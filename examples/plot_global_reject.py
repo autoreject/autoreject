@@ -1,0 +1,95 @@
+"""
+===============================
+Find global rejection threshold
+===============================
+
+This example demonstrates how to use ``autoreject`` to
+find global rejection thresholds.
+"""
+
+# Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+# License: BSD (3-clause)
+
+import numpy as np
+import matplotlib
+from sklearn.learning_curve import validation_curve
+from sklearn.cross_validation import KFold
+
+import mne
+import matplotlib.pyplot as plt
+from autoreject import GlobalAutoReject
+
+from mne.datasets import sample
+from mne import io
+
+print(__doc__)
+
+data_path = sample.data_path()
+raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+raw = io.Raw(raw_fname, preload=True)
+
+event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
+                           'eve.fif')
+event_id = {'Visual/Left': 3}
+tmin, tmax = -0.2, 0.5
+events = mne.read_events(event_fname)
+
+
+include = []
+picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
+                       eog=False, include=include, exclude='bads')
+epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                    picks=picks, baseline=(None, 0),
+                    reject=None, verbose=False, detrend=True)
+
+param_range = np.linspace(400e-7, 200e-6, 30)
+X = epochs.get_data()
+n_epochs, n_channels, n_times = X.shape
+
+human_thresh = 80e-6
+unit = r'$\mu$V'
+scaling = 1e6
+cv = KFold(n_epochs, n_folds=5, random_state=42)
+
+# XXX : you should have your own learning_curve to be able to pass Epochs
+# to fit and avoid passing these n_channels, n_times to the init
+_, test_scores = validation_curve(
+    GlobalAutoReject(n_channels, n_times), X.reshape(n_epochs, -1), y=None,
+    param_name="thresh", param_range=param_range, cv=cv, n_jobs=1,
+    verbose=1)
+
+test_scores = -test_scores.mean(axis=1)
+best_thresh = param_range[np.argmin(test_scores)]
+
+matplotlib.style.use('ggplot')
+fontsize = 17
+params = {'axes.labelsize': fontsize + 2,
+          'text.fontsize': fontsize,
+          'legend.fontsize': fontsize,
+          'xtick.labelsize': fontsize,
+          'ytick.labelsize': fontsize}
+plt.rcParams.update(params)
+
+plt.figure(figsize=(8, 5))
+plt.tick_params(axis='x', which='both', bottom='off', top='off')
+plt.tick_params(axis='y', which='both', left='off', right='off')
+
+colors = plt.rcParams['axes.color_cycle']
+
+plt.plot(scaling * param_range, scaling * test_scores,
+         'o-', markerfacecolor='w',
+         color=colors[0], markeredgewidth=2, linewidth=2,
+         markeredgecolor=colors[0], markersize=8, label='CV scores')
+plt.ylabel('RMSE (%s)' % unit)
+plt.xlabel('Threshold (%s)' % unit)
+plt.xlim((scaling * param_range[0] - 10, scaling * param_range[-1] + 10))
+plt.axvline(scaling * best_thresh, label='auto global', color=colors[2],
+            linewidth=2, linestyle='--')
+plt.axvline(scaling * human_thresh, label='manual', color=colors[1],
+            linewidth=2, linestyle=':')
+
+plt.legend(loc='upper right')
+
+ax = plt.gca()
+plt.tight_layout()
+plt.show()
