@@ -16,6 +16,7 @@ from joblib import Memory
 from pandas import DataFrame
 from scipy.stats.distributions import uniform
 from collections import namedtuple
+from mne.utils import logger
 
 from .utils import clean_by_interp
 
@@ -49,9 +50,9 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
     for fold, (train, test) in enumerate(cv):
         for jdx, n_interp in enumerate(n_interpolates):
             for idx, consensus_perc in enumerate(consensus_percs):
-                print('%s[Val fold %d] Trying consensus '
-                      'perc %0.2f, n_interp %d'
-                      % (prefix, fold + 1, consensus_perc, n_interp))
+                logger.info('%s[Val fold %d] Trying consensus '
+                            'perc %0.2f, n_interp %d' % (
+                                prefix, fold + 1, consensus_perc, n_interp))
                 # set the params
                 auto_reject.consensus_perc = consensus_perc
                 auto_reject.n_interpolate = n_interp
@@ -62,32 +63,6 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
                 err_cons[idx, jdx, fold] = -auto_reject.score(X)
 
     return err_cons
-
-
-def remove_eog(epochs):
-    """Get the indices of eyeblink epochs.
-    """
-    picks = mne.pick_types(epochs.info, eog=True)
-    if len(picks) == 0:
-        return []
-    elif len(picks) > 1:
-        picks = picks[0]
-
-    data = epochs.copy().pick_types(eog=True).get_data()
-    cv = KFold(data.shape[0], 10, random_state=42)
-    est = ChannelAutoReject()
-    low, high = 20e-7, 400e-6
-    param_dist = dict(thresh=uniform(low, high))
-    rs = RandomizedSearchCV(est,  # XXX : is random really better than grid?
-                            param_distributions=param_dist,
-                            n_iter=20, cv=cv)
-    rs.fit(data[:, 0, :])
-    best_thresh = rs.best_estimator_.thresh
-    delta = np.ptp(data, axis=-1).T
-    bad_epochs_idx = np.where(delta > best_thresh)
-    good_epochs_idx = np.setdiff1d(np.arange(len(epochs)), bad_epochs_idx)
-
-    return epochs[good_epochs_idx], best_thresh, delta
 
 
 class BaseAutoReject(BaseEstimator):
@@ -247,24 +222,30 @@ class ConsensusAutoReject(BaseAutoReject):
     ----------
     epochs : instance of mne.Epochs
         The epochs object
-    thresh_func : callable
-        Function which returns the channel-level thresholds
+    thresh_func : callable | None
+        Function which returns the channel-level thresholds. If None,
+        defaults to ``autoreject.compute_threshes``.
     consensus_perc : float (0 to 1.0)
         percentage of channels that must agree as a fraction of
         the total number of channels.
     n_interpolate : int (default 0)
         Number of channels for which to interpolate
     """
-    def __init__(self, thresh_func, consensus_perc, n_interpolate=0):
+    def __init__(self, thresh_func=None, consensus_perc=0.1, n_interpolate=0):
 
         # TODO: must be able to try different consensus percs
         # with pretrained thresh
+        if thresh_func is None:
+            thresh_func = compute_threshes
+        if not (0 <= consensus_perc <= 1):
+            raise ValueError('"consensus_perc" must be between 0 and 1. '
+                             'You gave me %s.' % consensus_perc)
         self.consensus_perc = consensus_perc
         self.n_interpolate = n_interpolate
         self.thresh_func = mem.cache(thresh_func)
 
     def _check_data(self, epochs):
-        epochs.drop_bad_epochs()
+        getattr(epochs, 'drop_bad', 'drop_bad_epochs')()
         if any(len(drop) > 0 and drop != ['IGNORED']
                 for drop in epochs.drop_log):
             raise RuntimeError('Some epochs are being dropped (maybe due to '
@@ -300,8 +281,6 @@ class ConsensusAutoReject(BaseAutoReject):
             self._interpolate_bad_epochs(epochs, ch_type=ch_type)
 
         bad_epochs_idx = self._get_bad_epochs()
-        # bad_epochs_idx = \
-        #     np.hstack((bad_epochs_idx, eog_bads_idx)).astype(int)
         self.bad_epochs_idx = np.sort(bad_epochs_idx)
         self.good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
                                             bad_epochs_idx)
