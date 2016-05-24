@@ -244,7 +244,8 @@ class ConsensusAutoReject(BaseAutoReject):
         self.thresh_func = mem.cache(thresh_func)
 
     def _check_data(self, epochs):
-        getattr(epochs, 'drop_bad', 'drop_bad_epochs')()
+        # needed for len
+        getattr(epochs, 'drop_bad', getattr(epochs, 'drop_bad_epochs'))()
         if any(len(drop) > 0 and drop != ['IGNORED']
                 for drop in epochs.drop_log):
             raise RuntimeError('Some epochs are being dropped (maybe due to '
