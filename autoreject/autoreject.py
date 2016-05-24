@@ -41,9 +41,8 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
     cv = KFold(len(epochs), n_folds=n_folds, random_state=42)
     err_cons = np.zeros((len(consensus_percs), len(n_interpolates),
                          n_folds))
-    # XXX: last two parameters are not used right now, bad design
-    auto_reject = ConsensusAutoReject(compute_threshes, consensus_percs[0],
-                                      n_interpolates[0])
+
+    auto_reject = ConsensusAutoReject()
     # The thresholds must be learnt from the entire data
     auto_reject.fit(epochs)
 
