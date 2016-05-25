@@ -3,9 +3,13 @@
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 
+from collections import namedtuple
+
 import numpy as np
+from scipy.stats.distributions import uniform
 
 import mne
+from mne.utils import logger, ProgressBar
 
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import RandomizedSearchCV
@@ -13,17 +17,16 @@ from sklearn.cross_validation import KFold
 
 from joblib import Memory
 from pandas import DataFrame
-from scipy.stats.distributions import uniform
-from collections import namedtuple
-from mne.utils import logger, ProgressBar
 
-from .utils import clean_by_interp
+from .utils import clean_by_interp, interpolate_bads
 
 mem = Memory(cachedir='cachedir')
+mem.clear()
 
 
 def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
-    """
+    """Grid search to find optimal values of n_interpolate and consensus_perc.
+
     Parameters
     ----------
     epochs : instance of mne.Epochs
@@ -63,6 +66,44 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
     return err_cons
 
 
+def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
+                     n_jobs=1):
+    """Validation curve on epochs.
+
+    Parameters
+    ----------
+    estimator : object that implements "fit" and "predict" method.
+        the estimator whose Validation curve must be found
+    epochs : instance of mne.Epochs.
+        The epochs.
+    y : array
+        The labels.
+    param_name : str
+        Name of the parameter that will be varied.
+    param_range : array
+        The values of the parameter that will be evaluated.
+    """
+    from sklearn.learning_curve import validation_curve
+    if not isinstance(estimator, GlobalAutoReject):
+        msg = 'No guarantee that it will work on this estimator.'
+        raise NotImplementedError(msg)
+    if not isinstance(epochs, mne.Epochs):
+        raise ValueError('Only accepts mne.Epochs objects.')
+
+    X = epochs.get_data()
+    n_epochs, n_channels, n_times = X.shape
+
+    estimator.n_channels = n_channels
+    estimator.n_times = n_times
+
+    train_scores, test_scores = \
+        validation_curve(estimator, X.reshape(n_epochs, -1), y=y,
+                         param_name="thresh", param_range=param_range,
+                         cv=cv, n_jobs=1, verbose=1)
+
+    return train_scores, test_scores
+
+
 class BaseAutoReject(BaseEstimator):
     """Base class for rejection."""
 
@@ -88,12 +129,15 @@ class BaseAutoReject(BaseEstimator):
 class GlobalAutoReject(BaseAutoReject):
     """docstring for AutoReject."""
 
-    def __init__(self, n_channels, n_times, thresh=40e-6):
+    def __init__(self, n_channels=None, n_times=None, thresh=40e-6):
         self.thresh = thresh
         self.n_channels = n_channels
         self.n_times = n_times
 
     def fit(self, X, y=None):
+        if self.n_channels is None or self.n_times is None:
+            raise ValueError('Cannot fit without knowing n_channels'
+                             ' and n_times')
         X = X.reshape(-1, self.n_channels, self.n_times)
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         epoch_deltas = deltas.max(axis=1)
@@ -339,17 +383,16 @@ class ConsensusAutoReject(BaseAutoReject):
         epochs : instance of mne.Epochs
             The epochs object which must be fixed.
         """
-        from utils import interpolate_bads
         drop_log = self.drop_log
         # 1: bad segment, # 2: interpolated, # 3: dropped
         self.fix_log = self.drop_log.copy()
         ch_names = drop_log.columns.values
         n_consensus = self.consensus_perc * len(ch_names)
-        pbar = ProgressBar(len(epochs), mesg='Repairing epochs: ',
+        pbar = ProgressBar(len(epochs) - 1, mesg='Repairing epochs: ',
                            spinner=True)
         # TODO: raise error if preload is not True
         for epoch_idx in range(len(epochs)):
-            pbar.update(epoch_idx)
+            pbar.update(epoch_idx + 1)
             # ch_score = self.scores_[ch_type][epoch_idx]
             # sorted_ch_idx = np.argsort(ch_score)
             n_bads = drop_log.ix[epoch_idx].sum()

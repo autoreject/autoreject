@@ -58,6 +58,7 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 epochs.drop_bad_epochs()
 
 prefix = 'MEG data'
+mne.set_log_level('INFO')
 err_cons = grid_search(epochs, n_interpolates, consensus_percs,
                        prefix=prefix, n_folds=n_folds)
 
@@ -68,13 +69,13 @@ consensus_perc = consensus_percs[best_idx]
 n_interpolate = n_interpolates[best_jdx]
 auto_reject = ConsensusAutoReject(compute_threshes, consensus_perc,
                                   n_interpolate=n_interpolate)
-epochs_transformed = auto_reject.fit_transform(epochs)
+epochs_clean = auto_reject.fit_transform(epochs)
 
 evoked = epochs.average()
-evoked_transformed = epochs_transformed.average()
+evoked_clean = epochs_clean.average()
 
 evoked.info['bads'] = ['MEG 2443']
-evoked_transformed.info['bads'] = ['MEG 2443']
+evoked_clean.info['bads'] = ['MEG 2443']
 
 matplotlib.style.use('ggplot')
 fontsize = 17
@@ -95,7 +96,7 @@ ylim = dict(grad=(-170, 200))
 evoked1 = evoked.copy().pick_types(meg='grad', exclude=[])
 evoked1.plot(exclude=[], axes=axes[0], ylim=ylim)
 axes[0].set_title('Before', fontsize=fontsize)
-evoked2 = evoked_transformed.copy().pick_types(meg='grad', exclude=[])
+evoked2 = evoked_clean.copy().pick_types(meg='grad', exclude=[])
 evoked2.plot(exclude=[], axes=axes[1], ylim=ylim)
 axes[1].set_title('After', fontsize=fontsize)
 plt.tight_layout()

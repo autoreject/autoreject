@@ -12,12 +12,11 @@ find global rejection thresholds.
 
 import numpy as np
 import matplotlib
-from sklearn.learning_curve import validation_curve
 from sklearn.cross_validation import KFold
 
 import mne
 import matplotlib.pyplot as plt
-from autoreject import GlobalAutoReject
+from autoreject import GlobalAutoReject, validation_curve
 
 from mne.datasets import sample
 from mne import io
@@ -43,20 +42,14 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     reject=None, verbose=False, detrend=True)
 
 param_range = np.linspace(400e-7, 200e-6, 30)
-X = epochs.get_data()
-n_epochs, n_channels, n_times = X.shape
 
 human_thresh = 80e-6
 unit = r'$\mu$V'
 scaling = 1e6
-cv = KFold(n_epochs, n_folds=5, random_state=42)
 
-# XXX : you should have your own learning_curve to be able to pass Epochs
-# to fit and avoid passing these n_channels, n_times to the init
 _, test_scores = validation_curve(
-    GlobalAutoReject(n_channels, n_times), X.reshape(n_epochs, -1), y=None,
-    param_name="thresh", param_range=param_range, cv=cv, n_jobs=1,
-    verbose=1)
+    GlobalAutoReject(), epochs, y=None,
+    param_name="thresh", param_range=param_range, cv=5, n_jobs=1)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]

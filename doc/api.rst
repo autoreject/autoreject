@@ -13,6 +13,7 @@ Classes
    :toctree: generated/
 
    GlobalAutoReject
+   ChannelAutoReject
    ConsensusAutoReject
 
 Functions
@@ -23,3 +24,4 @@ Functions
 
    compute_threshes
    grid_search
+   validation_curve
