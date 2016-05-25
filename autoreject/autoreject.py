@@ -11,12 +11,11 @@ from sklearn.base import BaseEstimator
 from sklearn.grid_search import RandomizedSearchCV
 from sklearn.cross_validation import KFold
 
-from progressbar import ProgressBar, SimpleProgress
 from joblib import Memory
 from pandas import DataFrame
 from scipy.stats.distributions import uniform
 from collections import namedtuple
-from mne.utils import logger
+from mne.utils import logger, ProgressBar
 
 from .utils import clean_by_interp
 
@@ -346,10 +345,11 @@ class ConsensusAutoReject(BaseAutoReject):
         self.fix_log = self.drop_log.copy()
         ch_names = drop_log.columns.values
         n_consensus = self.consensus_perc * len(ch_names)
-        pbar = ProgressBar(widgets=[SimpleProgress()])
-        print('Repairing epochs: ')
+        pbar = ProgressBar(len(epochs), mesg='Repairing epochs: ',
+                           spinner=True)
         # TODO: raise error if preload is not True
-        for epoch_idx in pbar(range(len(epochs))):
+        for epoch_idx in range(len(epochs)):
+            pbar.update(epoch_idx)
             # ch_score = self.scores_[ch_type][epoch_idx]
             # sorted_ch_idx = np.argsort(ch_score)
             n_bads = drop_log.ix[epoch_idx].sum()

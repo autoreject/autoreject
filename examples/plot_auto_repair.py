@@ -26,7 +26,6 @@ import matplotlib
 print(__doc__)
 
 check_random_state(42)
-mne.set_log_level('WARNING')
 
 scaling = 1e6
 n_folds = 3
@@ -37,7 +36,8 @@ data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = io.Raw(raw_fname, preload=True)
 
-projs, _ = mne.preprocessing.compute_proj_ecg(raw, n_eeg=1, average=True)
+projs, _ = mne.preprocessing.compute_proj_ecg(raw, n_eeg=1, average=True,
+                                              verbose=False)
 raw.add_proj(projs).apply_proj()
 
 event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'

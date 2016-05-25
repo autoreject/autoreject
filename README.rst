@@ -12,7 +12,6 @@ to run:
 * mne-python
 * scikit-learn
 * joblibs
-* progressbar
 * pandas
 * scipy
 * numpy
