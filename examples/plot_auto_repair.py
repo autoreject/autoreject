@@ -18,10 +18,10 @@ from mne import Epochs
 from mne.utils import check_random_state
 from mne.datasets import sample
 
-from autoreject import ConsensusAutoReject, compute_threshes, grid_search
+from autoreject import (LocalAutoReject, compute_threshes, grid_search,
+                        set_matplotlib_defaults)
 
 import matplotlib.pyplot as plt
-import matplotlib
 
 print(__doc__)
 
@@ -67,8 +67,8 @@ best_idx, best_jdx = np.unravel_index(err_cons.mean(axis=-1).argmin(),
                                       err_cons.shape[:2])
 consensus_perc = consensus_percs[best_idx]
 n_interpolate = n_interpolates[best_jdx]
-auto_reject = ConsensusAutoReject(compute_threshes, consensus_perc,
-                                  n_interpolate=n_interpolate)
+auto_reject = LocalAutoReject(compute_threshes, consensus_perc,
+                              n_interpolate=n_interpolate)
 epochs_clean = auto_reject.fit_transform(epochs)
 
 evoked = epochs.average()
@@ -77,14 +77,7 @@ evoked_clean = epochs_clean.average()
 evoked.info['bads'] = ['MEG 2443']
 evoked_clean.info['bads'] = ['MEG 2443']
 
-matplotlib.style.use('ggplot')
-fontsize = 17
-params = {'axes.labelsize': fontsize + 2,
-          'text.fontsize': fontsize,
-          'legend.fontsize': fontsize,
-          'xtick.labelsize': fontsize,
-          'ytick.labelsize': fontsize}
-plt.rcParams.update(params)
+set_matplotlib_defaults(plt)
 
 fig, axes = plt.subplots(2, 1, figsize=(6, 6))
 
@@ -94,9 +87,9 @@ for ax in axes:
 
 ylim = dict(grad=(-170, 200))
 evoked1 = evoked.copy().pick_types(meg='grad', exclude=[])
-evoked1.plot(exclude=[], axes=axes[0], ylim=ylim)
-axes[0].set_title('Before', fontsize=fontsize)
+evoked1.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
+axes[0].set_title('Before')
 evoked2 = evoked_clean.copy().pick_types(meg='grad', exclude=[])
 evoked2.plot(exclude=[], axes=axes[1], ylim=ylim)
-axes[1].set_title('After', fontsize=fontsize)
+axes[1].set_title('After')
 plt.tight_layout()

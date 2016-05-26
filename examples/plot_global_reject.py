@@ -11,17 +11,18 @@ find global rejection thresholds.
 # License: BSD (3-clause)
 
 import numpy as np
-import matplotlib
-from sklearn.cross_validation import KFold
 
 import mne
 import matplotlib.pyplot as plt
-from autoreject import GlobalAutoReject, validation_curve
+from autoreject import (GlobalAutoReject, validation_curve,
+                        set_matplotlib_defaults)
 
 from mne.datasets import sample
 from mne import io
 
 print(__doc__)
+
+set_matplotlib_defaults(plt)
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
@@ -53,15 +54,6 @@ _, test_scores = validation_curve(
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]
-
-matplotlib.style.use('ggplot')
-fontsize = 17
-params = {'axes.labelsize': fontsize + 2,
-          'text.fontsize': fontsize,
-          'legend.fontsize': fontsize,
-          'xtick.labelsize': fontsize,
-          'ytick.labelsize': fontsize}
-plt.rcParams.update(params)
 
 plt.figure(figsize=(8, 5))
 plt.tick_params(axis='x', which='both', bottom='off', top='off')

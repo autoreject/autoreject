@@ -1,3 +1,7 @@
+"""Utility functions for autoreject."""
+
+# Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
+
 import numpy as np
 
 import mne
@@ -8,31 +12,25 @@ from joblib import Memory
 mem = Memory(cachedir='cachedir')
 
 
-def scorer(evoked_gt, epochs_test, good_epochs_idx=None):
-    """ Returns the error percentage. """
-    import numpy as np
-    if good_epochs_idx is None:
-        evoked_test = epochs_test.average()
-        return np.sqrt(np.mean((np.mean(evoked_gt.data, axis=0)
-                       - evoked_test.data) ** 2))
-    elif len(good_epochs_idx) > 0:
-        epochs_test = epochs_test[good_epochs_idx]
-        evoked_test = epochs_test.average()
-        return np.sqrt(np.mean((np.mean(evoked_gt.data, axis=0)
-                       - evoked_test.data) ** 2))
-    else:
-        return np.inf
+def set_matplotlib_defaults(plt):
+    """Set publication quality defaults for matplotlib.
 
-
-def get_bad_idx(epochs, reject):
-    """Get indices of bad epochs.
+    Parameters
+    ----------
+    plt : instance of matplotlib.pyplot
+        The plt instance.
     """
-    deltas = np.array([(np.max(d, axis=1) - np.min(d, axis=1))
-                      for d in epochs.get_data()])
-    bad_epochs_score = np.max(deltas, axis=-1)
-    bad_epochs_idx = np.where(bad_epochs_score > reject)[0]
-    sorted_epoch_idx = bad_epochs_score.argsort()[::-1]
-    return bad_epochs_idx, sorted_epoch_idx
+    import matplotlib
+    matplotlib.style.use('ggplot')
+
+    fontsize = 17
+    params = {'axes.labelsize': fontsize + 2,
+              'text.fontsize': fontsize,
+              'legend.fontsize': fontsize,
+              'xtick.labelsize': fontsize,
+              'ytick.labelsize': fontsize,
+              'axes.titlesize': fontsize + 2}
+    plt.rcParams.update(params)
 
 
 def clean_by_interp(inst):
@@ -68,17 +66,6 @@ def _set_raw_montage(raw):
     raw.rename_channels(dict(Cpz='CPz', Poz='POz', Fcz='FCz', Afz='AFz'))
     raw.set_channel_types({'Fp1': 'eog'})  # artificially make an EOG channel
     raw.set_montage(montage)
-
-
-def _epochs_to_rawarray(epochs):
-    """Concatenate the epochs in a raw object."""
-    from mne.io import RawArray
-    from mne.decoding import EpochsVectorizer
-    # bring channels to the first dimension
-    data = epochs.get_data().transpose((1, 0, 2))
-    raw_data = EpochsVectorizer().transform(data)
-    raw_array = RawArray(raw_data, epochs.info.copy())
-    return raw_array
 
 
 def _interpolate_epochs(epochs, bad_log):

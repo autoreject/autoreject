@@ -3,8 +3,6 @@
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 
-from collections import namedtuple
-
 import numpy as np
 from scipy.stats.distributions import uniform
 
@@ -44,7 +42,7 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
     err_cons = np.zeros((len(consensus_percs), len(n_interpolates),
                          n_folds))
 
-    auto_reject = ConsensusAutoReject()
+    auto_reject = LocalAutoReject()
     # The thresholds must be learnt from the entire data
     auto_reject.fit(epochs)
 
@@ -127,7 +125,17 @@ class BaseAutoReject(BaseEstimator):
 
 
 class GlobalAutoReject(BaseAutoReject):
-    """docstring for AutoReject."""
+    """Class to compute global rejection thresholds.
+
+    Parameters
+    ----------
+    n_channels : int | None
+        The number of channels in the epochs. Defaults to None.
+    n_times : int | None
+        The number of time points in the epochs. Defaults to None.
+    thresh : float
+        Boilerplate API. The rejection threshold.
+    """
 
     def __init__(self, n_channels=None, n_times=None, thresh=40e-6):
         self.thresh = thresh
@@ -146,7 +154,7 @@ class GlobalAutoReject(BaseAutoReject):
         return self
 
 
-class ChannelAutoReject(BaseAutoReject):
+class _ChannelAutoReject(BaseAutoReject):
     """docstring for AutoReject"""
 
     def __init__(self, thresh=40e-6):
@@ -181,40 +189,20 @@ def _pick_exclusive_channels(info, ch_type):
     return picks
 
 
-def _rank_channels(data):
-    """Rank the channels epoch-wise
-    """
-    deltas = np.ptp(data, axis=-1).T
-    n_channels = deltas.shape[0]
-    n_epochs = deltas.shape[1] / 2
-    scores = np.zeros((n_epochs, n_channels))
-    for ch_idx, delta in enumerate(deltas):
-        for epoch_idx in range(n_epochs):
-            scores[epoch_idx, ch_idx] = np.mean(delta[epoch_idx] <= delta)
-    return scores
-
-
-def _compute_thresh(this_data, ch_type, cv=10):
+def _compute_thresh(this_data, thresh_range, cv=10):
     """ Compute the rejection threshold for one channel.
 
     Parameters
     ----------
     this_data: array (n_epochs, n_times)
         Data for one channel.
-    ch_type: str
-        'mag', 'grad' or 'eeg'.
     cv : iterator
         Iterator for cross-validation.
     """
-    est = ChannelAutoReject()
+    est = _ChannelAutoReject()
 
-    Limits = namedtuple('Limits', 'low high')
-    limits = dict(eeg=Limits(low=20e-7, high=400e-6),
-                  grad=Limits(low=400e-13, high=20000e-13),
-                  mag=Limits(low=400e-15, high=20000e-15))
-
-    param_dist = dict(thresh=uniform(limits[ch_type].low,
-                                     limits[ch_type].high))
+    param_dist = dict(thresh=uniform(thresh_range[0],
+                                     thresh_range[1]))
     rs = RandomizedSearchCV(est,  # XXX : is random really better than grid?
                             param_distributions=param_dist,
                             n_iter=20, cv=cv)
@@ -224,16 +212,31 @@ def _compute_thresh(this_data, ch_type, cv=10):
     return best_thresh
 
 
-def compute_threshes(epochs):
-    """ Compute thresholds for each channel.
+def compute_threshes(epochs, thresh_range=None):
+    """Compute thresholds for each channel.
+
+    Parameters
+    ----------
+    epochs : instance of mne.Epochs
+        The epochs objects whose thresholds must be computed.
+    thresh_range : dict
+        Possible keys are 'eeg', 'grad' and 'mag'. Each entry is a tuple
+        of the form (low, high) which specifies the range to try.
+        Example: compute_threshes(epochs, range=dict(eeg=(20e-7, 400e-6)))
     """
+    if thresh_range is None:
+        thresh_range = dict(eeg=(20e-7, 400e-6),
+                            grad=(400e-13, 20000e-13),
+                            mag=(400e-15, 20000e-15))
+    if not all(key in ['eeg', 'grad', 'mag'] for key in thresh_range.keys()):
+        raise KeyError('Invalid key provided to thresh_range')
+
     ch_types = [ch_type for ch_type in ('eeg', 'meg')
                 if ch_type in epochs]
     epochs_interp = clean_by_interp(epochs)
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)
     threshes = dict()
-    scores = dict()
     picks_grad, picks_mag = list(), list()
     for ch_type in ch_types:
         print('Compute optimal thresholds for %s' % ch_type)
@@ -244,7 +247,6 @@ def compute_threshes(epochs):
         np.random.seed(42)  # has no effect unless shuffle=True is used
         cv = KFold(data.shape[0], 10, random_state=42)
         threshes[ch_type] = []
-        scores[ch_type] = _rank_channels(data[:, picks])
         for ii, pick in enumerate(picks):
             if pick in picks_grad:
                 thresh_type = 'grad'
@@ -252,12 +254,13 @@ def compute_threshes(epochs):
                 thresh_type = 'mag'
             else:
                 thresh_type = 'eeg'
-            thresh = _compute_thresh(data[:, pick], ch_type=thresh_type, cv=cv)
+            thresh = _compute_thresh(data[:, pick], cv=cv,
+                                     thresh_range=thresh_range[thresh_type])
             threshes[ch_type].append(thresh)
-    return threshes, scores
+    return threshes
 
 
-class ConsensusAutoReject(BaseAutoReject):
+class LocalAutoReject(BaseAutoReject):
     """ Class to deal with automatically rejecting bad epochs.
 
     Parameters
@@ -304,7 +307,7 @@ class ConsensusAutoReject(BaseAutoReject):
             The epochs object from which the channel-level thresholds are
             estimated.
         """
-        self.threshes_, self.scores_ = self.thresh_func(epochs)
+        self.threshes_ = self.thresh_func(epochs)
         return self
 
     def transform(self, epochs):
@@ -393,8 +396,6 @@ class ConsensusAutoReject(BaseAutoReject):
         # TODO: raise error if preload is not True
         for epoch_idx in range(len(epochs)):
             pbar.update(epoch_idx + 1)
-            # ch_score = self.scores_[ch_type][epoch_idx]
-            # sorted_ch_idx = np.argsort(ch_score)
             n_bads = drop_log.ix[epoch_idx].sum()
             if n_bads == 0 or n_bads > n_consensus:
                 continue

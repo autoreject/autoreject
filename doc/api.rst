@@ -13,8 +13,7 @@ Classes
    :toctree: generated/
 
    GlobalAutoReject
-   ChannelAutoReject
-   ConsensusAutoReject
+   LocalAutoReject
 
 Functions
 =========
