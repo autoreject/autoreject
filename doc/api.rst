@@ -24,3 +24,4 @@ Functions
    compute_threshes
    grid_search
    validation_curve
+   set_matplotlib_defaults

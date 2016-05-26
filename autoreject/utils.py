@@ -2,11 +2,7 @@
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 
-import numpy as np
-
 import mne
-from mne.channels import read_montage
-
 from joblib import Memory
 
 mem = Memory(cachedir='cachedir')
@@ -55,46 +51,6 @@ def clean_by_interp(inst):
             inst._data[:, ch_idx] = ch_orig
 
     return inst_interp
-
-
-def _set_raw_montage(raw):
-    """Set montage for the raw object."""
-    montage = read_montage('standard_1005')
-    raw.rename_channels(lambda x: str(x.strip('.')).upper()
-                        if str(x.strip('.')).upper() in
-                        montage.ch_names else str(x.strip('.')))
-    raw.rename_channels(dict(Cpz='CPz', Poz='POz', Fcz='FCz', Afz='AFz'))
-    raw.set_channel_types({'Fp1': 'eog'})  # artificially make an EOG channel
-    raw.set_montage(montage)
-
-
-def _interpolate_epochs(epochs, bad_log):
-    """Interpolate channels epochwise.
-
-    Parameters
-    ----------
-    epochs : instance of mne.Epochs
-        The epochs to be interpolated.
-    bad_log : array, shape (n_epochs, n_channels)
-    """
-    from utils import interpolate_bads
-    from progressbar import ProgressBar, SimpleProgress
-
-    if len(epochs) != bad_log.shape[0]:
-        raise ValueError('Shape of bad_log and epochs do not match')
-    if len(epochs.info['ch_names']) != bad_log.shape[1]:
-        raise ValueError('Shape of bad_log and ch_names do not match')
-
-    pbar = ProgressBar(widgets=[SimpleProgress()])
-    # XXX: last epoch may be smaller than window size
-    print('Repairing epochs: ')
-    for epoch_idx in pbar(range(len(epochs))):
-        bad_idx = np.where(bad_log[epoch_idx] == 1)[0]
-        bad_chs = [epochs.info['ch_names'][p] for p in bad_idx]
-        epoch = epochs[epoch_idx].copy()
-        epoch.info['bads'] = bad_chs
-        interpolate_bads(epoch, reset_bads=True)
-        epochs._data[epoch_idx] = epoch._data
 
 
 def _interpolate_bads_meg_fast(inst, mode='accurate', verbose=None):

@@ -34,16 +34,16 @@ consensus_percs = np.linspace(0, 1.0, 11)
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.Raw(raw_fname, preload=True)
-
-projs, _ = mne.preprocessing.compute_proj_ecg(raw, n_eeg=1, average=True,
-                                              verbose=False)
-raw.add_proj(projs).apply_proj()
-
 event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
                            'eve.fif')
 event_id = {'Auditory/Left': 1}
 tmin, tmax = -0.2, 0.5
+
+raw = io.Raw(raw_fname, preload=True)
+projs, _ = mne.preprocessing.compute_proj_ecg(raw, n_eeg=1, average=True,
+                                              verbose=False)
+raw.add_proj(projs).apply_proj()
+
 events = mne.read_events(event_fname)
 
 # pick EEG and MEG channels
@@ -58,7 +58,6 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 epochs.drop_bad_epochs()
 
 prefix = 'MEG data'
-mne.set_log_level('INFO')
 err_cons = grid_search(epochs, n_interpolates, consensus_percs,
                        prefix=prefix, n_folds=n_folds)
 

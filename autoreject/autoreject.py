@@ -1,4 +1,4 @@
-"""Auto reject."""
+"""Automated rejection and repair of trials in M/EEG."""
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 import mne
-from mne.utils import logger, ProgressBar
+from mne.utils import ProgressBar
 
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import RandomizedSearchCV
@@ -33,10 +33,10 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
         The number of sensors to interpolate.
     consensus_percs : array
         The percentage of channels to be interpolated.
-    n_folds : int
-        Number of folds for cross-validation.
     prefix : str
         Prefix to the log
+    n_folds : int
+        Number of folds for cross-validation.
     """
     cv = KFold(len(epochs), n_folds=n_folds, random_state=42)
     err_cons = np.zeros((len(consensus_percs), len(n_interpolates),
@@ -49,9 +49,9 @@ def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
     for fold, (train, test) in enumerate(cv):
         for jdx, n_interp in enumerate(n_interpolates):
             for idx, consensus_perc in enumerate(consensus_percs):
-                logger.info('%s[Val fold %d] Trying consensus '
-                            'perc %0.2f, n_interp %d' % (
-                                prefix, fold + 1, consensus_perc, n_interp))
+                print('%s[Val fold %d] Trying consensus perc %0.2f,'
+                      'n_interp %d' % (prefix, fold + 1,
+                                       consensus_perc, n_interp))
                 # set the params
                 auto_reject.consensus_perc = consensus_perc
                 auto_reject.n_interpolate = n_interp
@@ -261,7 +261,7 @@ def compute_threshes(epochs, thresh_range=None):
 
 
 class LocalAutoReject(BaseAutoReject):
-    """ Class to deal with automatically rejecting bad epochs.
+    """Class to automatically reject bad epochs and repair bad trials.
 
     Parameters
     ----------
@@ -368,8 +368,8 @@ class LocalAutoReject(BaseAutoReject):
         n_channels = self.drop_log.shape[1]
         n_consensus = self.consensus_perc * n_channels
         if np.max(bad_epoch_counts) >= n_consensus:
-            self.n_epochs_drop = np.sum(self.bad_epoch_counts
-                                        >= n_consensus) + 1
+            self.n_epochs_drop = np.sum(self.bad_epoch_counts >=
+                                        n_consensus) + 1
             bad_epochs_idx = self.sorted_epoch_idx[:self.n_epochs_drop]
         else:
             self.n_epochs_drop = 0
