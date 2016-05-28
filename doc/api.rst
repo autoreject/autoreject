@@ -14,6 +14,7 @@ Classes
 
    GlobalAutoReject
    LocalAutoReject
+   LocalAutoRejectCV
 
 Functions
 =========
@@ -22,6 +23,5 @@ Functions
    :toctree: generated/
 
    compute_threshes
-   grid_search
    validation_curve
    set_matplotlib_defaults
