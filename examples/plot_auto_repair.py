@@ -18,7 +18,7 @@ from mne import Epochs
 from mne.utils import check_random_state
 from mne.datasets import sample
 
-from autoreject import (LocalAutoReject, compute_threshes, grid_search,
+from autoreject import (LocalAutoRejectCV, compute_threshes,
                         set_matplotlib_defaults)
 
 import matplotlib.pyplot as plt
@@ -58,17 +58,10 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 epochs.drop_bad_epochs()
 
 prefix = 'MEG data'
-err_cons = grid_search(epochs, n_interpolates, consensus_percs,
-                       prefix=prefix, n_folds=n_folds)
 
-# try the best consensus perc to get clean evoked now
-best_idx, best_jdx = np.unravel_index(err_cons.mean(axis=-1).argmin(),
-                                      err_cons.shape[:2])
-consensus_perc = consensus_percs[best_idx]
-n_interpolate = n_interpolates[best_jdx]
-auto_reject = LocalAutoReject(compute_threshes, consensus_perc,
-                              n_interpolate=n_interpolate)
-epochs_clean = auto_reject.fit_transform(epochs)
+local_reject = LocalAutoRejectCV(n_interpolates, consensus_percs,
+                                 compute_threshes)
+epochs_clean = local_reject.fit_transform(epochs)
 
 evoked = epochs.average()
 evoked_clean = epochs_clean.average()

@@ -2,6 +2,7 @@
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+#          Denis A. Engemann <denis.engemann@gmail.com>
 
 import numpy as np
 from scipy.stats.distributions import uniform
@@ -20,48 +21,6 @@ from .utils import clean_by_interp, interpolate_bads
 
 mem = Memory(cachedir='cachedir')
 mem.clear()
-
-
-def grid_search(epochs, n_interpolates, consensus_percs, prefix, n_folds=3):
-    """Grid search to find optimal values of n_interpolate and consensus_perc.
-
-    Parameters
-    ----------
-    epochs : instance of mne.Epochs
-        The epochs object for which bad epochs must be found.
-    n_interpolates : array
-        The number of sensors to interpolate.
-    consensus_percs : array
-        The percentage of channels to be interpolated.
-    prefix : str
-        Prefix to the log
-    n_folds : int
-        Number of folds for cross-validation.
-    """
-    cv = KFold(len(epochs), n_folds=n_folds, random_state=42)
-    err_cons = np.zeros((len(consensus_percs), len(n_interpolates),
-                         n_folds))
-
-    auto_reject = LocalAutoReject()
-    # The thresholds must be learnt from the entire data
-    auto_reject.fit(epochs)
-
-    for fold, (train, test) in enumerate(cv):
-        for jdx, n_interp in enumerate(n_interpolates):
-            for idx, consensus_perc in enumerate(consensus_percs):
-                print('%s[Val fold %d] Trying consensus perc %0.2f,'
-                      'n_interp %d' % (prefix, fold + 1,
-                                       consensus_perc, n_interp))
-                # set the params
-                auto_reject.consensus_perc = consensus_perc
-                auto_reject.n_interpolate = n_interp
-                # not do the transform
-                auto_reject.transform(epochs[train])
-                # score using this param
-                X = epochs[test].get_data()
-                err_cons[idx, jdx, fold] = -auto_reject.score(X)
-
-    return err_cons
 
 
 def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
@@ -419,3 +378,114 @@ class LocalAutoReject(BaseAutoReject):
             epoch.info['bads'] = bad_chs
             interpolate_bads(epoch, reset_bads=True)
             epochs._data[epoch_idx] = epoch._data
+
+
+class LocalAutoRejectCV(object):
+    """Efficiently find n_interp and n_consensus.
+
+    Parameters
+    ----------
+    n_interpolates : array
+        The values of :math:`\\rho` to try.
+    consensus_percs : array
+        The values of :math:`\kappa` to try.
+    thresh_func : callable | None
+        Function which returns the channel-level thresholds. If None,
+        defaults to ``autoreject.compute_threshes``.
+    cv : a scikit-learn cross-validation object
+        Defaults to cv=10
+
+    Returns
+    -------
+    local_ar : instance of LocalAutoReject
+        The fitted LocalAutoReject object.
+    """
+
+    def __init__(self, n_interpolates, consensus_percs, thresh_func=None,
+                 cv=None):
+        self.n_interpolates = n_interpolates
+        self.consensus_percs = consensus_percs
+        self.thresh_func = thresh_func
+        self.cv = cv
+
+    def fit(self, epochs):
+        """Fit the epochs on the LocalAutoReject object.
+
+        Parameters
+        ----------
+        epochs : instance of mne.Epochs
+            The epochs object to be fit.
+        """
+        if self.cv is None:
+            self.cv = KFold(len(epochs), n_folds=10, random_state=42)
+
+        n_folds = len(self.cv)
+        loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
+                         n_folds))
+
+        local_reject = LocalAutoReject(thresh_func=self.thresh_func)
+        local_reject._check_data(epochs)
+
+        # The thresholds must be learnt from the entire data
+        local_reject.fit(epochs)
+
+        local_reject._vote_epochs(epochs)
+        bad_epoch_counts = local_reject.bad_epoch_counts.copy()
+        for jdx, n_interp in enumerate(self.n_interpolates):
+            # we can interpolate before doing cross-validation
+            # because interpolation is independent across trials.
+            local_reject.n_interpolate = n_interp
+            ch_types = [ch_type for ch_type in ('eeg', 'meg') if
+                        ch_type in epochs]
+            epochs_interp = epochs.copy()
+            for ch_type in ch_types:
+                local_reject._interpolate_bad_epochs(epochs_interp,
+                                                     ch_type=ch_type)
+            for fold, (train, test) in enumerate(self.cv):
+                for idx, consensus_perc in enumerate(self.consensus_percs):
+                    print('[Val fold %d] Trying consensus perc %0.2f,'
+                          'n_interp %d' % (fold + 1, consensus_perc, n_interp))
+                    local_reject.consensus_perc = consensus_perc
+                    local_reject.bad_epoch_counts = bad_epoch_counts[train]
+
+                    bad_epochs_idx = local_reject._get_bad_epochs()
+                    local_reject.bad_epochs_idx = np.sort(bad_epochs_idx)
+                    n_train = len(epochs[train])
+                    good_epochs_idx = np.setdiff1d(np.arange(n_train),
+                                                   bad_epochs_idx)
+                    epochs_train = epochs_interp[train][good_epochs_idx]
+                    local_reject.mean_ = epochs_train.get_data().mean(axis=0)
+                    X = epochs[test].get_data()
+                    loss[idx, jdx, fold] = -local_reject.score(X)
+
+        best_idx, best_jdx = np.unravel_index(loss.mean(axis=-1).argmin(),
+                                              loss.shape[:2])
+        consensus_perc = self.consensus_percs[best_idx]
+        n_interpolate = self.n_interpolates[best_jdx]
+        self.consensus_perc_ = consensus_perc
+        self.n_interpolate_ = n_interpolate
+        local_reject = LocalAutoReject(compute_threshes, consensus_perc,
+                                       n_interpolate=n_interpolate)
+        local_reject.fit(epochs)
+        self._local_reject = local_reject
+        return self
+
+    def transform(self, epochs):
+        """Removes bad epochs, repairs sensors and returns clean epochs.
+
+        Parameters
+        ----------
+        epochs : instance of mne.Epochs
+            The epochs object which must be cleaned.
+        """
+        return self._local_reject.transform(epochs)
+
+    def fit_transform(self, epochs):
+        """Estimates the rejection params and finds bad epochs.
+
+        Parameters
+        ----------
+        epochs : instance of mne.Epochs
+            The epochs object which must be cleaned.
+        """
+        return self.fit(epochs).transform(epochs)
