@@ -144,7 +144,7 @@ def _pick_exclusive_channels(info, ch_type):
     elif ch_type == 'meg':
         picks = mne.pick_types(info, meg=True)
     elif ch_type == 'grad' or ch_type == 'mag':
-        picks = mne.pick_types(info, meg=True)
+        picks = mne.pick_types(info, meg=ch_type)
     return picks
 
 
