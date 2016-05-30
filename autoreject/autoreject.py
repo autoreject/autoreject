@@ -44,8 +44,8 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
     if not isinstance(estimator, GlobalAutoReject):
         msg = 'No guarantee that it will work on this estimator.'
         raise NotImplementedError(msg)
-    if not isinstance(epochs, mne.Epochs):
-        raise ValueError('Only accepts mne.Epochs objects.')
+    if not isinstance(epochs, mne.epochs._BaseEpochs):
+        raise ValueError('Only accepts MNE epochs objects.')
 
     X = epochs.get_data()
     n_epochs, n_channels, n_times = X.shape
