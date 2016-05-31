@@ -10,19 +10,13 @@ find global rejection thresholds.
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD (3-clause)
 
-import numpy as np
-import matplotlib.pyplot as plt
+###############################################################################
+# Let us import the data using MNE-Python and epoch it.
 
+###############################################################################
 import mne
 from mne import io
 from mne.datasets import sample
-
-from autoreject import (GlobalAutoReject, validation_curve,
-                        set_matplotlib_defaults)
-
-print(__doc__)
-
-set_matplotlib_defaults(plt)
 
 event_id = {'Visual/Left': 3}
 tmin, tmax = -0.2, 0.5
@@ -42,13 +36,38 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     picks=picks, baseline=(None, 0),
                     reject=None, verbose=False, detrend=True)
 
-param_range = np.linspace(400e-7, 200e-6, 30)
+###############################################################################
+# Let us define a range of candidate thresholds which we would like to try.
+# In this particular case, we try from :math:`40{\mu}V` to :math:`200{\mu}V`
+
+###############################################################################
+import numpy as np
+param_range = np.linspace(40e-6, 200e-6, 30)
+
+###############################################################################
+# Next, we can use :class:`autoreject.GlobalAutoReject` to find global
+# (i.e., for all channels) peak-to-peak thresholds. It is a class which
+# follows a ``scikit-learn``-like API. To compute the Root Mean Squared
+# (RMSE) values at the candidate thresholds, we will use the function
+# :func:`autoreject.validation_curve`.
+
+###############################################################################
+from autoreject import GlobalAutoReject, validation_curve
+
 _, test_scores = validation_curve(
     GlobalAutoReject(), epochs, y=None,
     param_name="thresh", param_range=param_range, cv=5, n_jobs=1)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]
+
+###############################################################################
+# Now let us plot the RMSE values against the candidate thresholds.
+
+###############################################################################
+import matplotlib.pyplot as plt
+from autoreject import set_matplotlib_defaults
+set_matplotlib_defaults(plt)
 
 human_thresh = 80e-6
 unit = r'$\mu$V'

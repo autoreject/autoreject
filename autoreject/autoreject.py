@@ -385,10 +385,12 @@ class LocalAutoRejectCV(object):
 
     Parameters
     ----------
-    n_interpolates : array
-        The values of :math:`\\rho` to try.
-    consensus_percs : array
-        The values of :math:`\kappa` to try.
+    n_interpolates : array | None
+        The values of :math:`\\rho` to try. If None, defaults
+        to `np.linspace(0, 1.0, 11)`
+    consensus_percs : array | None
+        The values of :math:`\kappa` to try. If None, defaults to
+        np.array([1, 4, 32])
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
         defaults to ``autoreject.compute_threshes``.
@@ -401,8 +403,8 @@ class LocalAutoRejectCV(object):
         The fitted LocalAutoReject object.
     """
 
-    def __init__(self, n_interpolates, consensus_percs, thresh_func=None,
-                 cv=None):
+    def __init__(self, n_interpolates=None, consensus_percs=None,
+                 thresh_func=None, cv=None):
         self.n_interpolates = n_interpolates
         self.consensus_percs = consensus_percs
         self.thresh_func = thresh_func
@@ -418,6 +420,14 @@ class LocalAutoRejectCV(object):
         """
         if self.cv is None:
             self.cv = KFold(len(epochs), n_folds=10, random_state=42)
+        if self.consensus_percs is None:
+            self.consensus_percs = np.linspace(0, 1.0, 11)
+        if self.n_interpolates is None:
+            if epochs.info['nchan'] < 4:
+                raise ValueError('Too few channels. Auto reject is unlikely'
+                                 ' to be effective')
+            max_interp = min(epochs.info['nchan'], 32)
+            self.n_interpolates = np.array([1, 4, max_interp])
 
         n_folds = len(self.cv)
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
