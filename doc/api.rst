@@ -22,6 +22,6 @@ Functions
 .. autosummary::
    :toctree: generated/
 
-   compute_threshes
+   compute_thresholds
    validation_curve
    set_matplotlib_defaults

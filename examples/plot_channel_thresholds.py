@@ -3,7 +3,7 @@
 Plot channel-level thresholds
 =============================
 
-This example demonstrates how to use ``autoreject`` to find
+This example demonstrates how to use :mod:`autoreject` to find
 channel-wise thresholds.
 """
 
@@ -11,7 +11,7 @@ channel-wise thresholds.
 # License: BSD (3-clause)
 
 ###############################################################################
-# Let us first load the `raw` data using MNE-Python.
+# Let us first load the `raw` data using :func:`mne.io.read_raw_fif`.
 
 ###############################################################################
 
@@ -21,7 +21,7 @@ from mne.datasets import sample
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.Raw(raw_fname, preload=True)
+raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
 # Let us apply the SSP projectors to remove ECG artifacts. This must be done
@@ -65,14 +65,14 @@ epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
 ###############################################################################
 # Now, we can define a threshold range over which the threshold must be found
 # and then compute the channel-level thresholds using
-# :func:`autoreject.compute_threshes`.
+# :func:`autoreject.compute_thresholds`.
 
 ###############################################################################
-from autoreject import compute_threshes
+from autoreject import compute_thresholds
 import numpy as np
 
 thresh_range = dict(grad=(4e-13, 900e-13))
-threshes = np.array(compute_threshes(epochs, thresh_range)['meg'])
+threshes = np.array(compute_thresholds(epochs, thresh_range)['meg'])
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify

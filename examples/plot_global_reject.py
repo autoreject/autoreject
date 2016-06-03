@@ -3,7 +3,7 @@
 Find global rejection threshold
 ===============================
 
-This example demonstrates how to use ``autoreject`` to
+This example demonstrates how to use :mod:`autoreject` to
 find global rejection thresholds.
 """
 
@@ -26,7 +26,7 @@ raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
                            'eve.fif')
 
-raw = io.Raw(raw_fname, preload=True)
+raw = io.read_raw_fif(raw_fname, preload=True)
 events = mne.read_events(event_fname)
 
 include = []
@@ -47,7 +47,7 @@ param_range = np.linspace(40e-6, 200e-6, 30)
 ###############################################################################
 # Next, we can use :class:`autoreject.GlobalAutoReject` to find global
 # (i.e., for all channels) peak-to-peak thresholds. It is a class which
-# follows a ``scikit-learn``-like API. To compute the Root Mean Squared
+# follows a :mod:`scikit-learn`-like API. To compute the Root Mean Squared
 # (RMSE) values at the candidate thresholds, we will use the function
 # :func:`autoreject.validation_curve`.
 

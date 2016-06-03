@@ -171,7 +171,7 @@ def _compute_thresh(this_data, thresh_range, cv=10):
     return best_thresh
 
 
-def compute_threshes(epochs, thresh_range=None):
+def compute_thresholds(epochs, thresh_range=None):
     """Compute thresholds for each channel.
 
     Parameters
@@ -181,7 +181,12 @@ def compute_threshes(epochs, thresh_range=None):
     thresh_range : dict
         Possible keys are 'eeg', 'grad' and 'mag'. Each entry is a tuple
         of the form (low, high) which specifies the range to try.
-        Example: compute_threshes(epochs, range=dict(eeg=(20e-7, 400e-6)))
+
+    Examples
+    --------
+    For example, we can compute the channel-level thresholds for all the
+    EEG sensors this way:
+        >>> compute_thresholds(epochs, range=dict(eeg=(20e-7, 400e-6)))
     """
     if thresh_range is None:
         thresh_range = dict(eeg=(20e-7, 400e-6),
@@ -228,7 +233,7 @@ class LocalAutoReject(BaseAutoReject):
         The epochs object
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
-        defaults to ``autoreject.compute_threshes``.
+        defaults to :func:`autoreject.compute_thresholds`.
     consensus_perc : float (0 to 1.0)
         percentage of channels that must agree as a fraction of
         the total number of channels.
@@ -240,7 +245,7 @@ class LocalAutoReject(BaseAutoReject):
         # TODO: must be able to try different consensus percs
         # with pretrained thresh
         if thresh_func is None:
-            thresh_func = compute_threshes
+            thresh_func = compute_thresholds
         if not (0 <= consensus_perc <= 1):
             raise ValueError('"consensus_perc" must be between 0 and 1. '
                              'You gave me %s.' % consensus_perc)
@@ -397,7 +402,7 @@ class LocalAutoRejectCV(object):
         np.array([1, 4, 32])
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
-        defaults to ``autoreject.compute_threshes``.
+        defaults to :func:`autoreject.compute_thresholds`.
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
 
@@ -482,7 +487,7 @@ class LocalAutoRejectCV(object):
         n_interpolate = self.n_interpolates[best_jdx]
         self.consensus_perc_ = consensus_perc
         self.n_interpolate_ = n_interpolate
-        local_reject = LocalAutoReject(compute_threshes, consensus_perc,
+        local_reject = LocalAutoReject(compute_thresholds, consensus_perc,
                                        n_interpolate=n_interpolate)
         local_reject.fit(epochs)
         self._local_reject = local_reject

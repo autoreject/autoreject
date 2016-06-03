@@ -16,9 +16,11 @@ repair epochs.
 # are the :math:`\kappa` values that :mod:`autoreject` will try.
 #
 # Epochs with more than :math:`\kappa * N` sensors (:math:`N` total sensors)
-# bad are dropped. For the rest of the epochs, the worst :math:`\rho` sensors
-# are interpolated. The exact values of these parameters are not preselected
-# but learned from the data.
+# bad are dropped. For the rest of the epochs, the worst :math:`\rho`
+# bad sensors (as determined by channel-level thresholds) are interpolated.
+# The exact values of these parameters are not preselected but learned from
+# the data. If the number of bad sensors for a particular trial is less than
+# :math:`\rho`, all the bad sensors are interpolated.
 
 ###############################################################################
 import numpy as np
@@ -40,13 +42,13 @@ from mne.datasets import sample
 
 ###############################################################################
 # Now, we can import the class required for rejecting and repairing bad
-# epochs. :func:`autoreject.compute_threshes` is a callable which must be
+# epochs. :func:`autoreject.compute_thresholds` is a callable which must be
 # provided to the :class:`autoreject.LocalAutoRejectCV` class for computing
 # the channel-level thresholds.
 
 ###############################################################################
 
-from autoreject import (LocalAutoRejectCV, compute_threshes,
+from autoreject import (LocalAutoRejectCV, compute_thresholds,
                         set_matplotlib_defaults)
 
 ###############################################################################
@@ -58,7 +60,7 @@ check_random_state(42)
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.Raw(raw_fname, preload=True)
+raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
 # We will remove the ECG artifacts from our signal using SSP projectors.
@@ -90,8 +92,9 @@ picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
 
 ###############################################################################
-# Now, we can create epochs. The reject params will be set to ``None`` because
-# we do not want MNE-Python to drop any epochs.
+# Now, we can create epochs. The ``reject`` params will be set to ``None``
+# because we do not want epochs to be dropped when instantiating
+# :class:`mne.Epochs`.
 
 ###############################################################################
 
@@ -105,7 +108,7 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 
 ###############################################################################
 
-ar = LocalAutoRejectCV(n_interpolates, consensus_percs, compute_threshes)
+ar = LocalAutoRejectCV(n_interpolates, consensus_percs, compute_thresholds)
 epochs_clean = ar.fit_transform(epochs)
 
 evoked = epochs.average()
@@ -133,12 +136,12 @@ for ax in axes:
     ax.tick_params(axis='y', which='both', left='off', right='off')
 
 ylim = dict(grad=(-170, 200))
-evoked1 = evoked.copy().pick_types(meg='grad', exclude=[])
-evoked1.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
-axes[0].set_title('Before')
-evoked2 = evoked_clean.copy().pick_types(meg='grad', exclude=[])
-evoked2.plot(exclude=[], axes=axes[1], ylim=ylim)
-axes[1].set_title('After')
+evoked.pick_types(meg='grad', exclude=[])
+evoked.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
+axes[0].set_title('Before autoreject')
+evoked_clean.pick_types(meg='grad', exclude=[])
+evoked_clean.plot(exclude=[], axes=axes[1], ylim=ylim)
+axes[1].set_title('After autoreject')
 plt.tight_layout()
 
 ###############################################################################
