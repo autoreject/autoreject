@@ -5,6 +5,8 @@
 import mne
 from joblib import Memory
 
+from mne.utils import ProgressBar
+
 mem = Memory(cachedir='cachedir')
 
 
@@ -33,8 +35,11 @@ def clean_by_interp(inst):
     """Clean epochs/evoked by LOOCV
     """
     inst_interp = inst.copy()
+    mesg = 'Creating augmented epochs'
+    pbar = ProgressBar(len(inst.info['ch_names']) - 1, mesg=mesg,
+                       spinner=True)
     for ch_idx, ch in enumerate(inst.info['ch_names']):
-        print('Cleaning ch %s' % ch)
+        pbar.update(ch_idx + 1)
         if isinstance(inst, mne.Evoked):
             ch_orig = inst.data[ch_idx].copy()
         elif isinstance(inst, mne.Epochs):

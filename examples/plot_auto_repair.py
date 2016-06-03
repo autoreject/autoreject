@@ -3,7 +3,7 @@
 Automatically repair epochs
 ===========================
 
-This example demonstrates how to use ``autoreject`` to automatically
+This example demonstrates how to use :mod:`autoreject` to automatically
 repair epochs.
 """
 
@@ -12,8 +12,8 @@ repair epochs.
 
 ###############################################################################
 # Let us first define the parameters. `n_interpolates` are the :math:`\rho`
-# values that we would like ``autoreject`` to try and `consensus_percs`
-# are the :math:`\kappa` values that ``autoreject`` will try.
+# values that we would like :mod:`autoreject` to try and `consensus_percs`
+# are the :math:`\kappa` values that :mod:`autoreject` will try.
 #
 # Epochs with more than :math:`\kappa * N` sensors (:math:`N` total sensors)
 # bad are dropped. For the rest of the epochs, the worst :math:`\rho` sensors
@@ -81,7 +81,7 @@ tmin, tmax = -0.2, 0.5
 events = mne.read_events(event_fname)
 
 ###############################################################################
-# And pick MEG channels for repairing. Currently, ``autoreject`` can repair
+# And pick MEG channels for repairing. Currently, :mod:`autoreject` can repair
 # only one channel type at a time.
 
 ###############################################################################
@@ -120,7 +120,7 @@ evoked.info['bads'] = ['MEG 2443']
 evoked_clean.info['bads'] = ['MEG 2443']
 
 ###############################################################################
-# Finally, let us plot the results.
+# Let us plot the results.
 
 ###############################################################################
 import matplotlib.pyplot as plt
@@ -142,3 +142,19 @@ axes[1].set_title('After')
 plt.tight_layout()
 
 ###############################################################################
+# To top things up, we can also visualize the bad sensors for each trial using
+# :func:`seaborn.heatmap`.
+
+###############################################################################
+import seaborn as sns
+set_matplotlib_defaults(plt)
+
+plt.figure(figsize=(18, 6))
+ax = sns.heatmap(ar.bad_segments, xticklabels=10, yticklabels=20, square=True,
+                 cbar=False, cmap='Reds')
+ax.set_xlabel('Sensors')
+ax.set_ylabel('Trials')
+
+plt.setp(ax.get_yticklabels(), rotation=0)
+plt.setp(ax.get_xticklabels(), rotation=90)
+plt.tight_layout(rect=[None, None, None, 1.1])

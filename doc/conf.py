@@ -304,7 +304,9 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {'python': ('https://docs.python.org/', None),
+                       'seaborn': ('https://web.stanford.edu/~mwaskom/software/seaborn/', None)
+                       }
 
 sphinx_gallery_conf = {
     'examples_dirs': '../examples',

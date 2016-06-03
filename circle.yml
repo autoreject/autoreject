@@ -6,7 +6,7 @@ dependencies:
     - pip install sphinx matplotlib coverage Pillow
     - pip install sphinx-gallery sphinx_bootstrap_theme
     - pip install scipy
-    - pip install scikit-learn mne joblib pandas
+    - pip install scikit-learn mne joblib pandas seaborn
     - pip install -e .
     # we need to do this here so the datasets will be cached
     # pipefail is necessary to propagate exit codes

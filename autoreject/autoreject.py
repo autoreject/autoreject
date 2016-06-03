@@ -248,6 +248,10 @@ class LocalAutoReject(BaseAutoReject):
         self.n_interpolate = n_interpolate
         self.thresh_func = mem.cache(thresh_func)
 
+    @property
+    def bad_segments(self):
+        return self._drop_log
+
     def _check_data(self, epochs):
         # needed for len
         getattr(epochs, 'drop_bad', getattr(epochs, 'drop_bad_epochs'))()
@@ -302,8 +306,8 @@ class LocalAutoReject(BaseAutoReject):
         """
         n_epochs = len(epochs)
         picks = mne.pick_types(epochs.info, meg=True, eeg=True, eog=True)
-        self.drop_log = DataFrame(np.zeros((n_epochs, len(picks)), dtype=int),
-                                  columns=epochs.info['ch_names'])
+        self._drop_log = DataFrame(np.zeros((n_epochs, len(picks)), dtype=int),
+                                   columns=epochs.info['ch_names'])
         self.bad_epoch_counts = np.zeros((len(epochs), ))
         ch_types = [ch_type for ch_type in ('eeg', 'meg')
                     if ch_type in epochs]
@@ -316,7 +320,7 @@ class LocalAutoReject(BaseAutoReject):
                 bad_epochs_idx = np.where(delta > thresh)[0]
                 # TODO: combine for different ch types
                 self.bad_epoch_counts[bad_epochs_idx] += 1
-                self.drop_log.ix[bad_epochs_idx, ch_name] = 1
+                self._drop_log.ix[bad_epochs_idx, ch_name] = 1
 
     def _get_bad_epochs(self):
         """Get the indices of bad epochs.
@@ -324,7 +328,7 @@ class LocalAutoReject(BaseAutoReject):
         # TODO: this must be done separately for each channel type?
         self.sorted_epoch_idx = np.argsort(self.bad_epoch_counts)[::-1]
         bad_epoch_counts = np.sort(self.bad_epoch_counts)[::-1]
-        n_channels = self.drop_log.shape[1]
+        n_channels = self._drop_log.shape[1]
         n_consensus = self.consensus_perc * n_channels
         if np.max(bad_epoch_counts) >= n_consensus:
             self.n_epochs_drop = np.sum(self.bad_epoch_counts >=
@@ -345,9 +349,9 @@ class LocalAutoReject(BaseAutoReject):
         epochs : instance of mne.Epochs
             The epochs object which must be fixed.
         """
-        drop_log = self.drop_log
+        drop_log = self._drop_log
         # 1: bad segment, # 2: interpolated, # 3: dropped
-        self.fix_log = self.drop_log.copy()
+        self.fix_log = self._drop_log.copy()
         ch_names = drop_log.columns.values
         n_consensus = self.consensus_perc * len(ch_names)
         pbar = ProgressBar(len(epochs) - 1, mesg='Repairing epochs: ',
@@ -409,6 +413,10 @@ class LocalAutoRejectCV(object):
         self.consensus_percs = consensus_percs
         self.thresh_func = thresh_func
         self.cv = cv
+
+    @property
+    def bad_segments(self):
+        return self._local_reject._drop_log
 
     def fit(self, epochs):
         """Fit the epochs on the LocalAutoReject object.
