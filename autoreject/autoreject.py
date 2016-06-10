@@ -23,6 +23,20 @@ mem = Memory(cachedir='cachedir')
 mem.clear()
 
 
+def _check_data(epochs):
+    if not isinstance(epochs, mne.epochs._BaseEpochs):
+        raise ValueError('Only accepts MNE epochs objects.')
+
+    # needed for len
+    getattr(epochs, 'drop_bad', getattr(epochs, 'drop_bad_epochs'))()
+    if any(len(drop) > 0 and drop != ['IGNORED']
+            for drop in epochs.drop_log):
+        msg = ('Some epochs are being dropped (maybe due to '
+               'incomplete data). Please check that no epoch '
+               'is dropped when you call epochs.drop_bad_epochs().')
+        raise RuntimeError(msg)
+
+
 def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
                      n_jobs=1):
     """Validation curve on epochs.
@@ -257,15 +271,6 @@ class LocalAutoReject(BaseAutoReject):
     def bad_segments(self):
         return self._drop_log
 
-    def _check_data(self, epochs):
-        # needed for len
-        getattr(epochs, 'drop_bad', getattr(epochs, 'drop_bad_epochs'))()
-        if any(len(drop) > 0 and drop != ['IGNORED']
-                for drop in epochs.drop_log):
-            raise RuntimeError('Some epochs are being dropped (maybe due to '
-                               'incomplete data). Please check that no epoch '
-                               'is dropped.')
-
     def fit(self, epochs):
         """Compute the thresholds.
 
@@ -287,7 +292,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object for which bad epochs must be found.
         """
         epochs = epochs.copy()
-        self._check_data(epochs)
+        _check_data(epochs)
 
         self._vote_epochs(epochs)
         ch_types = [ch_type for ch_type in ('eeg', 'meg') if ch_type in epochs]
@@ -431,6 +436,7 @@ class LocalAutoRejectCV(object):
         epochs : instance of mne.Epochs
             The epochs object to be fit.
         """
+        _check_data(epochs)
         if self.cv is None:
             self.cv = KFold(len(epochs), n_folds=10, random_state=42)
         if self.consensus_percs is None:
@@ -447,7 +453,6 @@ class LocalAutoRejectCV(object):
                          n_folds))
 
         local_reject = LocalAutoReject(thresh_func=self.thresh_func)
-        local_reject._check_data(epochs)
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
