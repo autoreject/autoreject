@@ -40,6 +40,13 @@ def _check_data(epochs):
         raise RuntimeError(msg)
 
 
+def _slicemean(obj, this_slice, axis):
+    mean = np.nan
+    if len(obj[this_slice]) > 0:
+        mean = np.mean(obj[this_slice], axis=axis)
+    return mean
+
+
 def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
                      n_jobs=1):
     """Validation curve on epochs.
@@ -126,7 +133,7 @@ class GlobalAutoReject(BaseAutoReject):
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         epoch_deltas = deltas.max(axis=1)
         keep = epoch_deltas <= self.thresh
-        self.mean_ = np.mean(X[keep], axis=0)
+        self.mean_ = _slicemean(X, keep, axis=0)
         return self
 
 
@@ -149,7 +156,7 @@ class _ChannelAutoReject(BaseAutoReject):
         deltas = np.ptp(X, axis=1)
         self.deltas_ = deltas
         keep = deltas <= self.thresh
-        self.mean_ = np.mean(X[keep], axis=0)
+        self.mean_ = _slicemean(X, keep, axis=0)
         return self
 
 
@@ -306,7 +313,8 @@ class LocalAutoReject(BaseAutoReject):
         self.bad_epochs_idx = np.sort(bad_epochs_idx)
         self.good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
                                             bad_epochs_idx)
-        self.mean_ = epochs[self.good_epochs_idx].get_data().mean(axis=0)
+        self.mean_ = _slicemean(epochs.get_data(),
+                                self.good_epochs_idx, axis=0)
         return epochs[self.good_epochs_idx]
 
     def _vote_epochs(self, epochs):
@@ -484,8 +492,9 @@ class LocalAutoRejectCV(object):
                     n_train = len(epochs[train])
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
                                                    bad_epochs_idx)
-                    epochs_train = epochs_interp[train][good_epochs_idx]
-                    local_reject.mean_ = epochs_train.get_data().mean(axis=0)
+                    local_reject.mean_ = _slicemean(
+                        epochs_interp[train].get_data(),
+                        good_epochs_idx, axis=0)
                     X = epochs[test].get_data()
                     loss[idx, jdx, fold] = -local_reject.score(X)
 
