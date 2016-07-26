@@ -281,6 +281,10 @@ class LocalAutoReject(BaseAutoReject):
     def bad_segments(self):
         return self._drop_log
 
+    @property
+    def bad_epochs_idx(self):
+        return self._bad_epochs_idx
+
     def fit(self, epochs):
         """Compute the thresholds.
 
@@ -310,7 +314,7 @@ class LocalAutoReject(BaseAutoReject):
             self._interpolate_bad_epochs(epochs, ch_type=ch_type)
 
         bad_epochs_idx = self._get_bad_epochs()
-        self.bad_epochs_idx = np.sort(bad_epochs_idx)
+        self._bad_epochs_idx = np.sort(bad_epochs_idx)
         self.good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
                                             bad_epochs_idx)
         self.mean_ = _slicemean(epochs.get_data(),
@@ -439,6 +443,14 @@ class LocalAutoRejectCV(object):
     def bad_segments(self):
         return self._local_reject._drop_log
 
+    @property
+    def fix_log(self):
+        return self._local_reject.fix_log
+
+    @property
+    def bad_epochs_idx(self):
+        return self._local_reject._bad_epochs_idx
+
     def fit(self, epochs):
         """Fit the epochs on the LocalAutoReject object.
 
@@ -488,7 +500,7 @@ class LocalAutoRejectCV(object):
                     local_reject.bad_epoch_counts = bad_epoch_counts[train]
 
                     bad_epochs_idx = local_reject._get_bad_epochs()
-                    local_reject.bad_epochs_idx = np.sort(bad_epochs_idx)
+                    local_reject._bad_epochs_idx = np.sort(bad_epochs_idx)
                     n_train = len(epochs[train])
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
                                                    bad_epochs_idx)

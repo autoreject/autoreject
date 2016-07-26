@@ -17,7 +17,6 @@ import numpy as np
 from mne.utils import get_config, set_config, logger
 from mne.io.pick import pick_types, channel_type
 from mne.io.proj import setup_proj
-from mne.fixes import _in1d
 from mne.viz.utils import (figure_nobar, _toggle_proj, _toggle_options,
                            _layout_figure, _channels_changed,
                            _plot_raw_onscroll, _onclick_help, plt_show,
@@ -119,7 +118,8 @@ def _epochs_axes_onclick(event, params):
 
 
 def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
-                n_channels=20, title=None, show=True, block=False):
+                n_channels=20, title=None, show=True, block=False,
+                bad_epochs_idx=None, fix_log=None):
     """ Visualize epochs
 
     Bad epochs can be marked with a left click on top of the epoch. Bad
@@ -158,6 +158,11 @@ def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
         Whether to halt program execution until the figure is closed.
         Useful for rejecting bad trials on the fly by clicking on an epoch.
         Defaults to False.
+    bad_epochs_idx : array-like | None
+        Indices of bad epochs to show. No bad epochs to visualize if None.
+    fix_log : dataframe, shape (n_channels, n_epochs) | None
+        The bad segments to show in red and the interpolated segments
+        to show in green.
 
     Returns
     -------
@@ -180,11 +185,17 @@ def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
 
     projs = epochs.info['projs']
 
+    bads = np.array(list(), dtype=int)
+    if bad_epochs_idx is not None:
+        bads = np.array(bad_epochs_idx).astype(int)
+
     params = {'epochs': epochs,
               'info': copy.deepcopy(epochs.info),
               'bad_color': (0.8, 0.8, 0.8),
               't_start': 0,
-              'histogram': None}
+              'histogram': None,
+              'bads': bads,
+              'fix_log': fix_log}
     params['label_click_fun'] = partial(_pick_bad_channels, params=params)
     _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
                                title, picks)
@@ -223,7 +234,7 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         idxs = pick_types(params['info'], meg=t, ref_meg=False, exclude=[])
         if len(idxs) < 1:
             continue
-        mask = _in1d(idxs, picks, assume_unique=True)
+        mask = np.in1d(idxs, picks, assume_unique=True)
         inds.append(idxs[mask])
         types += [t] * len(inds[-1])
     pick_kwargs = dict(meg=False, ref_meg=False, exclude=[])
@@ -235,7 +246,7 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         idxs = pick_types(params['info'], **pick_kwargs)
         if len(idxs) < 1:
             continue
-        mask = _in1d(idxs, picks, assume_unique=True)
+        mask = np.in1d(idxs, picks, assume_unique=True)
         inds.append(idxs[mask])
         types += [ch_type] * len(inds[-1])
         pick_kwargs[ch_type] = False
@@ -351,11 +362,12 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
 
     for epoch_idx in range(len(epoch_times)):
         ax_hscroll.add_patch(mpl.patches.Rectangle((epoch_idx * n_times, 0),
-                                                   n_times, 1, facecolor='w',
-                                                   edgecolor='w', alpha=0.6))
+                                                   n_times, 1,
+                                                   facecolor=(0.8, 0.8, 0.8),
+                                                   edgecolor=(0.8, 0.8, 0.8), alpha=0.5))
     hsel_patch = mpl.patches.Rectangle((0, 0), duration, 1,
                                        edgecolor='k',
-                                       facecolor=(0.75, 0.75, 0.75),
+                                       facecolor=(0.5, 0.5, 0.5),
                                        alpha=0.25, linewidth=1, clip_on=False)
     ax_hscroll.add_patch(hsel_patch)
     text = ax.text(0, 0, 'blank', zorder=3, verticalalignment='baseline',
@@ -380,7 +392,6 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
                    'colors': colors,
                    'def_colors': type_colors,  # don't change at runtime
                    'picks': picks,
-                   'bads': np.array(list(), dtype=int),
                    'data': data,
                    'times': times,
                    'epoch_times': epoch_times,
@@ -417,6 +428,32 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
 
     # Draw event lines for the first time.
     _plot_vert_lines(params)
+
+    # Plot bad epochs
+    for epoch_idx in params['bads']:
+        params['ax_hscroll'].patches[epoch_idx].set_color((1., 0., 0., 1.))
+        params['ax_hscroll'].patches[epoch_idx].set_zorder(3)
+        params['ax_hscroll'].patches[epoch_idx].set_edgecolor('w')
+        for ch_idx in range(len(params['ch_names'])):
+            params['colors'][ch_idx][epoch_idx] = (1., 0., 0., 1.)
+
+    assert params['fix_log'].shape == (len(params['ch_names']),
+                                       len(epochs.events))
+    # Plot bad segments
+    if params['fix_log'] is not None:
+        for ch_idx in range(len(params['ch_names'])):
+            ch_name = params['ch_names'][ch_idx]
+            for epoch_idx in range(len(epochs.events)):
+                this_log = params['fix_log'][ch_name][epoch_idx]
+                if epoch_idx in params['bads']:
+                    pass
+                else:
+                    if this_log == 1:
+                        params['colors'][ch_idx][epoch_idx] = (1., 0., 0., 1.)
+                    elif this_log == 2:
+                        params['colors'][ch_idx][epoch_idx] = (0., 0., 1., 1.)
+
+    params['plot_fun']()
 
 
 def _prepare_projectors(params):
@@ -1009,11 +1046,7 @@ def _onpick(event, params):
 
 
 def _close_event(event, params):
-    """Function to drop selected bad epochs. Called on closing of the plot."""
-    params['epochs'].drop(params['bads'])
-    params['epochs'].info['bads'] = params['info']['bads']
-    logger.info('Channels marked as bad: %s' % params['epochs'].info['bads'])
-
+    pass
 
 def _resize_event(event, params):
     """Function to handle resize event"""
