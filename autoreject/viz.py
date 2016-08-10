@@ -437,8 +437,8 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         for ch_idx in range(len(params['ch_names'])):
             params['colors'][ch_idx][epoch_idx] = (1., 0., 0., 1.)
 
-    assert params['fix_log'].shape == (len(params['ch_names']),
-                                       len(epochs.events))
+    assert params['fix_log'].shape == (len(epochs.events),
+                                       len(params['ch_names']))
     # Plot bad segments
     if params['fix_log'] is not None:
         for ch_idx in range(len(params['ch_names'])):

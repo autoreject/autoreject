@@ -20,7 +20,7 @@ from pandas import DataFrame
 from .utils import clean_by_interp, interpolate_bads
 
 mem = Memory(cachedir='cachedir')
-mem.clear()
+# mem.clear()
 
 
 def _check_data(epochs):
@@ -156,6 +156,11 @@ class _ChannelAutoReject(BaseAutoReject):
         deltas = np.ptp(X, axis=1)
         self.deltas_ = deltas
         keep = deltas <= self.thresh
+        # XXX: actually go over all the folds before setting the min
+        # in skopt. Otherwise, may confuse skopt.
+        if self.thresh < np.min(np.ptp(X, axis=1)):
+            assert np.sum(keep) == 0
+            keep = deltas <= np.min(np.ptp(X, axis=1))
         self.mean_ = _slicemean(X, keep, axis=0)
         return self
 
@@ -181,30 +186,41 @@ def _compute_thresh(this_data, thresh_range, cv=10):
         Data for one channel.
     cv : iterator
         Iterator for cross-validation.
+
+    Returns
+    -------
+    rs : instance of RandomizedSearchCV
+        The RandomizedSearchCV object.
     """
     est = _ChannelAutoReject()
 
-    param_dist = dict(thresh=uniform(thresh_range[0],
-                                     thresh_range[1]))
-    rs = RandomizedSearchCV(est,  # XXX : is random really better than grid?
-                            param_distributions=param_dist,
-                            n_iter=20, cv=cv)
-    rs.fit(this_data)
-    best_thresh = rs.best_estimator_.thresh
+    # param_dist = dict(thresh=uniform(thresh_range[0],
+    #                                  thresh_range[1]))
+    # rs = RandomizedSearchCV(est,  # XXX : is random really better than grid?
+    #                         param_distributions=param_dist,
+    #                         n_iter=20, cv=cv)
+    # rs.fit(this_data)
 
-    return best_thresh
+    from sklearn.cross_validation import cross_val_score
+
+    def objective(thresh):
+        est.set_params(thresh=thresh)
+        return -np.mean(cross_val_score(est, this_data, cv=cv))
+
+    from skopt import gp_minimize
+    space = [(thresh_range[0], thresh_range[1])]
+    rs = gp_minimize(objective, space, n_calls=50, random_state=0)
+
+    return rs
 
 
-def compute_thresholds(epochs, thresh_range=None):
+def compute_thresholds(epochs):
     """Compute thresholds for each channel.
 
     Parameters
     ----------
     epochs : instance of mne.Epochs
         The epochs objects whose thresholds must be computed.
-    thresh_range : dict
-        Possible keys are 'eeg', 'grad' and 'mag'. Each entry is a tuple
-        of the form (low, high) which specifies the range to try.
 
     Examples
     --------
@@ -212,12 +228,6 @@ def compute_thresholds(epochs, thresh_range=None):
     EEG sensors this way:
         >>> compute_thresholds(epochs, range=dict(eeg=(20e-7, 400e-6)))
     """
-    if thresh_range is None:
-        thresh_range = dict(eeg=(20e-7, 400e-6),
-                            grad=(400e-13, 20000e-13),
-                            mag=(400e-15, 20000e-15))
-    if not all(key in ['eeg', 'grad', 'mag'] for key in thresh_range.keys()):
-        raise KeyError('Invalid key provided to thresh_range')
 
     ch_types = [ch_type for ch_type in ('eeg', 'meg')
                 if ch_type in epochs]
@@ -225,25 +235,42 @@ def compute_thresholds(epochs, thresh_range=None):
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)
     threshes = dict()
-    picks_grad, picks_mag = list(), list()
     for ch_type in ch_types:
-        print('Compute optimal thresholds for %s' % ch_type)
         picks = _pick_exclusive_channels(epochs.info, ch_type)
-        if ch_type == 'meg':
-            picks_grad = _pick_exclusive_channels(epochs.info, 'grad')
-            picks_mag = _pick_exclusive_channels(epochs.info, 'mag')
         np.random.seed(42)  # has no effect unless shuffle=True is used
         cv = KFold(data.shape[0], 10, random_state=42)
         threshes[ch_type] = []
         for ii, pick in enumerate(picks):
-            if pick in picks_grad:
-                thresh_type = 'grad'
-            elif pick in picks_mag:
-                thresh_type = 'mag'
-            else:
-                thresh_type = 'eeg'
-            thresh = _compute_thresh(data[:, pick], cv=cv,
-                                     thresh_range=thresh_range[thresh_type])
+            print(epochs.info['ch_names'][pick])
+            # lower bound must be minimum ptp, otherwise random search
+            # screws up.
+            thresh_low = np.min(np.ptp(data[:, pick], axis=1))
+            thresh_high = np.max(np.ptp(data[:, pick], axis=1))
+            rs = _compute_thresh(data[:, pick], cv=cv,
+                                 thresh_range=(thresh_low, thresh_high))
+            # thresh = rs.best_estimator_.thresh
+            thresh = rs.x[0]
+
+            # if epochs.info['ch_names'][pick] == 'A244':
+            #     import matplotlib.pyplot as plt
+            #     f, axes = plt.subplots(2, 1, sharex=True)
+
+            #     errors = [-grid_score.mean_validation_score for grid_score
+            #               in rs.grid_scores_]
+            #     threshes = [grid_score.parameters['thresh']
+            #                 for grid_score in rs.grid_scores_]
+            #     idx = np.argsort(threshes)
+            #     axes[0].plot(np.array(threshes)[idx], np.array(errors)[idx], 'b-o',
+            #                  markerfacecolor='w', markeredgewidth=2, linewidth=2)
+            #     axes[0].axvline(thresh, linestyle='--')
+            #     axes[0].set_ylabel('RMSE')
+
+            #     p2p = np.ptp(data[:, pick], axis=1)
+            #     axes[1].hist(p2p)
+            #     axes[1].axvline(thresh, linestyle='--')
+
+            #     plt.show()
+
             threshes[ch_type].append(thresh)
     return threshes
 
