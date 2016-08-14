@@ -12,7 +12,7 @@ from mne.utils import ProgressBar
 
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import RandomizedSearchCV
-from sklearn.cross_validation import KFold
+from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 
 from joblib import Memory
 from pandas import DataFrame
@@ -231,14 +231,17 @@ def compute_thresholds(epochs):
 
     ch_types = [ch_type for ch_type in ('eeg', 'meg')
                 if ch_type in epochs]
+    n_epochs = len(epochs)
     epochs_interp = clean_by_interp(epochs)
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)
+    y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
+    cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2, random_state=42)
+
     threshes = dict()
     for ch_type in ch_types:
         picks = _pick_exclusive_channels(epochs.info, ch_type)
         np.random.seed(42)  # has no effect unless shuffle=True is used
-        cv = KFold(data.shape[0], 10, random_state=42)
         threshes[ch_type] = []
         for ii, pick in enumerate(picks):
             print(epochs.info['ch_names'][pick])
@@ -246,28 +249,53 @@ def compute_thresholds(epochs):
             # screws up.
             thresh_low = np.min(np.ptp(data[:, pick], axis=1))
             thresh_high = np.max(np.ptp(data[:, pick], axis=1))
+            # if not epochs.info['ch_names'][pick] == 'A111':
+            #     continue
             rs = _compute_thresh(data[:, pick], cv=cv,
                                  thresh_range=(thresh_low, thresh_high))
             # thresh = rs.best_estimator_.thresh
             thresh = rs.x[0]
 
-            # if epochs.info['ch_names'][pick] == 'A244':
+            # if epochs.info['ch_names'][pick] == 'A111':
             #     import matplotlib.pyplot as plt
             #     f, axes = plt.subplots(2, 1, sharex=True)
 
-            #     errors = [-grid_score.mean_validation_score for grid_score
-            #               in rs.grid_scores_]
-            #     threshes = [grid_score.parameters['thresh']
-            #                 for grid_score in rs.grid_scores_]
+            #     from sklearn.cross_validation import cross_val_score
+            #     stds = list()
+
+            #     # errors = [-grid_score.mean_validation_score for grid_score
+            #     #           in rs.grid_scores_]
+            #     # threshes = [grid_score.parameters['thresh']
+            #     #             for grid_score in rs.grid_scores_]
+            #     ths = np.array(sum(rs['x_iters'], []))
+            #     idx = ths.argsort()
+            #     ths = np.array(ths)[idx]
+            #     errors = np.array(rs['func_vals'])[idx]
+            #     for th in ths:
+            #         est = _ChannelAutoReject(thresh=th)
+            #         scores = cross_val_score(est, data[:, pick], cv=cv)
+            #         stds.append(np.std(scores))
+            #     stds = np.array(stds)
+
+            #     scaling = 1e15
             #     idx = np.argsort(threshes)
-            #     axes[0].plot(np.array(threshes)[idx], np.array(errors)[idx], 'b-o',
-            #                  markerfacecolor='w', markeredgewidth=2, linewidth=2)
+            #     axes[0].plot(ths, errors * scaling, 'b-o',
+            #                  markerfacecolor='w', markeredgewidth=2,
+            #                  linewidth=2)
+            #     axes[0].fill_between(ths, (errors - stds) * scaling,
+            #                          (errors + stds) * scaling, alpha=0.1,
+            #                          color='blue')
             #     axes[0].axvline(thresh, linestyle='--')
             #     axes[0].set_ylabel('RMSE')
 
-            #     p2p = np.ptp(data[:, pick], axis=1)
-            #     axes[1].hist(p2p)
+            #     p2p = np.ptp(data[:n_epochs, pick], axis=1)
+            #     axes[1].hist(p2p, label='Real data')
+
+            #     p2p = np.ptp(data[n_epochs + 1:, pick], axis=1)
+            #     axes[1].hist(p2p, label='Interp.')
+
             #     axes[1].axvline(thresh, linestyle='--')
+            #     axes[1].legend()
 
             #     plt.show()
 
