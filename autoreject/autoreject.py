@@ -20,7 +20,7 @@ from pandas import DataFrame
 from .utils import clean_by_interp, interpolate_bads
 
 mem = Memory(cachedir='cachedir')
-# mem.clear()
+mem.clear()
 
 
 def _check_data(epochs):
@@ -177,13 +177,18 @@ def _pick_exclusive_channels(info, ch_type):
     return picks
 
 
-def _compute_thresh(this_data, thresh_range, cv=10):
+def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
+                    cv=10):
     """ Compute the rejection threshold for one channel.
 
     Parameters
     ----------
     this_data: array (n_epochs, n_times)
         Data for one channel.
+    thresh_range : tuple
+        The range (low, high) of thresholds over which to optimize.
+    method : str
+        'bayesian_optimization' or 'random_search'
     cv : iterator
         Iterator for cross-validation.
 
@@ -194,41 +199,44 @@ def _compute_thresh(this_data, thresh_range, cv=10):
     """
     est = _ChannelAutoReject()
 
-    # param_dist = dict(thresh=uniform(thresh_range[0],
-    #                                  thresh_range[1]))
-    # rs = RandomizedSearchCV(est,  # XXX : is random really better than grid?
-    #                         param_distributions=param_dist,
-    #                         n_iter=20, cv=cv)
-    # rs.fit(this_data)
+    if method == 'random_search':
+        param_dist = dict(thresh=uniform(thresh_range[0],
+                                         thresh_range[1]))
+        rs = RandomizedSearchCV(est,
+                                param_distributions=param_dist,
+                                n_iter=20, cv=cv)
+        rs.fit(this_data)
+    elif method == 'bayesian_optimization':
+        from skopt import gp_minimize
+        from sklearn.cross_validation import cross_val_score
 
-    from sklearn.cross_validation import cross_val_score
-
-    def objective(thresh):
-        est.set_params(thresh=thresh)
-        return -np.mean(cross_val_score(est, this_data, cv=cv))
-
-    from skopt import gp_minimize
-    space = [(thresh_range[0], thresh_range[1])]
-    rs = gp_minimize(objective, space, n_calls=50, random_state=0)
+        def objective(thresh):
+            est.set_params(thresh=thresh)
+            return -np.mean(cross_val_score(est, this_data, cv=cv))
+        space = [(thresh_range[0], thresh_range[1])]
+        rs = gp_minimize(objective, space, n_calls=50, random_state=0)
 
     return rs
 
 
-def compute_thresholds(epochs):
+def compute_thresholds(epochs, method='bayesian_optimization'):
     """Compute thresholds for each channel.
 
     Parameters
     ----------
     epochs : instance of mne.Epochs
         The epochs objects whose thresholds must be computed.
+    method : str
+        'bayesian_optimization' or 'random_search'
 
     Examples
     --------
     For example, we can compute the channel-level thresholds for all the
     EEG sensors this way:
-        >>> compute_thresholds(epochs, range=dict(eeg=(20e-7, 400e-6)))
+        >>> compute_thresholds(epochs)
     """
-
+    if method not in ['bayesian_optimization', 'random_search']:
+        raise ValueError('`method` param not recognized')
     ch_types = [ch_type for ch_type in ('eeg', 'meg')
                 if ch_type in epochs]
     n_epochs = len(epochs)
@@ -243,62 +251,21 @@ def compute_thresholds(epochs):
         picks = _pick_exclusive_channels(epochs.info, ch_type)
         np.random.seed(42)  # has no effect unless shuffle=True is used
         threshes[ch_type] = []
+        pbar = ProgressBar(len(epochs) - 1, mesg='Computing thresholds ',
+                           spinner=True)
+        print('')
         for ii, pick in enumerate(picks):
-            print(epochs.info['ch_names'][pick])
+            pbar.update(ii + 1)
             # lower bound must be minimum ptp, otherwise random search
             # screws up.
             thresh_low = np.min(np.ptp(data[:, pick], axis=1))
             thresh_high = np.max(np.ptp(data[:, pick], axis=1))
-            # if not epochs.info['ch_names'][pick] == 'A111':
-            #     continue
-            rs = _compute_thresh(data[:, pick], cv=cv,
+            rs = _compute_thresh(data[:, pick], cv=cv, method=method,
                                  thresh_range=(thresh_low, thresh_high))
-            # thresh = rs.best_estimator_.thresh
-            thresh = rs.x[0]
-
-            # if epochs.info['ch_names'][pick] == 'A111':
-            #     import matplotlib.pyplot as plt
-            #     f, axes = plt.subplots(2, 1, sharex=True)
-
-            #     from sklearn.cross_validation import cross_val_score
-            #     stds = list()
-
-            #     # errors = [-grid_score.mean_validation_score for grid_score
-            #     #           in rs.grid_scores_]
-            #     # threshes = [grid_score.parameters['thresh']
-            #     #             for grid_score in rs.grid_scores_]
-            #     ths = np.array(sum(rs['x_iters'], []))
-            #     idx = ths.argsort()
-            #     ths = np.array(ths)[idx]
-            #     errors = np.array(rs['func_vals'])[idx]
-            #     for th in ths:
-            #         est = _ChannelAutoReject(thresh=th)
-            #         scores = cross_val_score(est, data[:, pick], cv=cv)
-            #         stds.append(np.std(scores))
-            #     stds = np.array(stds)
-
-            #     scaling = 1e15
-            #     idx = np.argsort(threshes)
-            #     axes[0].plot(ths, errors * scaling, 'b-o',
-            #                  markerfacecolor='w', markeredgewidth=2,
-            #                  linewidth=2)
-            #     axes[0].fill_between(ths, (errors - stds) * scaling,
-            #                          (errors + stds) * scaling, alpha=0.1,
-            #                          color='blue')
-            #     axes[0].axvline(thresh, linestyle='--')
-            #     axes[0].set_ylabel('RMSE')
-
-            #     p2p = np.ptp(data[:n_epochs, pick], axis=1)
-            #     axes[1].hist(p2p, label='Real data')
-
-            #     p2p = np.ptp(data[n_epochs + 1:, pick], axis=1)
-            #     axes[1].hist(p2p, label='Interp.')
-
-            #     axes[1].axvline(thresh, linestyle='--')
-            #     axes[1].legend()
-
-            #     plt.show()
-
+            if method == 'random_search':
+                thresh = rs.best_estimator_.thresh
+            elif method == 'bayesian_optimization':
+                thresh = rs.x[0]
             threshes[ch_type].append(thresh)
     return threshes
 
@@ -318,9 +285,11 @@ class LocalAutoReject(BaseAutoReject):
         the total number of channels.
     n_interpolate : int (default 0)
         Number of channels for which to interpolate
+    method : str
+        'bayesian_optimization' or 'random_search'
     """
-    def __init__(self, thresh_func=None, consensus_perc=0.1, n_interpolate=0):
-
+    def __init__(self, thresh_func=None, consensus_perc=0.1,
+                 n_interpolate=0, method='bayesian_optimization'):
         # TODO: must be able to try different consensus percs
         # with pretrained thresh
         if thresh_func is None:
@@ -331,6 +300,7 @@ class LocalAutoReject(BaseAutoReject):
         self.consensus_perc = consensus_perc
         self.n_interpolate = n_interpolate
         self.thresh_func = mem.cache(thresh_func)
+        self.method = method
 
     @property
     def bad_segments(self):
@@ -349,7 +319,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object from which the channel-level thresholds are
             estimated.
         """
-        self.threshes_ = self.thresh_func(epochs)
+        self.threshes_ = self.thresh_func(epochs, self.method)
         return self
 
     def transform(self, epochs):
@@ -434,8 +404,9 @@ class LocalAutoReject(BaseAutoReject):
         self.fix_log = self._drop_log.copy()
         ch_names = drop_log.columns.values
         n_consensus = self.consensus_perc * len(ch_names)
-        pbar = ProgressBar(len(epochs) - 1, mesg='Repairing epochs: ',
+        pbar = ProgressBar(len(epochs) - 1, mesg='Repairing epochs ',
                            spinner=True)
+        print('')
         # TODO: raise error if preload is not True
         for epoch_idx in range(len(epochs)):
             pbar.update(epoch_idx + 1)
@@ -478,6 +449,8 @@ class LocalAutoRejectCV(object):
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
         defaults to :func:`autoreject.compute_thresholds`.
+    method : str
+        'bayesian_optimization' or 'random_search'
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
 
@@ -488,11 +461,12 @@ class LocalAutoRejectCV(object):
     """
 
     def __init__(self, n_interpolates=None, consensus_percs=None,
-                 thresh_func=None, cv=None):
+                 thresh_func=None, method='bayesian_optimization', cv=None):
         self.n_interpolates = n_interpolates
         self.consensus_percs = consensus_percs
         self.thresh_func = thresh_func
         self.cv = cv
+        self.method = method
 
     @property
     def bad_segments(self):
@@ -530,7 +504,8 @@ class LocalAutoRejectCV(object):
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_folds))
 
-        local_reject = LocalAutoReject(thresh_func=self.thresh_func)
+        local_reject = LocalAutoReject(thresh_func=self.thresh_func,
+                                       method=self.method)
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
@@ -572,7 +547,8 @@ class LocalAutoRejectCV(object):
         self.consensus_perc_ = consensus_perc
         self.n_interpolate_ = n_interpolate
         local_reject = LocalAutoReject(compute_thresholds, consensus_perc,
-                                       n_interpolate=n_interpolate)
+                                       n_interpolate=n_interpolate,
+                                       method=self.method)
         local_reject.fit(epochs)
         self._local_reject = local_reject
         return self

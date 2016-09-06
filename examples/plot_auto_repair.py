@@ -97,7 +97,7 @@ picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=False,
 # :class:`mne.Epochs`.
 
 ###############################################################################
-
+raw.info['projs'] = list()  # remove proj, don't proj while interpolating
 epochs = Epochs(raw, events, event_id, tmin, tmax,
                 picks=picks, baseline=(None, 0), reject=None,
                 verbose=False, detrend=0, preload=True)
@@ -108,7 +108,8 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 
 ###############################################################################
 
-ar = LocalAutoRejectCV(n_interpolates, consensus_percs, compute_thresholds)
+ar = LocalAutoRejectCV(n_interpolates, consensus_percs, compute_thresholds,
+                       method='random_search')
 epochs_clean = ar.fit_transform(epochs)
 
 evoked = epochs.average()
