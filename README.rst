@@ -1,6 +1,11 @@
 Auto Reject
 ===========
 
+|CircleCI|_
+
+.. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/master.svg?style=shield&circle-token=:circle-token
+.. _CircleCI: https://circleci.com/gh/autoreject/autoreject
+
 This repository hosts code to automatically reject trials and repair sensors for M/EEG data.
 
 Dependencies
@@ -10,7 +15,8 @@ We are actively trying to reduce the number of dependencies. However, as of now 
 to run:
 
 * mne-python
-* scikit-learn
+* scikit-learn (0.18dev)
+* scikit-optimize (0.1)
 * joblibs
 * pandas
 * scipy

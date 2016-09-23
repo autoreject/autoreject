@@ -6,14 +6,16 @@
 autoreject
 ==========
 
-This is a library to automatically reject bad trials and repair bad sensors in M/EEG.
+This is a library to automatically reject bad trials and repair bad sensors in magneto-/electroencephalography (M/EEG) data.
 
 Installation
 ============
 
 We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_. To install ``autoreject``, you first need to install its dependencies::
 
-	$ pip install numpy matplotlib scipy scikit-learn mne joblib pandas
+	$ pip install -e git+https://github.com/scikit-learn/scikit-learn.git#egg=scikit-learn-0.18dev
+	$ pip install scikit-optimize
+	$ pip install numpy matplotlib scipy mne joblib pandas
 
 Then clone the repository::
 
@@ -47,6 +49,11 @@ in your script:
 
 This will automatically clean an `epochs` object read in using MNE-Python. For more details check
 out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_auto_examples_plot_auto_repair.py>`.
+
+Bug reports
+===========
+
+Use the `github issue tracker <https://github.com/autoreject/autoreject/issues>` to report bugs.
 
 Cite
 ====
