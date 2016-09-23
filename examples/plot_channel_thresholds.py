@@ -24,17 +24,6 @@ raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
-# Let us apply the SSP projectors to remove ECG artifacts. This must be done
-# to ensure that the channel-level thresholds are not sensitive to ECG
-# artifacts.
-
-###############################################################################
-
-projs, _ = mne.preprocessing.compute_proj_ecg(raw, n_eeg=1, average=True,
-                                              verbose=False)
-raw.add_proj(projs).apply_proj()
-
-###############################################################################
 # We can extract the events (or triggers) for epoching our signal.
 
 ###############################################################################
@@ -56,8 +45,7 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False,
 
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     picks=picks, baseline=(None, 0),
-                    reject=None, verbose=False, detrend=True,
-                    preload=True)
+                    reject=None, verbose=False, preload=True)
 
 epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
                   include=include, exclude='bads')
@@ -71,8 +59,8 @@ epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
 from autoreject import compute_thresholds
 import numpy as np
 
-thresh_range = dict(grad=(4e-13, 900e-13))
-threshes = np.array(compute_thresholds(epochs, thresh_range)['meg'])
+# thresh_range = dict(grad=(4e-13, 900e-13))
+threshes = compute_thresholds(epochs, method='bayesian_optimization')['meg']
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify
@@ -90,7 +78,7 @@ plt.figure(figsize=(6, 5))
 plt.tick_params(axis='x', which='both', bottom='off', top='off')
 plt.tick_params(axis='y', which='both', left='off', right='off')
 
-plt.hist(scaling * threshes, 30, color='g', alpha=0.4)
+plt.hist(scaling * np.array(threshes), 30, color='g', alpha=0.4)
 plt.xlabel('Threshold (%s)' % unit)
 plt.ylabel('Number of sensors')
 plt.xlim((100, 950))

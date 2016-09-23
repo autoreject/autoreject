@@ -63,15 +63,6 @@ raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
-# We will remove the ECG artifacts from our signal using SSP projectors.
-
-###############################################################################
-
-projs, _ = mne.preprocessing.compute_proj_ecg(raw, n_eeg=1, average=True,
-                                              verbose=False)
-raw.add_proj(projs).apply_proj()
-
-###############################################################################
 # We can then read in the events
 
 ###############################################################################
