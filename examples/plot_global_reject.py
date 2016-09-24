@@ -34,7 +34,7 @@ picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
                        eog=False, include=include, exclude='bads')
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     picks=picks, baseline=(None, 0),
-                    reject=None, verbose=False, detrend=True)
+                    reject=None, verbose=False, detrend=1)
 
 ###############################################################################
 # Let us define a range of candidate thresholds which we would like to try.

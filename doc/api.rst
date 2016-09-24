@@ -22,6 +22,7 @@ Functions
 .. autosummary::
    :toctree: generated/
 
+   plot_epochs
    compute_thresholds
    validation_curve
    set_matplotlib_defaults
