@@ -58,6 +58,25 @@ def clean_by_interp(inst):
     return inst_interp
 
 
+def fetch_file(url, file_name, resume=True, timeout=10.):
+    """Load requested file, downloading it if needed or requested
+
+    Parameters
+    ----------
+    url: string
+        The url of file to be downloaded.
+    file_name: string
+        Name, along with the path, of where downloaded file will be saved.
+    resume: bool, optional
+        If true, try to resume partially downloaded files.
+    timeout : float
+        The URL open timeout.
+    """
+    from mne.utils import _fetch_file
+    return _fetch_file(url=url, file_name=file_name, print_destination=True,
+                       resume=resume, hash_=None, timeout=timeout)
+
+
 def _interpolate_bads_meg_fast(inst, mode='accurate', verbose=None):
     """Interpolate bad channels from data in good channels.
     """
