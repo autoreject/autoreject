@@ -53,7 +53,7 @@ out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_au
 Bug reports
 ===========
 
-Use the `github issue tracker <https://github.com/autoreject/autoreject/issues>` to report bugs.
+Use the `github issue tracker <https://github.com/autoreject/autoreject/issues>`_ to report bugs.
 
 Cite
 ====

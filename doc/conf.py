@@ -312,4 +312,10 @@ intersphinx_mapping = {'python': ('https://docs.python.org/', None),
 sphinx_gallery_conf = {
     'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
+    'reference_url': {
+        'mne': 'http://martinos.org/mne/stable',
+        'autoreject': 'http://autoreject.github.io/',
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference',
+        'mayavi': 'http://docs.enthought.com/mayavi/mayavi'}
 }
