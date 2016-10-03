@@ -13,6 +13,7 @@ from mne.utils import ProgressBar
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import KFold, StratifiedShuffleSplit
+from sklearn.model_selection import cross_val_score
 
 from joblib import Memory
 from pandas import DataFrame
@@ -208,7 +209,6 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
         rs.fit(this_data)
     elif method == 'bayesian_optimization':
         from skopt import gp_minimize
-        from sklearn.cross_validation import cross_val_score
 
         def objective(thresh):
             est.set_params(thresh=thresh)
@@ -245,7 +245,7 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
                           axis=0)
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
     cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
-    cv = cv.split(data, y)
+    cv = cv.split(np.zeros((len(y),)), y)
 
     threshes = dict()
     for ch_type in ch_types:
@@ -491,7 +491,10 @@ class LocalAutoRejectCV(object):
         """
         _check_data(epochs)
         if self.cv is None:
-            self.cv = KFold(n_folds=10, random_state=42).split(epochs)
+            self.cv = KFold(n_folds=10, random_state=42)
+            # Interface is cv.split(X, y)
+            # where X must be of shape (n_samples, (n_features))
+            self.cv = self.cv.split(np.zeros((len(epochs),)))
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
