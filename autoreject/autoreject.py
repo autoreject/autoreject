@@ -245,7 +245,7 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
                           axis=0)
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
     cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
-    cv = cv.split(data)
+    cv = cv.split(data, y)
 
     threshes = dict()
     for ch_type in ch_types:
