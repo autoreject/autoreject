@@ -491,7 +491,7 @@ class LocalAutoRejectCV(object):
         """
         _check_data(epochs)
         if self.cv is None:
-            self.cv = KFold(n_folds=10, random_state=42)
+            self.cv = KFold(n_splits=10, random_state=42)
             # Interface is cv.split(X, y)
             # where X must be of shape (n_samples, (n_features))
             self.cv = self.cv.split(np.zeros((len(epochs),)))
@@ -504,9 +504,9 @@ class LocalAutoRejectCV(object):
             max_interp = min(epochs.info['nchan'], 32)
             self.n_interpolates = np.array([1, 4, max_interp])
 
-        n_folds = len(self.cv)
+        n_splits = len(self.cv)
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
-                         n_folds))
+                         n_splits))
 
         local_reject = LocalAutoReject(thresh_func=self.thresh_func,
                                        method=self.method)
