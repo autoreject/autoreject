@@ -11,8 +11,8 @@ import mne
 from mne.utils import ProgressBar
 
 from sklearn.base import BaseEstimator
-from sklearn.grid_search import RandomizedSearchCV
-from sklearn.cross_validation import KFold, StratifiedShuffleSplit
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import KFold, StratifiedShuffleSplit
 
 from joblib import Memory
 from pandas import DataFrame
@@ -244,7 +244,8 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
-    cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2, random_state=42)
+    cv = StratifiedShuffleSplit(n_iter=10, test_size=0.2, random_state=42)
+    cv = cv.split(data)
 
     threshes = dict()
     for ch_type in ch_types:
@@ -490,7 +491,7 @@ class LocalAutoRejectCV(object):
         """
         _check_data(epochs)
         if self.cv is None:
-            self.cv = KFold(len(epochs), n_folds=10, random_state=42)
+            self.cv = KFold(n_folds=10, random_state=42).split(epochs)
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
