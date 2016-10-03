@@ -190,8 +190,8 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
         The range (low, high) of thresholds over which to optimize.
     method : str
         'bayesian_optimization' or 'random_search'
-    cv : iterator
-        Iterator for cross-validation.
+    cv : a scikit-learn cross-validation object
+        Defaults to cv=10
 
     Returns
     -------
@@ -245,7 +245,6 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
                           axis=0)
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
     cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
-    cv = cv.split(np.zeros((len(y),)), y)
 
     threshes = dict()
     for ch_type in ch_types:
@@ -492,9 +491,6 @@ class LocalAutoRejectCV(object):
         _check_data(epochs)
         if self.cv is None:
             self.cv = KFold(n_splits=10, random_state=42)
-            # Interface is cv.split(X, y)
-            # where X must be of shape (n_samples, (n_features))
-            self.cv = self.cv.split(np.zeros((len(epochs),)))
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
@@ -504,7 +500,7 @@ class LocalAutoRejectCV(object):
             max_interp = min(epochs.info['nchan'], 32)
             self.n_interpolates = np.array([1, 4, max_interp])
 
-        n_splits = len(self.cv)
+        n_splits = self.cv.get_n_splits(X=np.zeros(len(epochs)))
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_splits))
 
@@ -526,7 +522,8 @@ class LocalAutoRejectCV(object):
             for ch_type in ch_types:
                 local_reject._interpolate_bad_epochs(epochs_interp,
                                                      ch_type=ch_type)
-            for fold, (train, test) in enumerate(self.cv):
+            for fold, (train, test) in enumerate(
+                    self.cv.split(np.zeros(len(epochs))):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
                     print('[Val fold %d] Trying consensus perc %0.2f,'
                           'n_interp %d' % (fold + 1, consensus_perc, n_interp))
