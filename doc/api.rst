@@ -6,8 +6,10 @@ API Documentation
 
 .. currentmodule:: autoreject
 
+Epochs rejection
+================
+
 Classes
-=======
 
 .. autosummary::
    :toctree: generated/
@@ -17,12 +19,35 @@ Classes
    LocalAutoRejectCV
 
 Functions
-=========
+
+.. autosummary::
+   :toctree: generated/
+
+   compute_thresholds
+   validation_curve
+
+
+Visualization
+=============
+
+Functions
+
+.. currentmodule:: autoreject.viz
 
 .. autosummary::
    :toctree: generated/
 
    plot_epochs
-   compute_thresholds
-   validation_curve
+
+Utilities
+=========
+
+Functions
+
+.. currentmodule:: autoreject.utils
+
+.. autosummary::
+   :toctree: generated/
+
+   fetch_file
    set_matplotlib_defaults
