@@ -60,13 +60,14 @@ for run in range(1, 7):
     run_fname = os.path.join(base_path, 'ds117', 'sub%03d' % subject_id, 'MEG',
                              'run_%02d_raw.fif' % run)
     raw = mne.io.Raw(run_fname, preload=True, add_eeg_ref=False)
-    raw.pick_types(eeg=True, meg=False, stim=True) # less memory + computation
-    raw.filter(1, 40, n_jobs=1, verbose='INFO')
+    mne.io.set_eeg_reference(raw, [])
+    raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
+    raw.filter(1, 40, l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
 
     raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
-                           'EEG063': 'ecg'})
+                           'EEG063': 'ecg', 'EEG064': 'misc'})
     raw.rename_channels({'EEG061': 'EOG061', 'EEG062': 'EOG062',
-                         'EEG063': 'ECG063'})
+                         'EEG063': 'ECG063', 'EEG064': 'MISC'})
 
     exclude = []  # XXX
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
