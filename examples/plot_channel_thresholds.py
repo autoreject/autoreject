@@ -60,7 +60,7 @@ from autoreject import compute_thresholds
 import numpy as np
 
 # thresh_range = dict(grad=(4e-13, 900e-13))
-threshes = compute_thresholds(epochs, method='bayesian_optimization')['meg']
+threshes = compute_thresholds(epochs, method='random_search')['meg']
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify

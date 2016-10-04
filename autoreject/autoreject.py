@@ -545,10 +545,8 @@ class LocalAutoRejectCV(object):
         n_interpolate = self.n_interpolates[best_jdx]
         self.consensus_perc_ = consensus_perc
         self.n_interpolate_ = n_interpolate
-        local_reject = LocalAutoReject(compute_thresholds, consensus_perc,
-                                       n_interpolate=n_interpolate,
-                                       method=self.method)
-        local_reject.fit(epochs)  # XXX: this shouldn't be necessary
+        local_reject.consensus_perc = consensus_perc
+        local_reject.n_interpolate = n_interpolate
         self._local_reject = local_reject
         return self
 
