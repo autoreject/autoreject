@@ -304,8 +304,6 @@ class LocalAutoReject(BaseAutoReject):
     """
     def __init__(self, thresh_func=None, consensus_perc=0.1,
                  n_interpolate=0, method='bayesian_optimization'):
-        # TODO: must be able to try different consensus percs
-        # with pretrained thresh
         if thresh_func is None:
             thresh_func = compute_thresholds
         if not (0 <= consensus_perc <= 1):
