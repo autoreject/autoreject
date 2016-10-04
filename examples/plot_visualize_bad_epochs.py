@@ -89,9 +89,13 @@ epochs = mne.epochs.concatenate_epochs(epochs)
 # Now, we apply autoreject
 
 ###############################################################################
-from autoreject import LocalAutoRejectCV
+from autoreject import LocalAutoRejectCV, compute_thresholds
+from functools import partial
+
 this_epoch = epochs['famous']
-ar = LocalAutoRejectCV()
+thresh_func = partial(compute_thresholds, random_state=42)
+
+ar = LocalAutoRejectCV(thresh_func=thresh_func)
 epochs_ar = ar.fit_transform(this_epoch.copy())
 
 ###############################################################################

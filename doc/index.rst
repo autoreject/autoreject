@@ -13,9 +13,7 @@ Installation
 
 We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_. To install ``autoreject``, you first need to install its dependencies::
 
-	$ pip install -e git+https://github.com/scikit-learn/scikit-learn.git#egg=scikit-learn-0.18dev
-	$ pip install scikit-optimize
-	$ pip install numpy matplotlib scipy mne joblib pandas
+	$ pip install numpy matplotlib scipy mne joblib pandas scikit-learn scikit-optimize
 
 Then clone the repository::
 

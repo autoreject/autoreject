@@ -299,8 +299,6 @@ class LocalAutoReject(BaseAutoReject):
         the total number of channels.
     n_interpolate : int (default 0)
         Number of channels for which to interpolate
-    method : str
-        'bayesian_optimization' or 'random_search'
     """
     def __init__(self, thresh_func=None, consensus_perc=0.1,
                  n_interpolate=0, method='bayesian_optimization'):
@@ -311,8 +309,7 @@ class LocalAutoReject(BaseAutoReject):
                              'You gave me %s.' % consensus_perc)
         self.consensus_perc = consensus_perc
         self.n_interpolate = n_interpolate
-        self.thresh_func = mem.cache(thresh_func)
-        self.method = method
+        self.thresh_func = thresh_func
 
     @property
     def bad_segments(self):
@@ -331,7 +328,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object from which the channel-level thresholds are
             estimated.
         """
-        self.threshes_ = self.thresh_func(epochs, self.method)
+        self.threshes_ = self.thresh_func(epochs)
         return self
 
     def transform(self, epochs):
@@ -461,8 +458,6 @@ class LocalAutoRejectCV(object):
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
         defaults to :func:`autoreject.compute_thresholds`.
-    method : str
-        'bayesian_optimization' or 'random_search'
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
 
@@ -478,7 +473,6 @@ class LocalAutoRejectCV(object):
         self.consensus_percs = consensus_percs
         self.thresh_func = thresh_func
         self.cv = cv
-        self.method = method
 
     @property
     def bad_segments(self):
@@ -516,8 +510,7 @@ class LocalAutoRejectCV(object):
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_folds))
 
-        local_reject = LocalAutoReject(thresh_func=self.thresh_func,
-                                       method=self.method)
+        local_reject = LocalAutoReject(thresh_func=self.thresh_func)
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
