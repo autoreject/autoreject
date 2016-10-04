@@ -40,20 +40,15 @@ def clean_by_interp(inst):
                        spinner=True)
     for ch_idx, ch in enumerate(inst.info['ch_names']):
         pbar.update(ch_idx + 1)
-        if isinstance(inst, mne.Evoked):
-            ch_orig = inst.data[ch_idx].copy()
-        elif isinstance(inst, mne.Epochs):
-            ch_orig = inst._data[:, ch_idx].copy()
 
-        inst.info['bads'] = [ch]
-        interpolate_bads(inst, reset_bads=True, mode='fast')
+        inst_clean = inst.copy()
+        inst_clean.info['bads'] = [ch]
+        interpolate_bads(inst_clean, reset_bads=True, mode='fast')
 
         if isinstance(inst, mne.Evoked):
-            inst_interp.data[ch_idx] = inst.data[ch_idx]
-            inst.data[ch_idx] = ch_orig
+            inst_interp.data[ch_idx] = inst_clean.data[ch_idx]
         elif isinstance(inst, mne.Epochs):
-            inst_interp._data[:, ch_idx] = inst._data[:, ch_idx]
-            inst._data[:, ch_idx] = ch_orig
+            inst_interp._data[:, ch_idx] = inst_clean._data[:, ch_idx]
 
     return inst_interp
 
