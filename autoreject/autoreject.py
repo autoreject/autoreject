@@ -249,7 +249,6 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
     threshes = dict()
     for ch_type in ch_types:
         picks = _pick_exclusive_channels(epochs.info, ch_type)
-        np.random.seed(42)  # has no effect unless shuffle=True is used
         threshes[ch_type] = []
         pbar = ProgressBar(len(epochs) - 1, mesg='Computing thresholds ',
                            spinner=True)
@@ -549,7 +548,7 @@ class LocalAutoRejectCV(object):
         local_reject = LocalAutoReject(compute_thresholds, consensus_perc,
                                        n_interpolate=n_interpolate,
                                        method=self.method)
-        local_reject.fit(epochs)
+        local_reject.fit(epochs)  # XXX: this shouldn't be necessary
         self._local_reject = local_reject
         return self
 
