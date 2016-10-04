@@ -59,7 +59,6 @@ epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
 from autoreject import compute_thresholds
 import numpy as np
 
-# thresh_range = dict(grad=(4e-13, 900e-13))
 threshes = compute_thresholds(epochs, method='random_search',
                               random_state=42)['meg']
 

@@ -94,13 +94,21 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
                 verbose=False, detrend=0, preload=True)
 
 ###############################################################################
+# First, we set up the function to compute the sensor-level thresholds.
+
+###############################################################################
+from functools import partial
+thresh_func = partial(compute_thresholds, method='random_search',
+                      random_state=42)
+
+###############################################################################
 # :class:`autoreject.LocalAutoRejectCV` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
 ###############################################################################
 
-ar = LocalAutoRejectCV(n_interpolates, consensus_percs, compute_thresholds,
-                       method='random_search')
+ar = LocalAutoRejectCV(n_interpolates, consensus_percs,
+                       thresh_func=thresh_func)
 epochs_clean = ar.fit_transform(epochs)
 
 evoked = epochs.average()
@@ -153,3 +161,4 @@ ax.set_ylabel('Trials')
 plt.setp(ax.get_yticklabels(), rotation=0)
 plt.setp(ax.get_xticklabels(), rotation=90)
 plt.tight_layout(rect=[None, None, None, 1.1])
+plt.show()
