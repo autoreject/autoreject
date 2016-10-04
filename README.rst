@@ -15,11 +15,11 @@ We are actively trying to reduce the number of dependencies. However, as of now 
 to run:
 
 * mne-python
-* scikit-learn (0.18dev)
+* scikit-learn (0.18)
 * scikit-optimize (0.1)
 * joblibs
 * pandas
-* scipy
+* scipy (>=0.16)
 * numpy
 * matplotlib
 

@@ -11,7 +11,7 @@ import mne
 from mne.utils import ProgressBar
 
 from sklearn.base import BaseEstimator
-from sklearn.grid_search import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 
 from joblib import Memory
@@ -178,7 +178,7 @@ def _pick_exclusive_channels(info, ch_type):
 
 
 def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
-                    cv=10):
+                    cv=10, random_state=None):
     """ Compute the rejection threshold for one channel.
 
     Parameters
@@ -191,11 +191,19 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
         'bayesian_optimization' or 'random_search'
     cv : iterator
         Iterator for cross-validation.
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use.
 
     Returns
     -------
     rs : instance of RandomizedSearchCV
         The RandomizedSearchCV object.
+
+    Notes
+    -----
+    For method='random_search', the random_state parameter gives deterministic
+    results only for scipy versions >= 0.16. This is why we recommend using
+    autoreject with scipy version 0.16 or greater.
     """
     est = _ChannelAutoReject()
 
@@ -204,7 +212,8 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
                                          thresh_range[1]))
         rs = RandomizedSearchCV(est,
                                 param_distributions=param_dist,
-                                n_iter=20, cv=cv)
+                                n_iter=20, cv=cv,
+                                random_state=random_state)
         rs.fit(this_data)
     elif method == 'bayesian_optimization':
         from skopt import gp_minimize
@@ -214,12 +223,14 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
             est.set_params(thresh=thresh)
             return -np.mean(cross_val_score(est, this_data, cv=cv))
         space = [(thresh_range[0], thresh_range[1])]
-        rs = gp_minimize(objective, space, n_calls=50, random_state=0)
+        rs = gp_minimize(objective, space, n_calls=50,
+                         random_state=random_state)
 
     return rs
 
 
-def compute_thresholds(epochs, method='bayesian_optimization'):
+def compute_thresholds(epochs, method='bayesian_optimization',
+                       random_state=None):
     """Compute thresholds for each channel.
 
     Parameters
@@ -228,6 +239,8 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
         The epochs objects whose thresholds must be computed.
     method : str
         'bayesian_optimization' or 'random_search'
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use
 
     Examples
     --------
@@ -244,7 +257,8 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
-    cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2, random_state=42)
+    cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
+                                random_state=random_state)
 
     threshes = dict()
     for ch_type in ch_types:
@@ -260,7 +274,8 @@ def compute_thresholds(epochs, method='bayesian_optimization'):
             thresh_low = np.min(np.ptp(data[:, pick], axis=1))
             thresh_high = np.max(np.ptp(data[:, pick], axis=1))
             rs = _compute_thresh(data[:, pick], cv=cv, method=method,
-                                 thresh_range=(thresh_low, thresh_high))
+                                 thresh_range=(thresh_low, thresh_high),
+                                 random_state=random_state)
             if method == 'random_search':
                 thresh = rs.best_estimator_.thresh
             elif method == 'bayesian_optimization':
@@ -489,7 +504,7 @@ class LocalAutoRejectCV(object):
         """
         _check_data(epochs)
         if self.cv is None:
-            self.cv = KFold(len(epochs), n_folds=10, random_state=42)
+            self.cv = KFold(len(epochs), n_folds=10)
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
