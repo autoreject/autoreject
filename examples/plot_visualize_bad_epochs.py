@@ -71,7 +71,7 @@ for run in range(1, 7):
 
     exclude = []  # XXX
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
-                           eog=True, exclude=exclude)
+                           eog=False, exclude=exclude)
     events = mne.find_events(raw, stim_channel='STI101',
                              consecutive='increasing',
                              min_duration=0.003, verbose=True)
