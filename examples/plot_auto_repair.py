@@ -79,7 +79,7 @@ events = mne.read_events(event_fname)
 
 ###############################################################################
 raw.info['bads'] = []
-picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=False,
+picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
 
 ###############################################################################
