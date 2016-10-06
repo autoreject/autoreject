@@ -36,19 +36,27 @@ def clean_by_interp(inst):
     """
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
-    pbar = ProgressBar(len(inst.info['ch_names']) - 1, mesg=mesg,
+    picks = mne.pick_types(inst.info, meg=True, eeg=True)
+    if len(picks) != len(inst.info['ch_names']):
+        raise ValueError('Please pick channel types before '
+                         'running autoreject')
+
+    ch_names = [ch_name for ch_name in inst.info['ch_names']]
+    pbar = ProgressBar(len(ch_names) - 1, mesg=mesg,
                        spinner=True)
-    for ch_idx, ch in enumerate(inst.info['ch_names']):
+    for ch_idx, (pick, ch) in enumerate(zip(picks, ch_names)):
         pbar.update(ch_idx + 1)
 
         inst_clean = inst.copy()
         inst_clean.info['bads'] = [ch]
         interpolate_bads(inst_clean, reset_bads=True, mode='fast')
 
+        pick = mne.pick_channels(inst.info['ch_names'], [ch])
+
         if isinstance(inst, mne.Evoked):
-            inst_interp.data[ch_idx] = inst_clean.data[ch_idx]
+            inst_interp.data[pick] = inst_clean.data[pick]
         elif isinstance(inst, mne.epochs._BaseEpochs):
-            inst_interp._data[:, ch_idx] = inst_clean._data[:, ch_idx]
+            inst_interp._data[:, pick] = inst_clean._data[:, pick]
         else:
             raise ValueError('Unrecognized type for inst')
 

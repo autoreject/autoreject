@@ -108,3 +108,20 @@ from autoreject import plot_epochs
 plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
             fix_log=ar.fix_log, scalings=dict(eeg=40e-6),
             title='')
+
+###############################################################################
+# ... and the epochs after cleaning with autoreject
+
+###############################################################################
+epochs_ar.plot(scalings=dict(eeg=40e-6))
+
+###############################################################################
+# Finally, the evoked before and after autoreject, for sanity check. We use
+# the ``spatial_colors`` argument from MNE as it allows us to see that
+# the eyeblinks have not yet been cleaned but the bad channels have been
+# repaired.
+
+###############################################################################
+ylim = dict(eeg=(-15, 15))
+epochs.average().plot(ylim=ylim, spatial_colors=True)
+epochs_ar.average().plot(ylim=ylim, spatial_colors=True)

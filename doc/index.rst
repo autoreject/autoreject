@@ -15,17 +15,12 @@ We recommend the `Anaconda Python distribution <https://www.continuum.io/downloa
 
 	$ pip install numpy matplotlib scipy mne joblib pandas scikit-learn scikit-optimize
 
-Then clone the repository::
+Then install autoreject::
 
-	$ git clone http://github.com/autoreject/autoreject
-
-and finally run `setup.py` to install the package::
-
-	$ cd autoreject/
-	$ python setup.py install
+	$ pip install git+https://github.com/autoreject/autoreject.git#egg=autoreject
 
 If you do not have admin privileges on the computer, use the ``--user`` flag
-with `setup.py`.
+with `pip`. To upgrade, use the ``--upgrade`` flag provided by `pip`.
 
 To check if everything worked fine, you can do::
 
