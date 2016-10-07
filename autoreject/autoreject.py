@@ -264,7 +264,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     for ch_type in ch_types:
         picks = _pick_exclusive_channels(epochs.info, ch_type)
         threshes[ch_type] = []
-        pbar = ProgressBar(len(epochs) - 1, mesg='Computing thresholds ',
+        pbar = ProgressBar(len(picks), mesg='Computing thresholds ',
                            spinner=True)
         print('')
         for ii, pick in enumerate(picks):

@@ -14,14 +14,14 @@ Dependencies
 We are actively trying to reduce the number of dependencies. However, as of now these are the dependencies for the examples
 to run:
 
+* numpy (>=1.8)
+* matplotlib (>=1.3)
+* scipy (>=0.16)
 * mne-python
 * scikit-learn (0.18)
 * scikit-optimize (0.1)
 * joblibs
 * pandas
-* scipy (>=0.16)
-* numpy
-* matplotlib
 
 Cite
 ----
