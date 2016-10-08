@@ -7,7 +7,7 @@ dependencies:
     - pip install sphinx-gallery sphinx_bootstrap_theme
     - pip install cython scipy
     - pip install mne joblib pandas seaborn
-    - pip install -e git+https://github.com/scikit-learn/scikit-learn.git#egg=scikit-learn-0.18dev
+    - pip install scikit-learn==0.18
     - pip install scikit-optimize
     - pip install -e .
     # we need to do this here so the datasets will be cached

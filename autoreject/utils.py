@@ -36,7 +36,7 @@ def clean_by_interp(inst):
     """
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
-    picks = mne.pick_types(inst.info, meg=True, eeg=True)
+    picks = mne.pick_types(inst.info, meg=True, eeg=True, exclude=[])
     if len(picks) != len(inst.info['ch_names']):
         raise ValueError('Please pick channel types before '
                          'running autoreject')

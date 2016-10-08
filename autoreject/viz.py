@@ -160,7 +160,7 @@ def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
         Defaults to False.
     bad_epochs_idx : array-like | None
         Indices of bad epochs to show. No bad epochs to visualize if None.
-    fix_log : dataframe, shape (n_channels, n_epochs) | None
+    fix_log : array, shape (n_channels, n_epochs) | None
         The bad segments to show in red and the interpolated segments
         to show in green.
 
@@ -364,7 +364,8 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         ax_hscroll.add_patch(mpl.patches.Rectangle((epoch_idx * n_times, 0),
                                                    n_times, 1,
                                                    facecolor=(0.8, 0.8, 0.8),
-                                                   edgecolor=(0.8, 0.8, 0.8), alpha=0.5))
+                                                   edgecolor=(0.8, 0.8, 0.8),
+                                                   alpha=0.5))
     hsel_patch = mpl.patches.Rectangle((0, 0), duration, 1,
                                        edgecolor='k',
                                        facecolor=(0.5, 0.5, 0.5),
@@ -442,9 +443,8 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
     # Plot bad segments
     if params['fix_log'] is not None:
         for ch_idx in range(len(params['ch_names'])):
-            ch_name = params['ch_names'][ch_idx]
             for epoch_idx in range(len(epochs.events)):
-                this_log = params['fix_log'][ch_name][epoch_idx]
+                this_log = params['fix_log'][epoch_idx, ch_idx]
                 if epoch_idx in params['bads']:
                     pass
                 else:
@@ -773,10 +773,6 @@ def _mouse_click(event, params):
                     logger.info('Event related fields / potentials only '
                                 'available for MEG and EEG channels.')
                     return
-                fig = plot_epochs_image(params['epochs'],
-                                        picks=params['inds'][ch_idx],
-                                        fig=params['image_plot'])[0]
-                params['image_plot'] = fig
     elif event.button == 1:  # left click
         # vertical scroll bar changed
         if event.inaxes == params['ax_vscroll']:
@@ -1047,6 +1043,7 @@ def _onpick(event, params):
 
 def _close_event(event, params):
     pass
+
 
 def _resize_event(event, params):
     """Function to handle resize event"""
