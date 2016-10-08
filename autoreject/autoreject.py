@@ -47,8 +47,7 @@ def _slicemean(obj, this_slice, axis):
     return mean
 
 
-def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
-                     n_jobs=1):
+def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     """Validation curve on epochs.
 
     Parameters
@@ -63,8 +62,10 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None,
         Name of the parameter that will be varied.
     param_range : array
         The values of the parameter that will be evaluated.
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation strategy.
     """
-    from sklearn.learning_curve import validation_curve
+    from sklearn.model_selection import validation_curve
     if not isinstance(estimator, GlobalAutoReject):
         msg = 'No guarantee that it will work on this estimator.'
         raise NotImplementedError(msg)

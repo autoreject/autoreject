@@ -56,7 +56,7 @@ from autoreject import GlobalAutoReject, validation_curve
 
 _, test_scores = validation_curve(
     GlobalAutoReject(), epochs, y=None,
-    param_name="thresh", param_range=param_range, cv=5, n_jobs=1)
+    param_name="thresh", param_range=param_range, cv=5)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]
