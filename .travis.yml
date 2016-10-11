@@ -16,3 +16,5 @@ install:
 script:
     - nosetests . --with-coverage
     - flake8 --count autoreject
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

@@ -1,13 +1,16 @@
 Auto Reject
 ===========
 
-|CircleCI|_ |Travis|_
+|CircleCI|_ |Travis|_ |Codecov|_
 
 .. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/autoreject/autoreject
 
 .. |Travis| image:: https://api.travis-ci.org/autoreject/autoreject.svg?branch=master
 .. _Travis: https://travis-ci.org/autoreject/autoreject
+
+.. |Codecov| image:: http://codecov.io/github/autoreject/autoreject/coverage.svg?branch=master
+.. _Codecov: http://codecov.io/github/autoreject/autoreject?branch=master
 
 This repository hosts code to automatically reject trials and repair sensors for M/EEG data.
 
