@@ -56,35 +56,25 @@ events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 import mne
 
 epochs = list()
-for run in range(1, 7):
-    run_fname = os.path.join(base_path, 'ds117', 'sub%03d' % subject_id, 'MEG',
-                             'run_%02d_raw.fif' % run)
-    raw = mne.io.Raw(run_fname, preload=True, add_eeg_ref=False)
-    mne.io.set_eeg_reference(raw, [])
-    raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
-    raw.filter(1, 40, l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
+run = 4
+run_fname = os.path.join(base_path, 'ds117', 'sub%03d' % subject_id, 'MEG',
+                         'run_%02d_raw.fif' % run)
+raw = mne.io.Raw(run_fname, preload=True, add_eeg_ref=False)
+mne.io.set_eeg_reference(raw, [])
+raw.pick_types(eeg=False, meg=True, stim=True)  # less memory + computation
+raw.filter(1, 40, l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
 
-    raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
-                           'EEG063': 'ecg', 'EEG064': 'misc'})
-    raw.rename_channels({'EEG061': 'EOG061', 'EEG062': 'EOG062',
-                         'EEG063': 'ECG063', 'EEG064': 'MISC'})
-
-    exclude = []  # XXX
-    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
-                           eog=False, exclude=exclude)
-    events = mne.find_events(raw, stim_channel='STI101',
-                             consecutive='increasing',
-                             min_duration=0.003, verbose=True)
-    # Read epochs
-    epoch = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
-                       add_eeg_ref=True, picks=picks, baseline=None,
-                       preload=False, reject=None, decim=4)
-    epochs.append(epoch)
-
-    # Same `dev_head_t` for all runs so that we can concatenate them.
-    epoch.info['dev_head_t'] = epochs[0].info['dev_head_t']
-epochs = mne.epochs.concatenate_epochs(epochs)
-
+exclude = []  # XXX
+picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False,
+                       eog=False, exclude=exclude)
+events = mne.find_events(raw, stim_channel='STI101',
+                         consecutive='increasing',
+                         min_duration=0.003, verbose=True)
+# Read epochs
+epochs = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
+                    add_eeg_ref=True, picks=picks, baseline=None,
+                    preload=True, reject=None, decim=8)
+del raw
 ###############################################################################
 # Now, we apply autoreject
 

@@ -251,8 +251,6 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
-    ch_types = [ch_type for ch_type in ('eeg', 'meg')
-                if ch_type in epochs]
     n_epochs = len(epochs)
     epochs_interp = clean_by_interp(epochs)
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
@@ -261,27 +259,25 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
                                 random_state=random_state)
 
-    threshes = dict()
-    for ch_type in ch_types:
-        picks = _pick_exclusive_channels(epochs.info, ch_type)
-        threshes[ch_type] = []
-        pbar = ProgressBar(len(picks), mesg='Computing thresholds ',
-                           spinner=True)
-        print('')
-        for ii, pick in enumerate(picks):
-            pbar.update(ii + 1)
-            # lower bound must be minimum ptp, otherwise random search
-            # screws up.
-            thresh_low = np.min(np.ptp(data[:, pick], axis=1))
-            thresh_high = np.max(np.ptp(data[:, pick], axis=1))
-            rs = _compute_thresh(data[:, pick], cv=cv, method=method,
-                                 thresh_range=(thresh_low, thresh_high),
-                                 random_state=random_state)
-            if method == 'random_search':
-                thresh = rs.best_estimator_.thresh
-            elif method == 'bayesian_optimization':
-                thresh = rs.x[0]
-            threshes[ch_type].append(thresh)
+    threshes = list()
+    picks = mne.pick_types(epochs.info, meg=False, eeg=True)
+    pbar = ProgressBar(len(picks), mesg='Computing thresholds ',
+                       spinner=True)
+    print('')
+    for ii, pick in enumerate(picks):
+        pbar.update(ii + 1)
+        # lower bound must be minimum ptp, otherwise random search
+        # screws up.
+        thresh_low = np.min(np.ptp(data[:, pick], axis=1))
+        thresh_high = np.max(np.ptp(data[:, pick], axis=1))
+        rs = _compute_thresh(data[:, pick], cv=cv, method=method,
+                             thresh_range=(thresh_low, thresh_high),
+                             random_state=random_state)
+        if method == 'random_search':
+            thresh = rs.best_estimator_.thresh
+        elif method == 'bayesian_optimization':
+            thresh = rs.x[0]
+        threshes.append(thresh)
     return threshes
 
 
@@ -312,6 +308,13 @@ class LocalAutoReject(BaseAutoReject):
         self.n_interpolate = n_interpolate
         self.thresh_func = thresh_func
 
+    def score(self, X):
+        if np.any(np.isnan(self.mean_)):
+            return -np.inf
+        else:
+            X /= self.scalings_[None, :, None]
+            return -np.sqrt(np.mean((np.median(X, axis=0) - self.mean_) ** 2))
+
     @property
     def bad_segments(self):
         return self._drop_log
@@ -330,6 +333,15 @@ class LocalAutoReject(BaseAutoReject):
             estimated.
         """
         self.threshes_ = self.thresh_func(epochs)
+
+        X = epochs.get_data()
+        _, n_channels, _ = X.shape
+        self.scalings_ = np.ones((n_channels, ))
+        ch_types = [ch_type for ch_type in ('eeg', 'mag', 'grad')]
+        for ch_type in ch_types:
+            picks = _pick_exclusive_channels(epochs.info, ch_type)
+            self.scalings_[picks] = np.std(X[:, picks, :].ravel())
+
         return self
 
     def transform(self, epochs):
@@ -369,18 +381,14 @@ class LocalAutoReject(BaseAutoReject):
         self._drop_log = DataFrame(np.zeros((n_epochs, len(picks)), dtype=int),
                                    columns=epochs.info['ch_names'])
         self.bad_epoch_counts = np.zeros((len(epochs), ))
-        ch_types = [ch_type for ch_type in ('eeg', 'meg')
-                    if ch_type in epochs]
-        for ch_type in ch_types:
-            picks = _pick_exclusive_channels(epochs.info, ch_type)
-            ch_names = [epochs.info['ch_names'][p] for p in picks]
-            deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
-            threshes = self.threshes_[ch_type]
-            for delta, thresh, ch_name in zip(deltas, threshes, ch_names):
-                bad_epochs_idx = np.where(delta > thresh)[0]
-                # TODO: combine for different ch types
-                self.bad_epoch_counts[bad_epochs_idx] += 1
-                self._drop_log.ix[bad_epochs_idx, ch_name] = 1
+        ch_names = [epochs.info['ch_names'][p] for p in picks]
+        deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
+        threshes = self.threshes_
+        for delta, thresh, ch_name in zip(deltas, threshes, ch_names):
+            bad_epochs_idx = np.where(delta > thresh)[0]
+            # TODO: combine for different ch types
+            self.bad_epoch_counts[bad_epochs_idx] += 1
+            self._drop_log.ix[bad_epochs_idx, ch_name] = 1
 
     def _get_bad_epochs(self):
         """Get the indices of bad epochs.
