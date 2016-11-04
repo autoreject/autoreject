@@ -17,6 +17,7 @@ Classes
    GlobalAutoReject
    LocalAutoReject
    LocalAutoRejectCV
+   Ransac
 
 Functions
 

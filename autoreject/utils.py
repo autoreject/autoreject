@@ -180,6 +180,10 @@ def _fast_map_meg_channels(inst, pick_from, pick_to, mode='fast'):
 
     miss = 1e-4  # Smoothing criterion for MEG
 
+    # XXX: hack to silence _compute_mapping_matrix
+    verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
+    mne.set_log_level('WARNING')
+
     def _compute_dots(info, mode='fast'):
         """Compute all-to-all dots.
         """
@@ -214,6 +218,8 @@ def _fast_map_meg_channels(inst, pick_from, pick_to, mode='fast'):
     fmd = dict(kind='meg', ch_names=ch_names,
                origin=my_origin, noise=noise, self_dots=self_dots,
                surface_dots=cross_dots, int_rad=int_rad, miss=miss)
+
     fmd['data'] = _compute_mapping_matrix(fmd, info_from)
+    mne.set_log_level(verbose)
 
     return fmd['data']
