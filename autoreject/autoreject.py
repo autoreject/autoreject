@@ -8,7 +8,6 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 import mne
-from mne.utils import ProgressBar
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -17,10 +16,10 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 from joblib import Memory
 from pandas import DataFrame
 
-from .utils import clean_by_interp, interpolate_bads
+from .utils import clean_by_interp, interpolate_bads, _pbar
 
 mem = Memory(cachedir='cachedir')
-mem.clear()
+mem.clear(warn=False)
 
 
 def _check_data(epochs):
@@ -231,7 +230,7 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
 
 
 def compute_thresholds(epochs, method='bayesian_optimization',
-                       random_state=None):
+                       random_state=None, verbose='progressbar'):
     """Compute thresholds for each channel.
 
     Parameters
@@ -242,6 +241,12 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         'bayesian_optimization' or 'random_search'
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use
+    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+        The verbosity of progress messages.
+        If `'progressbar'`, use `mne.utils.ProgressBar`.
+        If `'tqdm'`, use `tqdm.tqdm`.
+        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
+        If False, suppress all output messages.
 
     Examples
     --------
@@ -254,7 +259,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     ch_types = [ch_type for ch_type in ('eeg', 'meg')
                 if ch_type in epochs]
     n_epochs = len(epochs)
-    epochs_interp = clean_by_interp(epochs)
+    epochs_interp = clean_by_interp(epochs, verbose=verbose)
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
@@ -265,11 +270,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     for ch_type in ch_types:
         picks = _pick_exclusive_channels(epochs.info, ch_type)
         threshes[ch_type] = []
-        pbar = ProgressBar(len(picks), mesg='Computing thresholds ',
-                           spinner=True)
-        print('')
-        for ii, pick in enumerate(picks):
-            pbar.update(ii + 1)
+        for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
+                                  verbose=verbose)):
             # lower bound must be minimum ptp, otherwise random search
             # screws up.
             thresh_low = np.min(np.ptp(data[:, pick], axis=1))
@@ -300,9 +302,16 @@ class LocalAutoReject(BaseAutoReject):
         the total number of channels.
     n_interpolate : int (default 0)
         Number of channels for which to interpolate
+    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+        The verbosity of progress messages.
+        If `'progressbar'`, use `mne.utils.ProgressBar`.
+        If `'tqdm'`, use `tqdm.tqdm`.
+        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
+        If False, suppress all output messages.
     """
     def __init__(self, thresh_func=None, consensus_perc=0.1,
-                 n_interpolate=0, method='bayesian_optimization'):
+                 n_interpolate=0, method='bayesian_optimization',
+                 verbose='progressbar'):
         if thresh_func is None:
             thresh_func = compute_thresholds
         if not (0 <= consensus_perc <= 1):
@@ -311,6 +320,7 @@ class LocalAutoReject(BaseAutoReject):
         self.consensus_perc = consensus_perc
         self.n_interpolate = n_interpolate
         self.thresh_func = thresh_func
+        self.verbose = verbose
 
     @property
     def bad_segments(self):
@@ -346,7 +356,8 @@ class LocalAutoReject(BaseAutoReject):
         self._vote_epochs(epochs)
         ch_types = [ch_type for ch_type in ('eeg', 'meg') if ch_type in epochs]
         for ch_type in ch_types:
-            self._interpolate_bad_epochs(epochs, ch_type=ch_type)
+            self._interpolate_bad_epochs(epochs, ch_type=ch_type,
+                                         verbose=self.verbose)
 
         bad_epochs_idx = self._get_bad_epochs()
         self._bad_epochs_idx = np.sort(bad_epochs_idx)
@@ -397,11 +408,10 @@ class LocalAutoReject(BaseAutoReject):
         else:
             self.n_epochs_drop = 0
             bad_epochs_idx = []
-            print('No bad epochs dropped by consensus.')
 
         return bad_epochs_idx
 
-    def _interpolate_bad_epochs(self, epochs, ch_type):
+    def _interpolate_bad_epochs(self, epochs, ch_type, verbose='progressbar'):
         """interpolate the bad epochs.
 
         Parameters
@@ -414,12 +424,10 @@ class LocalAutoReject(BaseAutoReject):
         self.fix_log = self._drop_log.copy()
         ch_names = drop_log.columns.values
         n_consensus = self.consensus_perc * len(ch_names)
-        pbar = ProgressBar(len(epochs) - 1, mesg='Repairing epochs ',
-                           spinner=True)
-        print('')
         # TODO: raise error if preload is not True
-        for epoch_idx in range(len(epochs)):
-            pbar.update(epoch_idx + 1)
+        pos = 4 if hasattr(self, '_leave') else 2
+        for epoch_idx in _pbar(range(len(epochs)), desc='Repairing epochs',
+                               position=pos, leave=True, verbose=verbose):
             n_bads = drop_log.ix[epoch_idx].sum()
             if n_bads == 0 or n_bads > n_consensus:
                 continue
@@ -461,6 +469,12 @@ class LocalAutoRejectCV(object):
         defaults to :func:`autoreject.compute_thresholds`.
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
+    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+        The verbosity of progress messages.
+        If `'progressbar'`, use `mne.utils.ProgressBar`.
+        If `'tqdm'`, use `tqdm.tqdm`.
+        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
+        If False, suppress all output messages.
 
     Returns
     -------
@@ -469,11 +483,13 @@ class LocalAutoRejectCV(object):
     """
 
     def __init__(self, n_interpolates=None, consensus_percs=None,
-                 thresh_func=None, method='bayesian_optimization', cv=None):
+                 thresh_func=None, method='bayesian_optimization', cv=None,
+                 verbose='progressbar'):
         self.n_interpolates = n_interpolates
         self.consensus_percs = consensus_percs
         self.thresh_func = thresh_func
         self.cv = cv
+        self.verbose = verbose
 
     @property
     def bad_segments(self):
@@ -511,14 +527,17 @@ class LocalAutoRejectCV(object):
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_folds))
 
-        local_reject = LocalAutoReject(thresh_func=self.thresh_func)
+        local_reject = LocalAutoReject(thresh_func=self.thresh_func,
+                                       verbose=self.verbose)
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
 
         local_reject._vote_epochs(epochs)
         bad_epoch_counts = local_reject.bad_epoch_counts.copy()
-        for jdx, n_interp in enumerate(self.n_interpolates):
+        desc = 'n_interp'
+        for jdx, n_interp in enumerate(_pbar(self.n_interpolates, desc=desc,
+                                       position=1, verbose=self.verbose)):
             # we can interpolate before doing cross-validation
             # because interpolation is independent across trials.
             local_reject.n_interpolate = n_interp
@@ -527,11 +546,12 @@ class LocalAutoRejectCV(object):
             epochs_interp = epochs.copy()
             for ch_type in ch_types:
                 local_reject._interpolate_bad_epochs(epochs_interp,
-                                                     ch_type=ch_type)
-            for fold, (train, test) in enumerate(self.cv):
+                                                     ch_type=ch_type,
+                                                     verbose=self.verbose)
+            for fold, (train, test) in enumerate(_pbar(self.cv, desc='Fold',
+                                                 position=3,
+                                                 verbose=self.verbose)):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
-                    print('[Val fold %d] Trying consensus perc %0.2f,'
-                          'n_interp %d' % (fold + 1, consensus_perc, n_interp))
                     local_reject.consensus_perc = consensus_perc
                     local_reject.bad_epoch_counts = bad_epoch_counts[train]
 
@@ -552,8 +572,12 @@ class LocalAutoRejectCV(object):
         n_interpolate = self.n_interpolates[best_jdx]
         self.consensus_perc_ = consensus_perc
         self.n_interpolate_ = n_interpolate
+        if self.verbose is not False:
+            print('Estimated consensus_perc=%0.2f and n_interpolate=%d'
+                  % (consensus_perc, n_interpolate))
         local_reject.consensus_perc = consensus_perc
         local_reject.n_interpolate = n_interpolate
+        local_reject._leave = False
         self._local_reject = local_reject
         return self
 

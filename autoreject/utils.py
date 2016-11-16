@@ -5,8 +5,6 @@
 import mne
 from joblib import Memory
 
-from mne.utils import ProgressBar
-
 mem = Memory(cachedir='cachedir')
 
 
@@ -31,8 +29,48 @@ def set_matplotlib_defaults(plt):
     plt.rcParams.update(params)
 
 
-def clean_by_interp(inst):
-    """Clean epochs/evoked by LOOCV
+def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
+    if verbose == 'progressbar':
+        from mne.utils import ProgressBar
+
+        _ProgressBar = ProgressBar
+        if not mne.utils.check_version('mne', '0.14dev0'):
+            class _ProgressBar(ProgressBar):
+                def __iter__(self):
+                    """Iterate to auto-increment the pbar with 1."""
+                    self.max_value = len(iterable)
+                    for obj in iterable:
+                        yield obj
+                    self.update_with_increment_value(1)
+
+        pbar = _ProgressBar(iterable, mesg=desc, spinner=True)
+    elif verbose == 'tqdm':
+        from tqdm import tqdm
+        pbar = tqdm(iterable, desc=desc, leave=leave, position=position,
+                    dynamic_ncols=True)
+    elif verbose == 'tqdm_notebook':
+        from tqdm import tqdm_notebook
+        pbar = tqdm_notebook(iterable, desc=desc, leave=leave,
+                             position=position, dynamic_ncols=True)
+    elif verbose is False:
+        pbar = iterable
+    return pbar
+
+
+def clean_by_interp(inst, verbose='progressbar'):
+    """Clean epochs/evoked by LOOCV.
+
+    Parameters
+    ----------
+    inst : instance of mne.Evoked or mne.Epochs
+        The evoked or epochs object.
+    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+        The verbosity of progress messages.
+        If `'progressbar'`, use `mne.utils.ProgressBar`.
+        If `'tqdm'`, use `tqdm.tqdm`.
+        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
+        If False, suppress all output messages.
+
     """
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
@@ -42,11 +80,8 @@ def clean_by_interp(inst):
                          'running autoreject')
 
     ch_names = [ch_name for ch_name in inst.info['ch_names']]
-    pbar = ProgressBar(len(ch_names) - 1, mesg=mesg,
-                       spinner=True)
-    for ch_idx, (pick, ch) in enumerate(zip(picks, ch_names)):
-        pbar.update(ch_idx + 1)
-
+    for ch_idx, (pick, ch) in enumerate(_pbar(zip(picks, ch_names), desc=mesg,
+                                        verbose=verbose)):
         inst_clean = inst.copy()
         inst_clean.info['bads'] = [ch]
         interpolate_bads(inst_clean, reset_bads=True, mode='fast')
@@ -59,7 +94,6 @@ def clean_by_interp(inst):
             inst_interp._data[:, pick] = inst_clean._data[:, pick]
         else:
             raise ValueError('Unrecognized type for inst')
-
     return inst_interp
 
 
@@ -151,7 +185,7 @@ def _fast_map_meg_channels(inst, pick_from, pick_to, mode='fast'):
                                     my_origin, 'meg', lut_fun, n_fact).T
         return self_dots, cross_dots
 
-    _compute_fast_dots = mem.cache(_compute_dots)
+    _compute_fast_dots = mem.cache(_compute_dots, verbose=0)
     info = inst.info.copy()
     info['bads'] = []  # if bads is different, hash will be different
 
