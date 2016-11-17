@@ -339,7 +339,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object from which the channel-level thresholds are
             estimated.
         """
-        self.threshes_ = self.thresh_func(epochs)
+        self.threshes_ = self.thresh_func(epochs, verbose=self.verbose)
         return self
 
     def transform(self, epochs):
