@@ -56,10 +56,10 @@ events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 import mne
 
 epochs = list()
-for run in range(1, 7):
+for run in range(3, 7):
     run_fname = os.path.join(base_path, 'ds117', 'sub%03d' % subject_id, 'MEG',
                              'run_%02d_raw.fif' % run)
-    raw = mne.io.Raw(run_fname, preload=True, add_eeg_ref=False)
+    raw = mne.io.read_raw_fif(run_fname, preload=True, add_eeg_ref=False)
     mne.io.set_eeg_reference(raw, [])
     raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
     raw.filter(1, 40, l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
