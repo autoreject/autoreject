@@ -8,7 +8,7 @@ dependencies:
     - pip install cython scipy
     - pip install mne joblib pandas seaborn
     - pip install scikit-learn==0.18
-    - pip install scikit-optimize
+    - pip install scikit-optimize tqdm
     - pip install -e .
     # we need to do this here so the datasets will be cached
     # pipefail is necessary to propagate exit codes

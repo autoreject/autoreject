@@ -15,6 +15,9 @@ We recommend the `Anaconda Python distribution <https://www.continuum.io/downloa
 
 	$ pip install numpy matplotlib scipy mne joblib pandas scikit-learn scikit-optimize
 
+An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'` 
+for nice progressbars.
+
 Then install autoreject::
 
 	$ pip install git+https://github.com/autoreject/autoreject.git#egg=autoreject
