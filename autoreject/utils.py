@@ -80,8 +80,8 @@ def clean_by_interp(inst, verbose='progressbar'):
                          'running autoreject')
 
     ch_names = [ch_name for ch_name in inst.info['ch_names']]
-    for ch_idx, (pick, ch) in enumerate(_pbar(zip(picks, ch_names), desc=mesg,
-                                        verbose=verbose)):
+    for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
+                                        desc=mesg, verbose=verbose)):
         inst_clean = inst.copy()
         inst_clean.info['bads'] = [ch]
         interpolate_bads(inst_clean, reset_bads=True, mode='fast')
