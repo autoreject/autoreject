@@ -16,14 +16,15 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 from joblib import Memory
 from pandas import DataFrame
 
-from .utils import clean_by_interp, interpolate_bads, _pbar
+from .utils import clean_by_interp, interpolate_bads, _get_epochs_type, _pbar
 
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
 
 def _check_data(epochs):
-    if not isinstance(epochs, mne.epochs._BaseEpochs):
+    BaseEpochs = _get_epochs_type()
+    if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
     # needed for len
@@ -68,7 +69,9 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     if not isinstance(estimator, GlobalAutoReject):
         msg = 'No guarantee that it will work on this estimator.'
         raise NotImplementedError(msg)
-    if not isinstance(epochs, mne.epochs._BaseEpochs):
+
+    BaseEpochs = _get_epochs_type()
+    if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
     X = epochs.get_data()

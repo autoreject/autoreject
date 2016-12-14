@@ -8,8 +8,8 @@ import mne
 from mne.datasets import sample
 from mne import io
 
-from autoreject import (GlobalAutoReject, LocalAutoReject, compute_thresholds,
-                        validation_curve)
+from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
+                        compute_thresholds, validation_curve)
 from autoreject.utils import clean_by_interp
 from autoreject.viz import plot_epochs
 
@@ -61,6 +61,9 @@ def test_autoreject():
     ar = LocalAutoReject()
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
+
+    ar = LocalAutoRejectCV()
+    assert_raises(ValueError, ar.fit, X)
 
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')

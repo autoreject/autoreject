@@ -57,6 +57,14 @@ def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
     return pbar
 
 
+def _get_epochs_type():
+    if hasattr(mne.epochs, '_BaseEpochs'):
+        BaseEpochs = mne.epochs._BaseEpochs
+    else:
+        BaseEpochs = mne.epochs.BaseEpochs
+    return BaseEpochs
+
+
 def clean_by_interp(inst, verbose='progressbar'):
     """Clean epochs/evoked by LOOCV.
 
@@ -79,6 +87,7 @@ def clean_by_interp(inst, verbose='progressbar'):
         raise ValueError('Please pick channel types before '
                          'running autoreject')
 
+    BaseEpochs = _get_epochs_type()
     ch_names = [ch_name for ch_name in inst.info['ch_names']]
     for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
                                         desc=mesg, verbose=verbose)):
@@ -90,7 +99,7 @@ def clean_by_interp(inst, verbose='progressbar'):
 
         if isinstance(inst, mne.Evoked):
             inst_interp.data[pick] = inst_clean.data[pick]
-        elif isinstance(inst, mne.epochs._BaseEpochs):
+        elif isinstance(inst, BaseEpochs):
             inst_interp._data[:, pick] = inst_clean._data[:, pick]
         else:
             raise ValueError('Unrecognized type for inst')
