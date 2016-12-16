@@ -462,11 +462,11 @@ class LocalAutoRejectCV(object):
     Parameters
     ----------
     n_interpolates : array | None
-        The values of :math:`\\rho` to try. If None, defaults
-        to `np.linspace(0, 1.0, 11)`
-    consensus_percs : array | None
-        The values of :math:`\kappa` to try. If None, defaults to
+        The values of :math:`\\rho` to try. If None, defaults to
         np.array([1, 4, 32])
+    consensus_percs : array | None
+        The values of :math:`\\kappa/Q` to try. If None, defaults
+        to `np.linspace(0, 1.0, 11)`
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
         defaults to :func:`autoreject.compute_thresholds`.
