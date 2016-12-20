@@ -24,3 +24,4 @@ pip-log.txt
 autoreject.egg-info/
 .tags
 tags
+.coverage

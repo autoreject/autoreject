@@ -13,7 +13,7 @@ Installation
 
 We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_. To install ``autoreject``, you first need to install its dependencies::
 
-	$ pip install numpy matplotlib scipy mne joblib pandas scikit-learn scikit-optimize
+	$ pip install numpy matplotlib scipy mne pandas scikit-learn scikit-optimize
 
 An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'` 
 for nice progressbars.
@@ -41,7 +41,7 @@ in your script:
 
 	>>> from autoreject import LocalAutoRejectCV
 	>>> ar = LocalAutoRejectCV()
-	>>> epochs_clean = ar.fit_transform(epochs)
+	>>> epochs_clean = ar.fit_transform(epochs)  # doctest: +SKIP
 
 This will automatically clean an `epochs` object read in using MNE-Python. For more details check
 out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_auto_examples_plot_auto_repair.py>`.

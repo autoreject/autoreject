@@ -13,7 +13,7 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 
-from joblib import Memory
+from sklearn.externals.joblib import Memory
 from pandas import DataFrame
 
 from .utils import clean_by_interp, interpolate_bads, _get_epochs_type, _pbar

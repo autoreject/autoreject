@@ -26,7 +26,6 @@ to run:
 * mne-python
 * scikit-learn (0.18)
 * scikit-optimize (0.1)
-* joblibs
 * pandas
 
 Cite

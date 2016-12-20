@@ -3,7 +3,7 @@
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 
 import mne
-from joblib import Memory
+from sklearn.externals.joblib import Memory
 
 mem = Memory(cachedir='cachedir')
 
