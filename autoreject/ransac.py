@@ -30,7 +30,7 @@ def _iterate_epochs(ransac, epochs, idxs, verbose):
     corrs = np.zeros((len(idxs), n_channels))
     for idx, _ in enumerate(_pbar(idxs, desc='Iterating epochs',
                             verbose=verbose)):
-        ransac.fit(epochs[idx]).predict(epochs[idx])
+        ransac.corr_ = ransac._compute_correlations(epochs[idx])
         corrs[idx, :] = ransac.corr_
     return corrs
 
@@ -154,15 +154,10 @@ class Ransac(object):
         return corr
 
     def fit(self, epochs):
+        n_epochs = len(epochs)
         self.ch_subsets_ = self._get_random_subsets(epochs.info)
         self.mappings_ = self._get_mappings(epochs)
-        return self
 
-    def predict(self, epochs):
-        self.corr_ = self._compute_correlations(epochs)
-
-    def fit_predict(self, epochs):
-        n_epochs = len(epochs)
         n_jobs = check_n_jobs(self.n_jobs)
         parallel = Parallel(n_jobs, verbose=10)
         my_iterator = delayed(_iterate_epochs)
@@ -175,6 +170,7 @@ class Ransac(object):
         self.corr_ = np.concatenate(corrs)
         if self.verbose is not False and self.n_jobs > 1:
             print('[Done]')
+
         # compute how many windows is a sensor RANSAC-bad
         self.bad_log = np.zeros_like(self.corr_)
         self.bad_log[self.corr_ < self.min_corr] = 1
@@ -185,3 +181,13 @@ class Ransac(object):
             self.bad_chs_ = [epochs.info['ch_names'][p] for p in bad_idx]
         else:
             self.bad_chs_ = []
+        return self
+
+    def transform(self, epochs):
+        epochs = epochs.copy()
+        epochs.info['bads'] = self.bad_chs_
+        epochs.interpolate_bads(reset_bads=True)
+        return epochs
+
+    def fit_transform(self, epochs):
+        return self.fit(epochs).transform(epochs)

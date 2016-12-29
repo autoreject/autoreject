@@ -43,8 +43,16 @@ in your script:
 	>>> ar = LocalAutoRejectCV()
 	>>> epochs_clean = ar.fit_transform(epochs)  # doctest: +SKIP
 
-This will automatically clean an `epochs` object read in using MNE-Python. For more details check
-out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_auto_examples_plot_auto_repair.py>`.
+This will automatically clean an `epochs` object read in using MNE-Python. We also implement RANSAC from the PREP pipeline.
+The API is the same:
+
+.. code:: python
+
+	>>> from autoreject import Ransac
+	>>> rsc = Ransac()
+	>>> epochs_clean = rsc.fit_transform(epochs)  # doctest: +SKIP
+
+For more details check out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_auto_examples_plot_auto_repair.py>`.
 
 .. note::
 

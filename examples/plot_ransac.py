@@ -64,25 +64,29 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
                 verbose=False, detrend=0, preload=True)
 
 ###############################################################################
-# First, we set up the function to compute the sensor-level thresholds.
+# We import ``Ransac`` and run the familiar ``fit_transform`` method.
 from autoreject import Ransac
 from autoreject.utils import interpolate_bads
 
 ransac = Ransac(ch_type='meg', verbose='tqdm')
-ransac.fit_predict(epochs)
-epochs_clean = epochs.copy()
-epochs_clean.info['bads'] = ransac.bad_chs_
-epochs_clean.interpolate_bads(reset_bads=True)
+epochs_clean = ransac.fit_transform(epochs)
+
+###############################################################################
+# We can also get the list of bad channels computed by ``Ransac``.
+
+print('\n'.join(ransac.bad_chs_))
+
+###############################################################################
+# Then we compute the ``evoked`` before and after interpolation.
 
 evoked = epochs.average()
 evoked_clean = epochs_clean.average()
 
 ###############################################################################
-# Now, we will manually mark the bad channels just for plotting.
+# We will manually mark the bad channels just for plotting.
 
 evoked.info['bads'] = ['MEG 2443']
 evoked_clean.info['bads'] = ['MEG 2443']
-
 
 ###############################################################################
 # Let us plot the results.
@@ -100,10 +104,10 @@ for ax in axes:
 ylim = dict(grad=(-170, 200))
 evoked.pick_types(meg='grad', exclude=[])
 evoked.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
-axes[0].set_title('Before autoreject')
+axes[0].set_title('Before RANSAC')
 evoked_clean.pick_types(meg='grad', exclude=[])
 evoked_clean.plot(exclude=[], axes=axes[1], ylim=ylim)
-axes[1].set_title('After autoreject')
+axes[1].set_title('After RANSAC')
 plt.tight_layout()
 
 ###############################################################################
