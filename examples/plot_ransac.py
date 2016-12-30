@@ -68,7 +68,7 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 from autoreject import Ransac
 from autoreject.utils import interpolate_bads
 
-ransac = Ransac(ch_type='meg', verbose='tqdm')
+ransac = Ransac(verbose='tqdm')
 epochs_clean = ransac.fit_transform(epochs)
 
 ###############################################################################

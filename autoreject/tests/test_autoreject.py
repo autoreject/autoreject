@@ -9,7 +9,7 @@ from mne.datasets import sample
 from mne import io
 
 from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
-                        compute_thresholds, validation_curve)
+                        Ransac, compute_thresholds, validation_curve)
 from autoreject.utils import clean_by_interp
 from autoreject.viz import plot_epochs
 
@@ -26,7 +26,7 @@ raw.info['projs'] = list()
 
 
 def test_autoreject():
-    """Some basic tests for autoreject."""
+    """Some basic tests for autoreject and ransac."""
 
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
@@ -69,6 +69,23 @@ def test_autoreject():
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
     for method in ['random_search', 'bayesian_optimization']:
         compute_thresholds(epochs, method=method)
+
+    rsc = Ransac()
+    assert_raises(ValueError, rsc.fit, X)
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
+                           eog=False, include=include, exclude=[])
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0), decim=8,
+                        reject=None, add_eeg_ref=False)
+    # should not contain both channel types
+    assert_raises(ValueError, rsc.fit, epochs)
+    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
+                           eog=False, include=include, exclude=[])
+    # should not contain other channel types
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0), decim=8,
+                        reject=None, add_eeg_ref=False)
+    assert_raises(ValueError, rsc.fit, epochs)
 
 
 def test_utils():

@@ -11,8 +11,10 @@ from sklearn.externals.joblib import Parallel, delayed
 
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.parallel import check_n_jobs
+from mne.io.pick import channel_indices_by_type
 
 from .utils import _pbar
+from .autoreject import _check_data
 
 
 def _randsample(X, num):
@@ -35,6 +37,30 @@ def _iterate_epochs(ransac, epochs, idxs, verbose):
     return corrs
 
 
+def _get_channel_type(epochs):
+    idx = channel_indices_by_type(epochs.info)
+    ch_types_present = list()
+    for (key, value) in list(idx.items()):
+        if len(value) > 0:
+            ch_types_present.append(key)
+    has_meg = 'mag' in ch_types_present or 'grad' in ch_types_present
+    has_eeg = 'eeg' in ch_types_present
+    other_types_present = [ch_type for ch_type in ch_types_present
+                           if ch_type not in ['mag', 'grad', 'eeg']]
+    has_others = True if len(other_types_present) > 0 else False
+    if has_others:
+        raise ValueError('Unknown channel types present in epochs.'
+                         ' Expected meg or eeg. Got instead %s'
+                         % ', '.join(ch_types_present))
+    if (has_meg and has_eeg):
+            raise ValueError('Got mixed channel types. Pick either eeg or meg'
+                             ' but not both')
+    if has_eeg:
+        return 'eeg'
+    elif has_meg:
+        return 'meg'
+
+
 class Ransac(object):
 
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
@@ -53,8 +79,6 @@ class Ransac(object):
         unbroken_time : float
             Cut-off fraction of time sensor can have poor RANSAC
             predictability.
-        ch_type : str
-            'meg' | 'eeg'
         n_jobs : int
             Number of parallel jobs.
         verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
@@ -81,7 +105,6 @@ class Ransac(object):
         self.min_channels = min_channels
         self.min_corr = min_corr
         self.unbroken_time = unbroken_time
-        self.ch_type = ch_type
         self.n_jobs = n_jobs
         self.verbose = verbose
 
@@ -154,6 +177,8 @@ class Ransac(object):
         return corr
 
     def fit(self, epochs):
+        _check_data(epochs)
+        self.ch_type = _get_channel_type(epochs)
         n_epochs = len(epochs)
         self.ch_subsets_ = self._get_random_subsets(epochs.info)
         self.mappings_ = self._get_mappings(epochs)
@@ -185,6 +210,7 @@ class Ransac(object):
 
     def transform(self, epochs):
         epochs = epochs.copy()
+        _check_data(epochs)
         epochs.info['bads'] = self.bad_chs_
         epochs.interpolate_bads(reset_bads=True)
         return epochs
