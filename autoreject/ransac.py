@@ -3,8 +3,9 @@
 The code is adopted from the PREP pipeline written in MATLAB:
 https://github.com/VisLab/EEG-Clean-Tools. This implementation
 also works for MEG data.
-
 """
+
+# Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 
 import numpy as np
 from sklearn.externals.joblib import Parallel, delayed
@@ -39,29 +40,24 @@ def _iterate_epochs(ransac, epochs, idxs, verbose):
 
 def _get_channel_type(epochs):
     idx = channel_indices_by_type(epochs.info)
-    ch_types_present = list()
-    for (key, value) in list(idx.items()):
-        if len(value) > 0:
-            ch_types_present.append(key)
-    has_meg = 'mag' in ch_types_present or 'grad' in ch_types_present
-    has_eeg = 'eeg' in ch_types_present
-    other_types_present = [ch_type for ch_type in ch_types_present
-                           if ch_type not in ['mag', 'grad', 'eeg']]
-    has_others = True if len(other_types_present) > 0 else False
-    if has_others:
-        raise ValueError('Unknown channel types present in epochs.'
-                         ' Expected meg or eeg. Got instead %s'
-                         % ', '.join(ch_types_present))
-    if (has_meg and has_eeg):
-            raise ValueError('Got mixed channel types. Pick either eeg or meg'
-                             ' but not both')
-    if has_eeg:
+    invalid_ch_types_present = [key for key in idx.keys()
+                                if key not in ['mag', 'grad', 'eeg'] and
+                                key in epochs]
+    if len(invalid_ch_types_present) > 0:
+        raise ValueError('Invalid channel types present in epochs.'
+                         ' Expected ONLY `meg` or ONLY `eeg`. Got %s'
+                         % ', '.join(invalid_ch_types_present))
+    if 'meg' in epochs and 'eeg' in epochs:
+        raise ValueError('Got mixed channel types. Pick either eeg or meg'
+                         ' but not both')
+    if 'eeg' in epochs:
         return 'eeg'
-    elif has_meg:
+    elif 'meg' in epochs:
         return 'meg'
 
 
 class Ransac(object):
+    """RANSAC algorithm to find bad sensors and repair them."""
 
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
                  unbroken_time=0.4, ch_type='eeg', n_jobs=1,
