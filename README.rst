@@ -17,8 +17,7 @@ This repository hosts code to automatically reject trials and repair sensors for
 Dependencies
 ------------
 
-We are actively trying to reduce the number of dependencies. However, as of now these are the dependencies for the examples
-to run:
+These are the dependencies to use autoreject:
 
 * numpy (>=1.8)
 * matplotlib (>=1.3)
@@ -26,7 +25,6 @@ to run:
 * mne-python
 * scikit-learn (0.18)
 * scikit-optimize (0.1)
-* pandas
 
 Cite
 ----

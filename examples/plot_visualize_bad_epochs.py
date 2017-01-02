@@ -106,7 +106,7 @@ epochs_ar = ar.fit_transform(this_epoch.copy())
 ###############################################################################
 from autoreject import plot_epochs
 plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
-            fix_log=ar.fix_log.as_matrix(), scalings=dict(eeg=40e-6),
+            fix_log=ar.fix_log, scalings=dict(eeg=40e-6),
             title='')
 
 ###############################################################################

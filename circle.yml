@@ -6,7 +6,7 @@ dependencies:
     - pip install sphinx matplotlib coverage Pillow
     - pip install sphinx-gallery sphinx_bootstrap_theme
     - pip install cython scipy
-    - pip install mne pandas seaborn
+    - pip install mne seaborn
     - pip install scikit-learn==0.18
     - pip install scikit-optimize tqdm
     - pip install -e .

@@ -14,7 +14,6 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 
 from sklearn.externals.joblib import Memory
-from pandas import DataFrame
 
 from .utils import clean_by_interp, interpolate_bads, _get_epochs_type, _pbar
 
@@ -381,21 +380,20 @@ class LocalAutoReject(BaseAutoReject):
         """
         n_epochs = len(epochs)
         picks = mne.pick_types(epochs.info, meg=True, eeg=True, eog=True)
-        self._drop_log = DataFrame(np.zeros((n_epochs, len(picks)), dtype=int),
-                                   columns=epochs.info['ch_names'])
+        self._drop_log = np.zeros((n_epochs, len(picks)))
         self.bad_epoch_counts = np.zeros((len(epochs), ))
         ch_types = [ch_type for ch_type in ('eeg', 'meg')
                     if ch_type in epochs]
         for ch_type in ch_types:
             picks = _pick_exclusive_channels(epochs.info, ch_type)
-            ch_names = [epochs.info['ch_names'][p] for p in picks]
+            assert len(picks) == len(epochs.info['ch_names'])
             deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
             threshes = self.threshes_[ch_type]
-            for delta, thresh, ch_name in zip(deltas, threshes, ch_names):
+            for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
                 bad_epochs_idx = np.where(delta > thresh)[0]
                 # TODO: combine for different ch types
                 self.bad_epoch_counts[bad_epochs_idx] += 1
-                self._drop_log.ix[bad_epochs_idx, ch_name] = 1
+                self._drop_log[bad_epochs_idx, ch_idx] = 1
 
     def _get_bad_epochs(self):
         """Get the indices of bad epochs.
@@ -426,31 +424,32 @@ class LocalAutoReject(BaseAutoReject):
         drop_log = self._drop_log
         # 1: bad segment, # 2: interpolated, # 3: dropped
         self.fix_log = self._drop_log.copy()
-        ch_names = drop_log.columns.values
+        ch_names = epochs.info['ch_names']
         n_consensus = self.consensus_perc * len(ch_names)
         # TODO: raise error if preload is not True
         pos = 4 if hasattr(self, '_leave') else 2
         for epoch_idx in _pbar(range(len(epochs)), desc='Repairing epochs',
                                position=pos, leave=True, verbose=verbose):
-            n_bads = drop_log.ix[epoch_idx].sum()
+            n_bads = drop_log[epoch_idx].sum()
             if n_bads == 0 or n_bads > n_consensus:
                 continue
             else:
                 if n_bads <= self.n_interpolate:
-                    bad_chs = drop_log.ix[epoch_idx].values == 1
+                    bad_chs = drop_log[epoch_idx] == 1
                 else:
                     # get peak-to-peak for channels in that epoch
                     data = epochs[epoch_idx].get_data()[0, :, :]
                     peaks = np.ptp(data, axis=-1)
                     # find channels which are bad by rejection threshold
-                    bad_chs = np.where(drop_log.ix[epoch_idx].values == 1)[0]
+                    bad_chs = np.where(drop_log[epoch_idx] == 1)[0]
                     # find the ordering of channels amongst the bad channels
                     sorted_ch_idx = np.argsort(peaks[bad_chs])[::-1]
                     # then select only the worst n_interpolate channels
                     bad_chs = bad_chs[sorted_ch_idx[:self.n_interpolate]]
 
-            self.fix_log.ix[epoch_idx][bad_chs] = 2
-            bad_chs = ch_names[bad_chs].tolist()
+            self.fix_log[epoch_idx][bad_chs] = 2
+            bad_chs = [ch_name for idx, ch_name in enumerate(ch_names)
+                       if idx in bad_chs]
             epoch = epochs[epoch_idx]
             epoch.info['bads'] = bad_chs
             interpolate_bads(epoch, reset_bads=True)

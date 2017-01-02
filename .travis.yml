@@ -9,7 +9,7 @@ install:
     - conda create -n testenv --yes pip python=2.7
     - source activate testenv
     - conda install --yes --quiet numpy=1.11 scipy=0.17 scikit-learn=0.18 matplotlib=1.5
-    - conda install --yes --quiet pandas nose coverage
+    - conda install --yes --quiet nose coverage
     - pip install -q flake8 mne scikit-optimize==0.1
     - pip install coverage coveralls
     - python setup.py install
