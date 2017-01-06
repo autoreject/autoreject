@@ -32,8 +32,9 @@ def _check_data(epochs):
         epochs.drop_bad()
     except AttributeError:
         epochs.drop_bad_epochs()
+    drop_log = [epochs.drop_log[x] for x in epochs.selection]
     if any(len(drop) > 0 and drop != ['IGNORED']
-            for drop in epochs.drop_log):
+            for drop in drop_log):
         msg = ('Some epochs are being dropped (maybe due to '
                'incomplete data). Please check that no epoch '
                'is dropped when you call epochs.drop_bad_epochs().')
