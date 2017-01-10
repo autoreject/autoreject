@@ -112,19 +112,19 @@ plt.tight_layout()
 
 ###############################################################################
 # To top things up, we can also visualize the bad sensors for each trial using
-# :func:`seaborn.heatmap`.
-import seaborn as sns
+# a heatmap.
 set_matplotlib_defaults(plt)
 
-plt.figure(figsize=(18, 6))
-ax = sns.heatmap(ransac.bad_log, yticklabels=20, square=True,
-                 cbar=False, cmap='Reds')
+plt.figure(figsize=(12, 6))
+im = plt.imshow(ransac.bad_log, cmap='Reds', interpolation='nearest')
+ax = im.get_axes()
+ax.grid(False)
 ax.set_xlabel('Sensors')
 ax.set_ylabel('Trials')
-
-plt.setp(ax, xticks=ax.get_xticks()[::10],
-         xticklabels=epochs.info['ch_names'][::10])
+plt.setp(ax, xticks=range(7, epochs.info['nchan'], 10),
+         xticklabels=epochs.info['ch_names'][7::10])
 plt.setp(ax.get_yticklabels(), rotation=0)
 plt.setp(ax.get_xticklabels(), rotation=90)
+ax.tick_params(axis=u'both', which=u'both', length=0)
 plt.tight_layout(rect=[None, None, None, 1.1])
 plt.show()
