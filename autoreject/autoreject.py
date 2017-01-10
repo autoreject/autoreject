@@ -435,7 +435,7 @@ class LocalAutoReject(BaseAutoReject):
                 continue
             else:
                 if n_bads <= self.n_interpolate:
-                    bad_chs = drop_log[epoch_idx] == 1
+                    bad_chs = np.where(drop_log[epoch_idx] == 1)[0]
                 else:
                     # get peak-to-peak for channels in that epoch
                     data = epochs[epoch_idx].get_data()[0, :, :]
