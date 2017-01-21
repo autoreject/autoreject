@@ -162,7 +162,7 @@ def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
         Indices of bad epochs to show. No bad epochs to visualize if None.
     fix_log : array, shape (n_channels, n_epochs) | None
         The bad segments to show in red and the interpolated segments
-        to show in green.
+        to show in gray.
 
     Returns
     -------
@@ -464,7 +464,8 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
                     if this_log == 1:
                         params['colors'][ch_idx][epoch_idx] = (1., 0., 0., 1.)
                     elif this_log == 2:
-                        params['colors'][ch_idx][epoch_idx] = (0., 0., 1., 1.)
+                        params['colors'][ch_idx][epoch_idx] = (0.6, 0.6, 0.6,
+                                                               1.)
 
     params['plot_fun']()
 
