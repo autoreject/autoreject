@@ -592,6 +592,9 @@ class LocalAutoRejectCV(object):
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
         """
+        _check_data(epochs)
+        if not hasattr(self, 'n_interpolate_'):
+            raise ValueError('Please run autoreject.fit() method first')
         return self._local_reject.transform(epochs)
 
     def fit_transform(self, epochs):

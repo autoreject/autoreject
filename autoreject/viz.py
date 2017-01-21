@@ -431,6 +431,13 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
     _plot_vert_lines(params)
 
     # Plot bad epochs
+    if len(params['bads']) > 0:
+        if params['bads'].max() > len(epochs.events):
+            raise ValueError('You had a bad_epoch with index'
+                             '%d but there are only %d epochs. Make sure'
+                             ' to provide the epochs *before* running'
+                             'autoreject.'
+                             % (params['bads'].max(), len(epochs.events)))
     for epoch_idx in params['bads']:
         params['ax_hscroll'].patches[epoch_idx].set_color((1., 0., 0., 1.))
         params['ax_hscroll'].patches[epoch_idx].set_zorder(3)
@@ -438,10 +445,16 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         for ch_idx in range(len(params['ch_names'])):
             params['colors'][ch_idx][epoch_idx] = (1., 0., 0., 1.)
 
-    assert params['fix_log'].shape == (len(epochs.events),
-                                       len(params['ch_names']))
     # Plot bad segments
     if params['fix_log'] is not None:
+        if not params['fix_log'].shape[0] == len(epochs.events):
+            raise ValueError('The number of epochs should match the number of'
+                             'epochs *before* autoreject. Please provide'
+                             'the epochs object before running autoreject')
+        if not params['fix_log'].shape[1] == len(params['ch_names']):
+            raise ValueError('The number of channels should match the number'
+                             ' of channels before running autoreject.')
+
         for ch_idx in range(len(params['ch_names'])):
             for epoch_idx in range(len(epochs.events)):
                 this_log = params['fix_log'][epoch_idx, ch_idx]

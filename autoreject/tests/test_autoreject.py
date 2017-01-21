@@ -64,6 +64,8 @@ def test_autoreject():
 
     ar = LocalAutoRejectCV()
     assert_raises(ValueError, ar.fit, X)
+    assert_raises(ValueError, ar.transform, X)
+    assert_raises(ValueError, ar.transform, epochs)
 
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
@@ -121,4 +123,8 @@ def test_viz():
     fix_log = np.zeros((n_epochs, n_channels))
 
     plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx, fix_log=fix_log)
+    plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx)
+    plot_epochs(epochs, fix_log=fix_log)
+    assert_raises(ValueError, plot_epochs, epochs[:2],
+                  bad_epochs_idx=bad_epochs_idx, fix_log=fix_log)
     plt.close('all')
