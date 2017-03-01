@@ -43,7 +43,15 @@ in your script:
 	>>> ar = LocalAutoRejectCV()
 	>>> epochs_clean = ar.fit_transform(epochs)  # doctest: +SKIP
 
-This will automatically clean an `epochs` object read in using MNE-Python. We also implement RANSAC from the PREP pipeline.
+This will automatically clean an `epochs` object read in using MNE-Python. To get the
+rejection dictionary, simply do:
+
+.. code:: python
+
+	>>> from autoreject import get_rejection_thresholds
+	>>> reject = get_rejection_thresholds(epochs)
+
+We also implement RANSAC from the PREP pipeline.
 The API is the same:
 
 .. code:: python

@@ -8,6 +8,7 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 import mne
+from mne.io.pick import channel_indices_by_type
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -64,6 +65,13 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
         The values of the parameter that will be evaluated.
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation strategy.
+
+    Returns
+    -------
+    train_scores : array
+        The scores in the training set
+    test_scores : array
+        The scores in the test set
     """
     from sklearn.model_selection import validation_curve
     if not isinstance(estimator, GlobalAutoReject):
@@ -83,7 +91,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     train_scores, test_scores = \
         validation_curve(estimator, X.reshape(n_epochs, -1), y=y,
                          param_name="thresh", param_range=param_range,
-                         cv=cv, n_jobs=1, verbose=1)
+                         cv=cv, n_jobs=1, verbose=0)
 
     return train_scores, test_scores
 
@@ -138,6 +146,39 @@ class GlobalAutoReject(BaseAutoReject):
         keep = epoch_deltas <= self.thresh
         self.mean_ = _slicemean(X, keep, axis=0)
         return self
+
+
+def get_rejection_threshold(epochs):
+    """Class to compute global rejection thresholds.
+
+    Parameters
+    ----------
+    epochs : mne.Epochs object
+        The epochs for which to estimate the epochs dictionary
+
+    Returns
+    -------
+    reject : dict
+        The rejection dictionary with keys 'meg', 'eeg' and 'eog'
+    """
+    reject = dict()
+    X = epochs.get_data()
+    picks = channel_indices_by_type(epochs.info)
+    for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
+        if ch_type not in epochs:
+            continue
+        deltas = np.array([np.ptp(d, axis=1) for d in X[:, picks[ch_type], :]])
+        param_range = deltas.max(axis=1)
+        print('Estimating rejection dictionary for %s with %d candidate'
+              ' thresholds' % (ch_type, param_range.shape[0]))
+
+        _, test_scores = validation_curve(
+            GlobalAutoReject(), epochs, y=None,
+            param_name="thresh", param_range=param_range, cv=5)
+
+        test_scores = -test_scores.mean(axis=1)
+        reject[ch_type] = param_range[np.argmin(test_scores)]
+    return reject
 
 
 class _ChannelAutoReject(BaseAutoReject):

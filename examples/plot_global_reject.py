@@ -1,10 +1,11 @@
 """
-===============================
-Find global rejection threshold
-===============================
+===================================
+Plotting the cross-validation curve
+===================================
 
 This example demonstrates how to use :mod:`autoreject` to
-find global rejection thresholds.
+plot the cross-validation curve that is used to estimate the
+global rejection thresholds.
 """
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>

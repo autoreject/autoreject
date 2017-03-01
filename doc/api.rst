@@ -25,6 +25,7 @@ Functions
    :toctree: generated/
 
    compute_thresholds
+   get_rejection_threshold
    validation_curve
 
 
