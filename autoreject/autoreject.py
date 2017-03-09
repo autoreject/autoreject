@@ -8,11 +8,12 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 import mne
+from mne import concatenate_epochs
 from mne.io.pick import channel_indices_by_type
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.cross_validation import KFold, StratifiedShuffleSplit
+from sklearn.cross_validation import StratifiedShuffleSplit
 
 from sklearn.externals.joblib import Memory
 
@@ -279,6 +280,11 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
         space = [(thresh_range[0], thresh_range[1])]
         rs = gp_minimize(objective, space, n_calls=50,
                          random_state=random_state)
+    elif method == 'grid_search':
+        from sklearn.model_selection import GridSearchCV
+        tuned_parameters = dict(thresh=np.ptp(this_data, axis=1))
+        rs = GridSearchCV(est, tuned_parameters, cv=cv)
+        rs.fit(this_data)
 
     return rs
 
@@ -308,14 +314,12 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     EEG sensors this way:
         >>> compute_thresholds(epochs)
     """
-    if method not in ['bayesian_optimization', 'random_search']:
+    if method not in ['bayesian_optimization', 'random_search', 'grid_search']:
         raise ValueError('`method` param not recognized')
     ch_types = [ch_type for ch_type in ('eeg', 'meg')
                 if ch_type in epochs]
-    n_epochs = len(epochs)
-    epochs_interp = clean_by_interp(epochs, verbose=verbose)
-    data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
-                          axis=0)
+    n_epochs = len(epochs) // 2
+    data = epochs.get_data()
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
     cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
                                 random_state=random_state)
@@ -337,6 +341,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
                 thresh = rs.best_estimator_.thresh
             elif method == 'bayesian_optimization':
                 thresh = rs.x[0]
+            elif method == 'grid_search':
+                thresh = rs.best_params_['thresh']
             threshes[ch_type].append(thresh)
     return threshes
 
@@ -571,21 +577,22 @@ class LocalAutoRejectCV(object):
             The instance.
         """
         _check_data(epochs)
+        epochs_interp = clean_by_interp(epochs, verbose=self.verbose)
+        epochs = concatenate_epochs((epochs, epochs_interp))
         if self.cv is None:
-            self.cv = KFold(len(epochs), n_folds=10)
+            n_epochs = len(epochs) // 2
+            y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
+            self.cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
+                                             random_state=42)
+
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
-        if self.n_interpolates is None:
-            if epochs.info['nchan'] < 4:
-                raise ValueError('Too few channels. autoreject is unlikely'
-                                 ' to be effective')
-            max_interp = min(epochs.info['nchan'], 32)
-            self.n_interpolates = np.array([1, 4, max_interp])
+
+        if epochs.info['nchan'] < 4:
+            raise ValueError('Too few channels. Auto reject is unlikely'
+                             ' to be effective')
 
         n_folds = len(self.cv)
-        loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
-                         n_folds))
-
         local_reject = LocalAutoReject(thresh_func=self.thresh_func,
                                        verbose=self.verbose)
 
@@ -593,6 +600,15 @@ class LocalAutoRejectCV(object):
         local_reject.fit(epochs)
 
         local_reject._vote_epochs(epochs)
+        print('Maximum number of bad sensors: %d'
+              % local_reject.bad_segments.sum(axis=1).max())
+
+        if self.n_interpolates is None:
+            max_interp = local_reject.bad_segments.sum(axis=1).max()
+            self.n_interpolates = np.unique(np.linspace(0, max_interp, 5))
+
+        loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
+                         n_folds))
         bad_epoch_counts = local_reject.bad_epoch_counts.copy()
         desc = 'n_interp'
         for jdx, n_interp in enumerate(_pbar(self.n_interpolates, desc=desc,
@@ -611,6 +627,12 @@ class LocalAutoRejectCV(object):
                                                  position=3,
                                                  verbose=self.verbose)):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
+                    # \kappa must be greater than \rho
+                    n_channels = local_reject._drop_log.shape[1]
+                    if consensus_perc * n_channels <= n_interp:
+                        loss[idx, jdx, fold] = np.inf
+                        continue
+
                     local_reject.consensus_perc = consensus_perc
                     local_reject.bad_epoch_counts = bad_epoch_counts[train]
 
@@ -625,6 +647,7 @@ class LocalAutoRejectCV(object):
                     X = epochs[test].get_data()
                     loss[idx, jdx, fold] = -local_reject.score(X)
 
+        self.loss = loss
         best_idx, best_jdx = np.unravel_index(loss.mean(axis=-1).argmin(),
                                               loss.shape[:2])
         consensus_perc = self.consensus_percs[best_idx]
