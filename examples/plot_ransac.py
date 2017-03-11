@@ -108,16 +108,14 @@ axes[0].set_title('Before RANSAC')
 evoked_clean.pick_types(meg='grad', exclude=[])
 evoked_clean.plot(exclude=[], axes=axes[1], ylim=ylim)
 axes[1].set_title('After RANSAC')
-plt.tight_layout()
+fig.tight_layout()
 
 ###############################################################################
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
-set_matplotlib_defaults(plt)
 
-plt.figure(figsize=(12, 6))
-im = plt.imshow(ransac.bad_log, cmap='Reds', interpolation='nearest')
-ax = im.get_axes()
+fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+ax.imshow(ransac.bad_log, cmap='Reds', interpolation='nearest')
 ax.grid(False)
 ax.set_xlabel('Sensors')
 ax.set_ylabel('Trials')
@@ -126,5 +124,5 @@ plt.setp(ax, xticks=range(7, epochs.info['nchan'], 10),
 plt.setp(ax.get_yticklabels(), rotation=0)
 plt.setp(ax.get_xticklabels(), rotation=90)
 ax.tick_params(axis=u'both', which=u'both', length=0)
-plt.tight_layout(rect=[None, None, None, 1.1])
+fig.tight_layout(rect=[None, None, None, 1.1])
 plt.show()
