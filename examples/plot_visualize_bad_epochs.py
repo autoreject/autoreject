@@ -57,7 +57,7 @@ for run in range(3, 7):
     raw = mne.io.read_raw_fif(run_fname, preload=True, add_eeg_ref=False)
     mne.io.set_eeg_reference(raw, [])
     raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
-    raw.filter(1, 40, l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
+    raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
 
     raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
                            'EEG063': 'ecg', 'EEG064': 'misc'})
@@ -90,7 +90,7 @@ from functools import partial  # noqa
 this_epoch = epochs['famous']
 thresh_func = partial(compute_thresholds, random_state=42)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm')
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='progressbar')
 epochs_ar = ar.fit_transform(this_epoch.copy())
 
 ###############################################################################
