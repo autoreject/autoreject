@@ -65,10 +65,10 @@ epochs = Epochs(raw, events, event_id, tmin, tmax,
 
 ###############################################################################
 # We import ``Ransac`` and run the familiar ``fit_transform`` method.
-from autoreject import Ransac
-from autoreject.utils import interpolate_bads
+from autoreject import Ransac  # noqa
+from autoreject.utils import interpolate_bads  # noqa
 
-ransac = Ransac(verbose='tqdm')
+ransac = Ransac(verbose='progressbar', n_jobs=1)
 epochs_clean = ransac.fit_transform(epochs)
 
 ###############################################################################
@@ -91,8 +91,8 @@ evoked_clean.info['bads'] = ['MEG 2443']
 ###############################################################################
 # Let us plot the results.
 
-from autoreject.utils import set_matplotlib_defaults
-import matplotlib.pyplot as plt
+from autoreject.utils import set_matplotlib_defaults  # noqa
+import matplotlib.pyplot as plt  # noqa
 set_matplotlib_defaults(plt)
 
 fig, axes = plt.subplots(2, 1, figsize=(6, 6))

@@ -79,6 +79,10 @@ def clean_by_interp(inst, verbose='progressbar'):
         If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
 
+    Returns
+    -------
+    inst_clean : instance of mne.Evoked or mne.Epochs
+        Instance after interpolation of bad channels.
     """
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
@@ -121,8 +125,8 @@ def fetch_file(url, file_name, resume=True, timeout=10.):
         The URL open timeout.
     """
     from mne.utils import _fetch_file
-    return _fetch_file(url=url, file_name=file_name, print_destination=True,
-                       resume=resume, hash_=None, timeout=timeout)
+    _fetch_file(url=url, file_name=file_name, print_destination=True,
+                resume=resume, hash_=None, timeout=timeout)
 
 
 def _interpolate_bads_meg_fast(inst, mode='accurate', verbose=None):

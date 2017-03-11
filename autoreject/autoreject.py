@@ -513,6 +513,11 @@ class LocalAutoRejectCV(object):
         ----------
         epochs : instance of mne.Epochs
             The epochs object to be fit.
+
+        Returns
+        -------
+        self : instance of LocalAutoRejectCV
+            The instance.
         """
         _check_data(epochs)
         if self.cv is None:
@@ -521,7 +526,7 @@ class LocalAutoRejectCV(object):
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
             if epochs.info['nchan'] < 4:
-                raise ValueError('Too few channels. Auto reject is unlikely'
+                raise ValueError('Too few channels. autoreject is unlikely'
                                  ' to be effective')
             max_interp = min(epochs.info['nchan'], 32)
             self.n_interpolates = np.array([1, 4, max_interp])

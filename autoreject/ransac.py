@@ -13,19 +13,10 @@ from sklearn.externals.joblib import Parallel, delayed
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.parallel import check_n_jobs
 from mne.io.pick import channel_indices_by_type
+from mne.utils import check_random_state
 
 from .utils import _pbar
 from .autoreject import _check_data
-
-
-def _randsample(X, num):
-    """Generate random subsamples (as done in PREP code)"""
-    Y = []
-    for k in range(num):
-        pick = int(round(1 + (len(X) - 1) * np.random.random())) - 1
-        Y.append(X[pick])
-        del X[pick]
-    return Y
 
 
 def _iterate_epochs(ransac, epochs, idxs, verbose):
@@ -61,7 +52,7 @@ class Ransac(object):
 
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
                  unbroken_time=0.4, ch_type='eeg', n_jobs=1,
-                 verbose='progressbar'):
+                 random_state=435656, verbose='progressbar'):
         """Implements RAndom SAmple Consensus (RANSAC) method to detect bad sensors.
 
         Parameters
@@ -77,6 +68,8 @@ class Ransac(object):
             predictability.
         n_jobs : int
             Number of parallel jobs.
+        random_state : None | int
+            To seed or not the random number generator.
         verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
             The verbosity of progress messages.
             If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -102,12 +95,13 @@ class Ransac(object):
         self.min_corr = min_corr
         self.unbroken_time = unbroken_time
         self.n_jobs = n_jobs
+        self.random_state = random_state
         self.verbose = verbose
 
     def _get_random_subsets(self, info):
         """ Get random channels"""
         # have to set the seed here
-        np.random.seed(435656)
+        rng = check_random_state(self.random_state)
         n_channels = len(info['ch_names'])
 
         # number of channels to interpolate from
@@ -116,7 +110,7 @@ class Ransac(object):
         # get picks for resamples
         picks = []
         for idx in range(self.n_resample):
-            pick = _randsample(range(n_channels), n_samples)
+            pick = rng.permutation(n_channels)[:n_samples].copy()
             picks.append(pick)
 
         # get channel subsets as lists

@@ -32,13 +32,9 @@ consensus_percs = np.linspace(0, 1.0, 11)
 # For the purposes of this example, we shall use the MNE sample dataset.
 # Therefore, let us make some MNE related imports.
 
-###############################################################################
-
-import mne
-from mne import io
-from mne import Epochs
-from mne.utils import check_random_state
-from mne.datasets import sample
+import mne  # noqa
+from mne.utils import check_random_state  # noqa
+from mne.datasets import sample  # noqa
 
 ###############################################################################
 # Now, we can import the class required for rejecting and repairing bad
@@ -46,26 +42,21 @@ from mne.datasets import sample
 # provided to the :class:`autoreject.LocalAutoRejectCV` class for computing
 # the channel-level thresholds.
 
-###############################################################################
-
 from autoreject import (LocalAutoRejectCV, compute_thresholds,
-                        set_matplotlib_defaults)
+                        set_matplotlib_defaults)  # noqa
 
 ###############################################################################
 # Let us now read in the raw `fif` file for MNE sample dataset.
-
-###############################################################################
 
 check_random_state(42)
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.read_raw_fif(raw_fname, preload=True)
+raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
 # We can then read in the events
 
-###############################################################################
 event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
                            'eve.fif')
 event_id = {'Auditory/Left': 1}
@@ -77,7 +68,6 @@ events = mne.read_events(event_fname)
 # And pick MEG channels for repairing. Currently, :mod:`autoreject` can repair
 # only one channel type at a time.
 
-###############################################################################
 raw.info['bads'] = []
 picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
@@ -87,25 +77,21 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
 # because we do not want epochs to be dropped when instantiating
 # :class:`mne.Epochs`.
 
-###############################################################################
 raw.info['projs'] = list()  # remove proj, don't proj while interpolating
-epochs = Epochs(raw, events, event_id, tmin, tmax,
-                picks=picks, baseline=(None, 0), reject=None,
-                verbose=False, detrend=0, preload=True)
+epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                    picks=picks, baseline=(None, 0), reject=None,
+                    verbose=False, detrend=0, preload=True)
 
 ###############################################################################
 # First, we set up the function to compute the sensor-level thresholds.
 
-###############################################################################
-from functools import partial
+from functools import partial  # noqa
 thresh_func = partial(compute_thresholds, method='random_search',
                       random_state=42)
 
 ###############################################################################
 # :class:`autoreject.LocalAutoRejectCV` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
-
-###############################################################################
 
 ar = LocalAutoRejectCV(n_interpolates, consensus_percs,
                        thresh_func=thresh_func)
@@ -117,16 +103,13 @@ evoked_clean = epochs_clean.average()
 ###############################################################################
 # Now, we will manually mark the bad channels just for plotting.
 
-###############################################################################
-
 evoked.info['bads'] = ['MEG 2443']
 evoked_clean.info['bads'] = ['MEG 2443']
 
 ###############################################################################
 # Let us plot the results.
 
-###############################################################################
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa
 set_matplotlib_defaults(plt)
 
 fig, axes = plt.subplots(2, 1, figsize=(6, 6))
@@ -148,7 +131,6 @@ plt.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
-###############################################################################
 set_matplotlib_defaults(plt)
 
 plt.figure(figsize=(12, 6))
