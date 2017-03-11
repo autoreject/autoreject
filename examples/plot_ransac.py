@@ -14,7 +14,7 @@ works for MEG sensors as well.
 [2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort,
     "Autoreject: Automated artifact rejection for MEG and EEG." arXiv preprint
     arXiv:1612.08194, 2016.
-"""
+"""  # noqa
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD (3-clause)
