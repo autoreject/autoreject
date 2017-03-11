@@ -13,8 +13,6 @@ channel-wise thresholds.
 ###############################################################################
 # Let us first load the `raw` data using :func:`mne.io.read_raw_fif`.
 
-###############################################################################
-
 import mne
 from mne import io
 from mne.datasets import sample
@@ -26,8 +24,6 @@ raw = io.read_raw_fif(raw_fname, preload=True)
 ###############################################################################
 # We can extract the events (or triggers) for epoching our signal.
 
-###############################################################################
-
 event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
                            'eve.fif')
 event_id = {'Auditory/Left': 1}
@@ -38,7 +34,6 @@ events = mne.read_events(event_fname)
 # Now that we have the events, we can extract the trials for the selection
 # of channels defined by ``picks``.
 
-###############################################################################
 include = []
 picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False,
                        eog=False, include=include, exclude='bads')
@@ -55,20 +50,18 @@ epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
 # and then compute the channel-level thresholds using
 # :func:`autoreject.compute_thresholds`.
 
-###############################################################################
-from autoreject import compute_thresholds
-import numpy as np
+import numpy as np  # noqa
+from autoreject import compute_thresholds  # noqa
 
 threshes = compute_thresholds(epochs, method='random_search',
-                              random_state=42, verbose='tqdm')['meg']
+                              random_state=42, verbose='progressbar')['meg']
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify
 # that the thresholds are indeed different for different sensors.
 
-###############################################################################
-import matplotlib.pyplot as plt
-from autoreject import set_matplotlib_defaults
+import matplotlib.pyplot as plt  # noqa
+from autoreject import set_matplotlib_defaults  # noqa
 set_matplotlib_defaults(plt)
 
 unit = r'fT/cm'
@@ -84,5 +77,3 @@ plt.ylabel('Number of sensors')
 plt.xlim((100, 950))
 plt.tight_layout()
 plt.show()
-
-###############################################################################

@@ -14,8 +14,6 @@ visualize the bad sensors in each trial
 # First, we download the data from OpenfMRI. We will download the tarfile,
 # extract the necessary files and delete the tar from the disk
 
-###############################################################################
-
 import os
 import tarfile
 
@@ -44,16 +42,13 @@ if not os.path.exists(os.path.join(base_path, 'ds117')):
 # and continuing up to 800 ms after that. The data contains visual stimuli for
 # famous faces, unfamiliar faces, as well as scrambled faces.
 
-###############################################################################
-
 tmin, tmax = -0.2, 0.8
 events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 
 ###############################################################################
 # Let us now load all the epochs into memory and concatenate them
 
-###############################################################################
-import mne
+import mne  # noqa
 
 epochs = list()
 for run in range(3, 7):
@@ -83,14 +78,14 @@ for run in range(3, 7):
 
     # Same `dev_head_t` for all runs so that we can concatenate them.
     epoch.info['dev_head_t'] = epochs[0].info['dev_head_t']
+
 epochs = mne.epochs.concatenate_epochs(epochs)
 
 ###############################################################################
 # Now, we apply autoreject
 
-###############################################################################
-from autoreject import LocalAutoRejectCV, compute_thresholds
-from functools import partial
+from autoreject import LocalAutoRejectCV, compute_thresholds  # noqa
+from functools import partial  # noqa
 
 this_epoch = epochs['famous']
 thresh_func = partial(compute_thresholds, random_state=42)
@@ -103,8 +98,7 @@ epochs_ar = ar.fit_transform(this_epoch.copy())
 # interpolated are in blue. Bad sensors which are not interpolated are in red.
 # Bad trials are also in red.
 
-###############################################################################
-from autoreject import plot_epochs
+from autoreject import plot_epochs  # noqa
 plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
             fix_log=ar.fix_log, scalings=dict(eeg=40e-6),
             title='')
@@ -112,7 +106,6 @@ plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
 ###############################################################################
 # ... and the epochs after cleaning with autoreject
 
-###############################################################################
 epochs_ar.plot(scalings=dict(eeg=40e-6))
 
 ###############################################################################
@@ -121,7 +114,6 @@ epochs_ar.plot(scalings=dict(eeg=40e-6))
 # the eyeblinks have not yet been cleaned but the bad channels have been
 # repaired.
 
-###############################################################################
 ylim = dict(eeg=(-15, 15))
 epochs.average().plot(ylim=ylim, spatial_colors=True)
 epochs_ar.average().plot(ylim=ylim, spatial_colors=True)

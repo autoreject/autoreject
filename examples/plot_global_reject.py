@@ -13,7 +13,6 @@ find global rejection thresholds.
 ###############################################################################
 # Let us import the data using MNE-Python and epoch it.
 
-###############################################################################
 import mne
 from mne import io
 from mne.datasets import sample
@@ -40,8 +39,7 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 # Let us define a range of candidate thresholds which we would like to try.
 # In this particular case, we try from :math:`40{\mu}V` to :math:`200{\mu}V`
 
-###############################################################################
-import numpy as np
+import numpy as np  # noqa
 param_range = np.linspace(40e-6, 200e-6, 30)
 
 ###############################################################################
@@ -51,8 +49,7 @@ param_range = np.linspace(40e-6, 200e-6, 30)
 # (RMSE) values at the candidate thresholds, we will use the function
 # :func:`autoreject.validation_curve`.
 
-###############################################################################
-from autoreject import GlobalAutoReject, validation_curve
+from autoreject import GlobalAutoReject, validation_curve  # noqa
 
 _, test_scores = validation_curve(
     GlobalAutoReject(), epochs, y=None,
@@ -64,9 +61,8 @@ best_thresh = param_range[np.argmin(test_scores)]
 ###############################################################################
 # Now let us plot the RMSE values against the candidate thresholds.
 
-###############################################################################
-import matplotlib.pyplot as plt
-from autoreject import set_matplotlib_defaults
+import matplotlib.pyplot as plt  # noqa
+from autoreject import set_matplotlib_defaults  # noqa
 set_matplotlib_defaults(plt)
 
 human_thresh = 80e-6
