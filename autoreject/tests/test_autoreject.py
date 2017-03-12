@@ -12,6 +12,10 @@ from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
 
 from nose.tools import assert_raises
 
+import matplotlib
+matplotlib.use('Agg')
+
+
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = io.read_raw_fif(raw_fname, add_eeg_ref=False, preload=False)
