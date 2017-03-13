@@ -17,6 +17,7 @@ visualize the bad sensors in each trial
 import os
 import tarfile
 
+import autoreject
 from autoreject.utils import fetch_file
 
 subject_id = 16  # OpenfMRI format of subject numbering
@@ -26,7 +27,8 @@ src_url = ('http://openfmri.s3.amazonaws.com/tarballs/'
 subject = "sub%03d" % subject_id
 
 print("processing subject: %s" % subject)
-base_path = os.path.join(os.path.dirname(__file__))
+base_path = os.path.join(
+    os.path.dirname(autoreject.__file__), '..', 'examples')
 target = os.path.join(base_path, 'ds117_R0.1.1_sub016_raw.tgz')
 if not os.path.exists(os.path.join(base_path, 'ds117')):
     if not os.path.exists(target):
