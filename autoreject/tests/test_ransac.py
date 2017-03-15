@@ -20,7 +20,7 @@ raw.info['projs'] = list()
 
 
 def test_ransac():
-    """Some basic tests for autoreject and ransac."""
+    """Some basic tests for ransac."""
     ransac = Ransac()
 
     event_id = {'Visual/Left': 3}
