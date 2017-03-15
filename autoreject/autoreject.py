@@ -149,17 +149,23 @@ class GlobalAutoReject(BaseAutoReject):
 
 
 def get_rejection_threshold(epochs):
-    """Class to compute global rejection thresholds.
+    """Compute global rejection thresholds.
 
     Parameters
     ----------
     epochs : mne.Epochs object
-        The epochs for which to estimate the epochs dictionary
+        The epochs from which to estimate the epochs dictionary
 
     Returns
     -------
     reject : dict
-        The rejection dictionary with keys 'meg', 'eeg' and 'eog'
+        The rejection dictionary with keys 'mag', 'grad', 'eeg', 'eog'
+        and 'ecg'.
+
+    Note
+    ----
+    Sensors marked as bad by user will be excluded when estimating the
+    rejection dictionary.
     """
     reject = dict()
     X = epochs.get_data()
@@ -167,7 +173,9 @@ def get_rejection_threshold(epochs):
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
         if ch_type not in epochs:
             continue
-        deltas = np.array([np.ptp(d, axis=1) for d in X[:, picks[ch_type], :]])
+        this_picks = [p for p in picks[ch_type] if epochs.info['ch_names'][p]
+                      not in epochs.info['bads']]
+        deltas = np.array([np.ptp(d, axis=1) for d in X[:, this_picks, :]])
         param_range = deltas.max(axis=1)
         print('Estimating rejection dictionary for %s with %d candidate'
               ' thresholds' % (ch_type, param_range.shape[0]))

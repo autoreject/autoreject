@@ -64,7 +64,7 @@ For more details check out the :ref:`example to automatically detect and repair 
 
 .. note::
 
-	Fow now, we do not guarantee if autoreject will work for more than one channel type. We intend to support multiple channel
+	Fow now, we do not guarantee if autoreject (local) will work for more than one channel type. We intend to support multiple channel
 	types, but in the future. Contributions to make this happen are welcome.
 
 Bug reports
