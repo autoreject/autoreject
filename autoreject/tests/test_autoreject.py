@@ -36,7 +36,7 @@ def test_autoreject():
                            eog=False, include=include, exclude=[])
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
-                        reject=None, add_eeg_ref=False)
+                        reject=None, add_eeg_ref=False, preload=True)
 
     X = epochs.get_data()
     n_epochs, n_channels, n_times = X.shape

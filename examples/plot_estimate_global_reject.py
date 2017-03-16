@@ -32,7 +32,7 @@ include = []
 picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
                        eog=True, include=include, exclude='bads')
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                    picks=picks, baseline=(None, 0),
+                    picks=picks, baseline=(None, 0), preload=True,
                     reject=None, verbose=False, detrend=1)
 
 ###############################################################################
@@ -45,3 +45,8 @@ reject = get_rejection_threshold(epochs)
 # and print it
 
 print('The rejection dictionary is %s' % reject)
+
+###############################################################################
+# Finally, the cleaned epochs
+epochs.drop_bad(reject=reject)
+epochs.average().plot()

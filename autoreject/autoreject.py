@@ -82,9 +82,9 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
-    good_picks = mne.pick_types(epochs.info, meg=True, eeg=True, eog=True,
-                                ecg=True, exclude='bads')
-    X = epochs.get_data()[:, good_picks, :]
+    data_picks = mne.pick_types(epochs.info, meg=True, eeg=True, eog=False,
+                                ecg=False, exclude='bads')
+    X = epochs.get_data()[:, data_picks, :]
     n_epochs, n_channels, n_times = X.shape
 
     estimator.n_channels = n_channels
@@ -175,6 +175,12 @@ def get_rejection_threshold(epochs):
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
         if ch_type not in epochs:
             continue
+        if ch_type == 'ecg' and 'mag' not in epochs:
+            continue
+        if ch_type == 'eog' and not \
+                ('mag' in epochs or 'grad' in epochs or 'eeg' in epochs):
+            continue
+
         this_picks = [p for p in picks[ch_type] if epochs.info['ch_names'][p]
                       not in epochs.info['bads']]
         deltas = np.array([np.ptp(d, axis=1) for d in X[:, this_picks, :]])
@@ -182,8 +188,23 @@ def get_rejection_threshold(epochs):
         print('Estimating rejection dictionary for %s with %d candidate'
               ' thresholds' % (ch_type, param_range.shape[0]))
 
+        if ch_type == 'mag' or ch_type == 'ecg':
+            this_epoch = epochs.copy().pick_types(meg='mag', eeg=False)
+        elif ch_type == 'eeg':
+            this_epoch = epochs.copy().pick_types(meg=False, eeg=True)
+        elif ch_type == 'eog':
+            # Cannot mix channel types in cv score
+            if 'eeg' in epochs:
+                this_epoch = epochs.copy().pick_types(meg=False, eeg=True)
+            elif 'grad' in epochs:
+                this_epoch = epochs.copy().pick_types(meg='grad', eeg=False)
+            elif 'mag' in epochs:
+                this_epoch = epochs.copy().pick_types(meg='mag', eeg=False)
+        elif ch_type == 'grad':
+            this_epoch = epochs.copy().pick_types(meg='grad', eeg=False)
+
         _, test_scores = validation_curve(
-            GlobalAutoReject(), epochs, y=None,
+            GlobalAutoReject(), this_epoch, y=None,
             param_name="thresh", param_range=param_range, cv=5)
 
         test_scores = -test_scores.mean(axis=1)
