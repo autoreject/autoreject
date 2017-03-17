@@ -91,7 +91,7 @@ from functools import partial  # noqa
 this_epoch = epochs['famous']
 thresh_func = partial(compute_thresholds, random_state=42)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='progressbar')
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm')
 epochs_ar = ar.fit_transform(this_epoch.copy())
 
 ###############################################################################

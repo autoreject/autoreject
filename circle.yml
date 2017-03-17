@@ -1,6 +1,8 @@
 dependencies:
   cache_directories:
-    - "~/autoreject_data"
+    - "~/.mne"
+    - "~/mne_data/MNE-sample-data"
+    - "examples/ds117"
   override:
     - pip install --upgrade pip
     - pip install sphinx matplotlib coverage Pillow
