@@ -52,7 +52,7 @@ events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 import mne  # noqa
 
 epochs = list()
-for run in range(3, 7):
+for run in range(3, 4):
     run_fname = os.path.join(base_path, 'ds117', 'sub%03d' % subject_id, 'MEG',
                              'run_%02d_raw.fif' % run)
     raw = mne.io.read_raw_fif(run_fname, preload=True, add_eeg_ref=False)
