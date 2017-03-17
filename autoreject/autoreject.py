@@ -294,10 +294,13 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
         from skopt import gp_minimize
         from sklearn.cross_validation import cross_val_score
 
-        def objective(thresh):
+        threshes = np.sort(np.ptp(this_data, axis=1))
+
+        def objective(n_epochs):
+            thresh = threshes[n_epochs]
             est.set_params(thresh=thresh)
             return -np.mean(cross_val_score(est, this_data, cv=cv))
-        space = [(thresh_range[0], thresh_range[1])]
+        space = [(0, threshes.shape[0] - 1)]
         rs = gp_minimize(objective, space, n_calls=50,
                          random_state=random_state)
 
@@ -357,7 +360,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
             if method == 'random_search':
                 thresh = rs.best_estimator_.thresh
             elif method == 'bayesian_optimization':
-                thresh = rs.x[0]
+                thresh = np.sort(np.ptp(data[:, pick], axis=1))[rs.x[0]]
             threshes[ch_type].append(thresh)
     return threshes
 
