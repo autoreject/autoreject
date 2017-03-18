@@ -17,6 +17,7 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 from sklearn.externals.joblib import Memory
 
 from .utils import clean_by_interp, interpolate_bads, _get_epochs_type, _pbar
+from .bayesopt import expected_improvement, bayes_opt
 
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
@@ -291,15 +292,15 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
                                 random_state=random_state)
         rs.fit(this_data)
     elif method == 'bayesian_optimization':
-        from skopt import gp_minimize
         from sklearn.cross_validation import cross_val_score
 
-        def objective(thresh):
+        def func(thresh):
             est.set_params(thresh=thresh)
             return -np.mean(cross_val_score(est, this_data, cv=cv))
-        space = [(thresh_range[0], thresh_range[1])]
-        rs = gp_minimize(objective, space, n_calls=50,
-                         random_state=random_state)
+
+        initial_x = np.ptp(this_data, axis=1)[::5]
+        rs, _ = bayes_opt(func, initial_x, expected_improvement,
+                          max_iter=10, debug=False)
 
     return rs
 
@@ -357,7 +358,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
             if method == 'random_search':
                 thresh = rs.best_estimator_.thresh
             elif method == 'bayesian_optimization':
-                thresh = rs.x[0]
+                thresh = rs
             threshes[ch_type].append(thresh)
     return threshes
 
