@@ -294,11 +294,19 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
     elif method == 'bayesian_optimization':
         from sklearn.cross_validation import cross_val_score
 
-        def func(thresh):
-            est.set_params(thresh=thresh)
-            return -np.mean(cross_val_score(est, this_data, cv=cv))
+        cache = dict()
+        all_threshes = np.sort(np.ptp(this_data, axis=1))
 
-        initial_x = np.ptp(this_data, axis=1)[::5]
+        def func(thresh):
+            idx = np.argmin(np.abs(thresh - all_threshes))
+            thresh = all_threshes[idx]
+            est.set_params(thresh=thresh)
+            if thresh not in cache:
+                obj = -np.mean(cross_val_score(est, this_data, cv=cv))
+                cache.update({thresh: obj})
+            return cache[thresh]
+
+        initial_x = all_threshes[::5]
         rs, _ = bayes_opt(func, initial_x, expected_improvement,
                           max_iter=10, debug=False)
 
