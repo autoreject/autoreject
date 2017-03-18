@@ -253,7 +253,7 @@ def _pick_exclusive_channels(info, ch_type):
     return picks
 
 
-def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
+def _compute_thresh(this_data, method='bayesian_optimization',
                     cv=10, random_state=None):
     """ Compute the rejection threshold for one channel.
 
@@ -261,8 +261,6 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
     ----------
     this_data: array (n_epochs, n_times)
         Data for one channel.
-    thresh_range : tuple
-        The range (low, high) of thresholds over which to optimize.
     method : str
         'bayesian_optimization' or 'random_search'
     cv : iterator
@@ -272,8 +270,8 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
 
     Returns
     -------
-    rs : instance of RandomizedSearchCV
-        The RandomizedSearchCV object.
+    best_thresh : float
+        The best threshold.
 
     Notes
     -----
@@ -282,20 +280,20 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
     autoreject with scipy version 0.16 or greater.
     """
     est = _ChannelAutoReject()
+    all_threshes = np.sort(np.ptp(this_data, axis=1))
 
     if method == 'random_search':
-        param_dist = dict(thresh=uniform(thresh_range[0],
-                                         thresh_range[1]))
+        param_dist = dict(thresh=uniform(all_threshes[0],
+                                         all_threshes[-1]))
         rs = RandomizedSearchCV(est,
                                 param_distributions=param_dist,
                                 n_iter=20, cv=cv,
                                 random_state=random_state)
         rs.fit(this_data)
+        best_thresh = rs.best_estimator_.thresh
     elif method == 'bayesian_optimization':
         from sklearn.cross_validation import cross_val_score
-
         cache = dict()
-        all_threshes = np.sort(np.ptp(this_data, axis=1))
 
         def func(thresh):
             idx = np.argmin(np.abs(thresh - all_threshes))
@@ -307,10 +305,10 @@ def _compute_thresh(this_data, thresh_range, method='bayesian_optimization',
             return cache[thresh]
 
         initial_x = all_threshes[::5]
-        rs, _ = bayes_opt(func, initial_x, expected_improvement,
-                          max_iter=10, debug=False)
+        best_thresh, _ = bayes_opt(func, initial_x, expected_improvement,
+                                   max_iter=10, debug=False)
 
-    return rs
+    return best_thresh
 
 
 def compute_thresholds(epochs, method='bayesian_optimization',
@@ -356,17 +354,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         threshes[ch_type] = []
         for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
                                   verbose=verbose)):
-            # lower bound must be minimum ptp, otherwise random search
-            # screws up.
-            thresh_low = np.min(np.ptp(data[:, pick], axis=1))
-            thresh_high = np.max(np.ptp(data[:, pick], axis=1))
-            rs = _compute_thresh(data[:, pick], cv=cv, method=method,
-                                 thresh_range=(thresh_low, thresh_high),
-                                 random_state=random_state)
-            if method == 'random_search':
-                thresh = rs.best_estimator_.thresh
-            elif method == 'bayesian_optimization':
-                thresh = rs
+            thresh = _compute_thresh(data[:, pick], cv=cv, method=method,
+                                     random_state=random_state)
             threshes[ch_type].append(thresh)
     return threshes
 
