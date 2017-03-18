@@ -15,7 +15,7 @@ import scipy.stats as st
 def expected_improvement(gp, best_y):
     """The expected improvement acquisition function.
 
-    The equation is explained in Eq (3) of the tutorial"""
+    The equation is explained in Eq (3) of the tutorial."""
     def ev(x):
         y, y_std = gp.predict(x * np.ones((1, 1)), return_std=True)
         Z = (y[0] - best_y) / (y_std[0] + 1e-12)
@@ -23,7 +23,7 @@ def expected_improvement(gp, best_y):
     return ev
 
 
-def bayes_opt(f, initial_x, acquisition, max_iter=100, tol=1e-12, debug=False):
+def bayes_opt(f, initial_x, acquisition, max_iter=100, debug=False):
     """The actual bayesian optimization function.
 
     f is the very expensive function we want to minimize.
