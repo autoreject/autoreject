@@ -1,8 +1,13 @@
-"""Bayesian optimization according to Brochu, Cora, and de Freitas' tutorial
+"""Bayesian optimization according to:
+
+Brochu, Cora, and de Freitas' tutorial at
 http://haikufactory.com/files/bayopt.pdf
+
+Adopted from http://atpassos.me/post/44900091837/bayesian-optimization
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+#          Alexandre Passos <alexandre.tp@gmail.com>
 #          Mainak Jas <mainak.jas@telecom-paristech.fr>
 
 from sklearn import gaussian_process
