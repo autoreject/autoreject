@@ -638,7 +638,7 @@ def _plot_update_epochs_proj(params, bools=None):
         params['info']['projs'] = [copy.deepcopy(params['projs'][ii])
                                    for ii in inds]
         params['proj_bools'] = bools
-    params['projector'], _ = setup_proj(params['info'], add_eeg_ref=False,
+    params['projector'], _ = setup_proj(params['info'],
                                         verbose=False)
 
     start = int(params['t_start'] / len(params['epochs'].times))

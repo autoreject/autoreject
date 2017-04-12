@@ -14,7 +14,7 @@ matplotlib.use('Agg')
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.read_raw_fif(raw_fname, add_eeg_ref=False, preload=False)
+raw = io.read_raw_fif(raw_fname, preload=False)
 raw.crop(0, 15)
 raw.info['projs'] = list()
 
@@ -31,7 +31,7 @@ def test_ransac():
                            eog=False, include=include, exclude=[])
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
-                        reject=None, add_eeg_ref=False)
+                        reject=None)
 
     X = epochs.get_data()
     assert_raises(ValueError, ransac.fit, X)
@@ -42,12 +42,12 @@ def test_ransac():
     # should not contain other channel types
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
-                        reject=None, add_eeg_ref=False)
+                        reject=None)
     assert_raises(ValueError, ransac.fit, epochs)
     # now with only one channel type
     picks = mne.pick_types(raw.info, meg=False, eeg=True)
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
-                        reject=None, add_eeg_ref=False, preload=True)
+                        reject=None, preload=True)
     epochs_clean = ransac.fit_transform(epochs)
     assert_true(len(epochs_clean) == len(epochs))
