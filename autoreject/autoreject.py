@@ -536,7 +536,7 @@ class LocalAutoReject(BaseAutoReject):
                     # find channels which are bad by rejection threshold
                     bad_chs_mask = drop_log[epoch_idx] == 1
                     # find the ordering of channels amongst the bad channels
-                    sorted_ch_idx_picks = np.argsort(peaks[bad_chs_mask])[::-1]
+                    sorted_ch_idx_picks = np.argsort(peaks)[::-1]
                     # then select only the worst n_interpolate channels
                     bad_chs_mask[
                         sorted_ch_idx_picks[:self.n_interpolate]] = True

@@ -255,6 +255,7 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         raise RuntimeError('Some channels not classified. Please'
                            ' check your picks')
     ch_names = [params['info']['ch_names'][x] for x in inds]
+    params['fix_log'] = params['fix_log'][:, inds]
 
     # set up plotting
     size = get_config('MNE_BROWSE_RAW_SIZE')
