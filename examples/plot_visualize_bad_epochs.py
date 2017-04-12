@@ -91,9 +91,9 @@ from functools import partial  # noqa
 this_epoch = epochs['famous']
 thresh_func = partial(compute_thresholds, random_state=42)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm')
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
 epochs_ar = ar.fit_transform(this_epoch.copy())
-
+epochs_ar.picks_
 ###############################################################################
 # ... and visualize the bad epochs and sensors. Bad sensors which have been
 # interpolated are in blue. Bad sensors which are not interpolated are in red.

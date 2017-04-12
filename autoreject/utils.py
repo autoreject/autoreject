@@ -8,6 +8,16 @@ from sklearn.externals.joblib import Memory
 mem = Memory(cachedir='cachedir')
 
 
+def _handle_picks(info, picks):
+    """Pick the data channls or return picks."""
+    if picks is None:
+        out = mne.pick_types(
+            info, meg=True, eeg=True, ref_meg=False, exclude='bads')
+    else:
+        out = picks
+    return out
+
+
 def set_matplotlib_defaults(plt):
     """Set publication quality defaults for matplotlib.
 
@@ -65,13 +75,16 @@ def _get_epochs_type():
     return BaseEpochs
 
 
-def clean_by_interp(inst, verbose='progressbar'):
+def clean_by_interp(inst, picks=None, verbose='progressbar'):
     """Clean epochs/evoked by LOOCV.
 
     Parameters
     ----------
     inst : instance of mne.Evoked or mne.Epochs
         The evoked or epochs object.
+    picks : ndarray, shape(n_channels,) | None
+        The channels to be considered for autoreject. If None, defaults
+        to data channels {'meg', 'eeg'}.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -86,7 +99,7 @@ def clean_by_interp(inst, verbose='progressbar'):
     """
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
-    picks = mne.pick_types(inst.info, meg=True, eeg=True, exclude=[])
+    picks = _handle_picks(info=inst_interp.info, picks=picks)
     if len(picks) != len(inst.info['ch_names']):
         raise ValueError('Please pick channel types before '
                          'running autoreject')
@@ -95,7 +108,7 @@ def clean_by_interp(inst, verbose='progressbar'):
     ch_names = [ch_name for ch_name in inst.info['ch_names']]
     for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
                                         desc=mesg, verbose=verbose)):
-        inst_clean = inst.copy()
+        inst_clean = inst.copy().pick(picks) # XXXX pick here
         inst_clean.info['bads'] = [ch]
         interpolate_bads(inst_clean, reset_bads=True, mode='fast')
 
@@ -104,7 +117,7 @@ def clean_by_interp(inst, verbose='progressbar'):
         if isinstance(inst, mne.Evoked):
             inst_interp.data[pick] = inst_clean.data[pick]
         elif isinstance(inst, BaseEpochs):
-            inst_interp._data[:, pick] = inst_clean._data[:, pick]
+            inst_interp._data[:, pick] = inst_clean._data[:, pick]  # keep track of picked
         else:
             raise ValueError('Unrecognized type for inst')
     return inst_interp
