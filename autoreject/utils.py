@@ -108,7 +108,7 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
     ch_names = [ch_name for ch_name in inst.info['ch_names']]
     for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
                                         desc=mesg, verbose=verbose)):
-        inst_clean = inst.copy().pick(picks) # XXXX pick here
+        inst_clean = inst.copy()  # XXXX pick here
         inst_clean.info['bads'] = [ch]
         interpolate_bads(inst_clean, reset_bads=True, mode='fast')
 
@@ -117,7 +117,8 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
         if isinstance(inst, mne.Evoked):
             inst_interp.data[pick] = inst_clean.data[pick]
         elif isinstance(inst, BaseEpochs):
-            inst_interp._data[:, pick] = inst_clean._data[:, pick]  # keep track of picked
+            inst_interp._data[:, pick] = inst_clean._data[:, pick]
+            # keep track of picked
         else:
             raise ValueError('Unrecognized type for inst')
     return inst_interp

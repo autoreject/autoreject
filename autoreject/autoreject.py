@@ -9,6 +9,7 @@ from scipy.stats.distributions import uniform
 
 import mne
 from mne.io.pick import channel_indices_by_type
+from mne.utils import logger
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -17,7 +18,7 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 from sklearn.externals.joblib import Memory
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
-                    _handle_picks, logger)
+                    _handle_picks)
 
 from .bayesopt import expected_improvement, bayes_opt
 
@@ -359,7 +360,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
                                 random_state=random_state)
 
-    threshes = list()
+    threshes = dict()
     ch_names = epochs_interp.ch_names
     for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
                               verbose=verbose)):

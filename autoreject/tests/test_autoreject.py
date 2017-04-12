@@ -19,7 +19,7 @@ matplotlib.use('Agg')
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.read_raw_fif(raw_fname, add_eeg_ref=False, preload=False)
+raw = io.read_raw_fif(raw_fname, preload=False)
 raw.crop(0, 20)
 raw.info['projs'] = list()
 
@@ -36,7 +36,7 @@ def test_autoreject():
                            eog=False, include=include, exclude=[])
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
-                        reject=None, add_eeg_ref=False, preload=True)
+                        reject=None, preload=True)
 
     X = epochs.get_data()
     n_epochs, n_channels, n_times = X.shape
