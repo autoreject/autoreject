@@ -52,7 +52,7 @@ events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 import mne  # noqa
 
 epochs = list()
-for run in range(3, 7):
+for run in [3]:  # range(3, 7):
     run_fname = os.path.join(base_path, 'ds117', 'sub%03d' % subject_id, 'MEG',
                              'run_%02d_raw.fif' % run)
     raw = mne.io.read_raw_fif(run_fname, preload=True)
@@ -66,7 +66,7 @@ for run in range(3, 7):
 
     exclude = []  # XXX
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
-                           eog=False, exclude=exclude)
+                           eog=True, exclude=exclude)
     events = mne.find_events(raw, stim_channel='STI101',
                              consecutive='increasing',
                              min_duration=0.003, verbose=True)
@@ -93,7 +93,7 @@ thresh_func = partial(compute_thresholds, random_state=42)
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
 epochs_ar = ar.fit_transform(this_epoch.copy())
-epochs_ar.picks_
+
 ###############################################################################
 # ... and visualize the bad epochs and sensors. Bad sensors which have been
 # interpolated are in blue. Bad sensors which are not interpolated are in red.
