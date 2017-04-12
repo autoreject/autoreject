@@ -516,6 +516,7 @@ class LocalAutoReject(BaseAutoReject):
         # 1: bad segment, # 2: interpolated, # 3: dropped
         self.fix_log = self._drop_log.copy()
         ch_names = [epochs.ch_names[pp] for pp in self.picks]
+        non_picks = np.setdiff1d(range(epochs.info['nchan']), self.picks)
         n_consensus = self.consensus_perc * len(ch_names)
         # TODO: raise error if preload is not True
         pos = 4 if hasattr(self, '_leave') else 2
@@ -526,19 +527,22 @@ class LocalAutoReject(BaseAutoReject):
                 continue
             else:
                 if n_bads <= self.n_interpolate:
-                    bad_chs = np.where(drop_log[epoch_idx] == 1)[0]
+                    bad_chs_mask = drop_log[epoch_idx] == 1
                 else:
                     # get peak-to-peak for channels in that epoch
-                    data = epochs[epoch_idx].get_data()[0, self.picks, :]
+                    data = epochs[epoch_idx].get_data()[0]
                     peaks = np.ptp(data, axis=-1)
+                    peaks[non_picks] = -np.inf
                     # find channels which are bad by rejection threshold
-                    bad_chs = np.where(drop_log[epoch_idx][self.picks] == 1)[0]
+                    bad_chs_mask = drop_log[epoch_idx] == 1
                     # find the ordering of channels amongst the bad channels
-                    sorted_ch_idx = np.argsort(peaks[bad_chs])[::-1]
+                    sorted_ch_idx_picks = np.argsort(peaks[bad_chs_mask])[::-1]
                     # then select only the worst n_interpolate channels
-                    bad_chs = bad_chs[sorted_ch_idx[:self.n_interpolate]]
+                    bad_chs_mask[
+                        sorted_ch_idx_picks[:self.n_interpolate]] = True
 
-            self.fix_log[epoch_idx][bad_chs] = 2
+            self.fix_log[epoch_idx][bad_chs_mask] = 2
+            bad_chs = np.where(bad_chs_mask)[0]
             bad_chs = [ch_name for idx, ch_name in enumerate(ch_names)
                        if idx in bad_chs]
             epoch = epochs[epoch_idx]
