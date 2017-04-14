@@ -44,7 +44,6 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 
 epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
                   include=include, exclude='bads')
-getattr(epochs, 'name', getattr(epochs, '_name'))
 
 ###############################################################################
 # Now, we can define a threshold range over which the threshold must be found
