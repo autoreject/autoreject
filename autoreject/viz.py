@@ -255,7 +255,8 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         raise RuntimeError('Some channels not classified. Please'
                            ' check your picks')
     ch_names = [params['info']['ch_names'][x] for x in inds]
-    params['fix_log'] = params['fix_log'][:, inds]
+    if params['fix_log'] is not None:
+        params['fix_log'] = params['fix_log'][:, inds]
 
     # set up plotting
     size = get_config('MNE_BROWSE_RAW_SIZE')
@@ -266,8 +267,11 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         size = size.split(',')
         size = tuple(float(s) for s in size)
     if title is None:
-        title = epochs.name
-        if epochs.name is None or len(title) == 0:
+        try:
+            title = epochs.name
+        except AttributeError:
+            title = epochs._name
+        if title is None or len(title) == 0:
             title = ''
     fig = figure_nobar(facecolor='w', figsize=size, dpi=80)
     fig.canvas.set_window_title('mne_browse_epochs')
