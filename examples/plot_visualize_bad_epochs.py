@@ -89,7 +89,7 @@ from autoreject import LocalAutoRejectCV, compute_thresholds  # noqa
 from functools import partial  # noqa
 
 this_epoch = epochs['famous']
-thresh_func = partial(compute_thresholds, random_state=42)
+thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
 epochs_ar = ar.fit_transform(this_epoch.copy())

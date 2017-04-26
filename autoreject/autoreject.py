@@ -15,7 +15,7 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 
-from sklearn.externals.joblib import Memory
+from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
                     _handle_picks)
@@ -318,7 +318,12 @@ def _compute_thresh(this_data, method='bayesian_optimization',
                 cache.update({thresh: obj})
             return cache[thresh]
 
-        initial_x = all_threshes[::5]
+        n_epochs = all_threshes.shape[0]
+        if n_epochs < 200:
+            idx = np.arange(0, n_epochs, 5)
+        else:
+            idx = np.linspace(0, n_epochs, 40, endpoint=False, dtype=int)
+        initial_x = all_threshes[idx]
         best_thresh, _ = bayes_opt(func, initial_x, expected_improvement,
                                    max_iter=10, debug=False)
 
@@ -326,7 +331,8 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
 
 def compute_thresholds(epochs, method='bayesian_optimization',
-                       random_state=None, picks=None, verbose='progressbar'):
+                       random_state=None, picks=None, verbose='progressbar',
+                       n_jobs=1):
     """Compute thresholds for each channel.
 
     Parameters
@@ -346,6 +352,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         If `'tqdm'`, use `tqdm.tqdm`.
         If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
+    n_jobs : int
+        The number of jobs.
 
     Examples
     --------
@@ -366,6 +374,16 @@ def compute_thresholds(epochs, method='bayesian_optimization',
 
     threshes = dict()
     ch_names = epochs_interp.ch_names
+
+    if n_jobs > 1:
+        my_thresh = delayed(_compute_thresh)
+        verbose = 10 if verbose is not False else 0
+        threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            my_thresh(data[:, pick], cv=cv, method=method,
+                      random_state=random_state) for pick in picks)
+        threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
+        return threshes
+
     for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
                               verbose=verbose)):
         thresh = _compute_thresh(data[:, pick], cv=cv, method=method,
