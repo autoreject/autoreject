@@ -31,9 +31,9 @@ def test_autoreject():
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
 
-    include = [u'EEG %03d' % i for i in range(1, 15)]
+    include = [u'EEG %03d' % i for i in range(1, 45, 3)]
     picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
-                           eog=False, include=include, exclude=[])
+                           eog=True, include=include, exclude=[])
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
                         reject=None, preload=True)
@@ -64,10 +64,16 @@ def test_autoreject():
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
 
-    ar = LocalAutoRejectCV()
+    ar = LocalAutoRejectCV(cv=3)
     assert_raises(ValueError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
+
+    ar.fit(epochs)
+    assert_true(len(ar.picks) == len(picks) - 1)
+    assert_true(len(ar.threshes_.keys()) == len(ar.picks))
+    pick_eog = mne.pick_types(epochs.info, eeg=False, eog=True)
+    assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
 
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')

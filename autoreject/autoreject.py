@@ -26,7 +26,7 @@ mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
 
-def _check_data(epochs):
+def _check_data(epochs, verbose='progressbar'):
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
@@ -49,10 +49,11 @@ def _check_data(epochs):
         raise ValueError('AutoReject handles only one channel type for now')
 
     if n_bads > 0:
-        logger.info(
-            '%i channels are marked as bad. These will be ignored.'
-            'If you want them to be considered by autoreject please remove '
-            'them from epochs.info["bads"].' % n_bads)
+        if verbose is not False:
+            logger.info(
+                '%i channels are marked as bad. These will be ignored.'
+                'If you want them to be considered by autoreject please '
+                'remove them from epochs.info["bads"].' % n_bads)
 
 
 def _slicemean(obj, this_slice, axis):
@@ -444,7 +445,7 @@ class LocalAutoReject(BaseAutoReject):
         epochs : instance of mne.Epochs
             The epochs object for which bad epochs must be found.
         """
-        _check_data(epochs)
+        _check_data(epochs, verbose=self.verbose)
 
         self._vote_epochs(epochs)
         if 'eeg' in epochs:
@@ -619,11 +620,13 @@ class LocalAutoRejectCV(object):
         self : instance of LocalAutoRejectCV
             The instance.
         """
-        _check_data(epochs)
+        _check_data(epochs, verbose=self.verbose)
         self.picks = _handle_picks(info=epochs.info, picks=self.picks)
 
         if self.cv is None:
-            self.cv = KFold(len(epochs), n_folds=10)
+            self.cv = 10
+        if isinstance(self.cv, int):
+            self.cv = KFold(len(epochs), n_folds=self.cv)
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
@@ -643,6 +646,7 @@ class LocalAutoRejectCV(object):
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
+        self.threshes_ = local_reject.threshes_
 
         local_reject._vote_epochs(epochs)
         bad_epoch_counts = local_reject.bad_epoch_counts.copy()
@@ -702,7 +706,7 @@ class LocalAutoRejectCV(object):
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
         """
-        _check_data(epochs)
+        _check_data(epochs, verbose=self.verbose)
         if not hasattr(self, 'n_interpolate_'):
             raise ValueError('Please run autoreject.fit() method first')
         return self._local_reject.transform(epochs)

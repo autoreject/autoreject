@@ -34,6 +34,7 @@ def test_viz():
     n_epochs, n_channels, _ = epochs.get_data().shape
     fix_log = np.zeros((n_epochs, n_channels))
 
+    epochs.name = ''
     plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx, fix_log=fix_log)
     plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx)
     plot_epochs(epochs, fix_log=fix_log)
