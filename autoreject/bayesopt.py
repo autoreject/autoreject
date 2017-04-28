@@ -10,6 +10,7 @@ Adopted from http://atpassos.me/post/44900091837/bayesian-optimization
 #          Alexandre Passos <alexandre.tp@gmail.com>
 #          Mainak Jas <mainak.jas@telecom-paristech.fr>
 
+import warnings
 from sklearn import gaussian_process
 import numpy as np
 
@@ -22,7 +23,9 @@ def expected_improvement(gp, best_y):
 
     The equation is explained in Eq (3) of the tutorial."""
     def ev(x):
-        y, y_std = gp.predict(x * np.ones((1, 1)), return_std=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            y, y_std = gp.predict(x * np.ones((1, 1)), return_std=True)
         Z = (y[0] - best_y) / (y_std[0] + 1e-12)
         return (y[0] - best_y) * st.norm.cdf(Z) + y_std[0] * st.norm.pdf(Z)
     return ev
