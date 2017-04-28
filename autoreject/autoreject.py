@@ -319,10 +319,10 @@ def _compute_thresh(this_data, method='bayesian_optimization',
             return cache[thresh]
 
         n_epochs = all_threshes.shape[0]
-        if n_epochs < 200:
-            idx = np.arange(0, n_epochs, 5)
-        else:
-            idx = np.linspace(0, n_epochs, 40, endpoint=False, dtype=int)
+        idx = np.concatenate((
+            np.linspace(0, n_epochs, 40, endpoint=False, dtype=int),
+            [n_epochs - 1]))  # ensure last point is in init
+        idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 40
         initial_x = all_threshes[idx]
         best_thresh, _ = bayes_opt(func, initial_x, expected_improvement,
                                    max_iter=10, debug=False)
