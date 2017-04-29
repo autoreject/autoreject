@@ -9,6 +9,7 @@ from scipy.stats.distributions import uniform
 
 import mne
 from mne.io.pick import channel_indices_by_type
+from mne.utils import logger
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -16,14 +17,16 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 
 from sklearn.externals.joblib import Memory
 
-from .utils import clean_by_interp, interpolate_bads, _get_epochs_type, _pbar
+from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
+                    _handle_picks)
+
 from .bayesopt import expected_improvement, bayes_opt
 
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
 
-def _check_data(epochs):
+def _check_data(epochs, verbose='progressbar'):
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
@@ -40,6 +43,17 @@ def _check_data(epochs):
                'incomplete data). Please check that no epoch '
                'is dropped when you call epochs.drop_bad_epochs().')
         raise RuntimeError(msg)
+    n_bads = len(epochs.info['bads'])
+
+    if sum(ch_type in epochs for ch_type in ('mag', 'grad', 'eeg')) > 1:
+        raise ValueError('AutoReject handles only one channel type for now')
+
+    if n_bads > 0:
+        if verbose is not False:
+            logger.info(
+                '%i channels are marked as bad. These will be ignored.'
+                'If you want them to be considered by autoreject please '
+                'remove them from epochs.info["bads"].' % n_bads)
 
 
 def _slicemean(obj, this_slice, axis):
@@ -83,8 +97,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
-    data_picks = mne.pick_types(epochs.info, meg=True, eeg=True, eog=False,
-                                ecg=False, exclude='bads')
+    data_picks = _handle_picks(epochs.info, picks=None)
     X = epochs.get_data()[:, data_picks, :]
     n_epochs, n_channels, n_times = X.shape
 
@@ -242,6 +255,7 @@ class _ChannelAutoReject(BaseAutoReject):
 
 
 def _pick_exclusive_channels(info, ch_type):
+    """pick one and only one type."""
     if ch_type == 'eeg':
         picks = mne.pick_types(info, meg=False, eeg=True)
     elif ch_type == 'eog':
@@ -312,7 +326,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
 
 def compute_thresholds(epochs, method='bayesian_optimization',
-                       random_state=None, verbose='progressbar'):
+                       random_state=None, picks=None, verbose='progressbar'):
     """Compute thresholds for each channel.
 
     Parameters
@@ -323,6 +337,9 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         'bayesian_optimization' or 'random_search'
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use
+    picks : ndarray, shape(n_channels,) | None
+        The channels to be considered for autoreject. If None, defaults
+        to data channels {'meg', 'eeg'}.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -338,25 +355,23 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
-    ch_types = [ch_type for ch_type in ('eeg', 'meg')
-                if ch_type in epochs]
     n_epochs = len(epochs)
-    epochs_interp = clean_by_interp(epochs, verbose=verbose)
+    picks = _handle_picks(info=epochs.info, picks=picks)
+    epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
-                          axis=0)
+                          axis=0)  # non-data channels will be duplicate
     y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
     cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
                                 random_state=random_state)
 
     threshes = dict()
-    for ch_type in ch_types:
-        picks = _pick_exclusive_channels(epochs.info, ch_type)
-        threshes[ch_type] = []
-        for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
-                                  verbose=verbose)):
-            thresh = _compute_thresh(data[:, pick], cv=cv, method=method,
-                                     random_state=random_state)
-            threshes[ch_type].append(thresh)
+    ch_names = epochs_interp.ch_names
+    for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
+                              verbose=verbose)):
+        thresh = _compute_thresh(data[:, pick], cv=cv, method=method,
+                                 random_state=random_state)
+        ch_name = ch_names[pick]
+        threshes[ch_name] = thresh
     return threshes
 
 
@@ -375,6 +390,9 @@ class LocalAutoReject(BaseAutoReject):
         the total number of channels.
     n_interpolate : int (default 0)
         Number of channels for which to interpolate
+    picks : ndarray, shape(n_channels,) | None
+        The channels to be considered for autoreject. If None, defaults
+        to data channels {'meg', 'eeg'}.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -384,6 +402,7 @@ class LocalAutoReject(BaseAutoReject):
     """
     def __init__(self, thresh_func=None, consensus_perc=0.1,
                  n_interpolate=0, method='bayesian_optimization',
+                 picks=None,
                  verbose='progressbar'):
         if thresh_func is None:
             thresh_func = compute_thresholds
@@ -393,6 +412,7 @@ class LocalAutoReject(BaseAutoReject):
         self.consensus_perc = consensus_perc
         self.n_interpolate = n_interpolate
         self.thresh_func = thresh_func
+        self.picks = picks
         self.verbose = verbose
 
     @property
@@ -412,7 +432,9 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object from which the channel-level thresholds are
             estimated.
         """
-        self.threshes_ = self.thresh_func(epochs, verbose=self.verbose)
+        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
+        self.threshes_ = self.thresh_func(
+            epochs.copy(), picks=self.picks, verbose=self.verbose)
         return self
 
     def transform(self, epochs):
@@ -423,14 +445,15 @@ class LocalAutoReject(BaseAutoReject):
         epochs : instance of mne.Epochs
             The epochs object for which bad epochs must be found.
         """
-        epochs = epochs.copy()
-        _check_data(epochs)
+        _check_data(epochs, verbose=self.verbose)
 
         self._vote_epochs(epochs)
-        ch_types = [ch_type for ch_type in ('eeg', 'meg') if ch_type in epochs]
-        for ch_type in ch_types:
-            self._interpolate_bad_epochs(epochs, ch_type=ch_type,
-                                         verbose=self.verbose)
+        if 'eeg' in epochs:
+            ch_type = 'eeg'
+        elif 'meg' in epochs:
+            ch_type = 'meg'
+        self._interpolate_bad_epochs(epochs, ch_type=ch_type,
+                                     verbose=self.verbose)
 
         bad_epochs_idx = self._get_bad_epochs()
         self._bad_epochs_idx = np.sort(bad_epochs_idx)
@@ -449,21 +472,20 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object for which bad epochs must be found.
         """
         n_epochs = len(epochs)
-        picks = mne.pick_types(epochs.info, meg=True, eeg=True, eog=True)
-        self._drop_log = np.zeros((n_epochs, len(picks)))
+        picks = _handle_picks(info=epochs.info, picks=self.picks)
+
+        self._drop_log = np.zeros((n_epochs, len(epochs.ch_names)))
         self.bad_epoch_counts = np.zeros((len(epochs), ))
-        ch_types = [ch_type for ch_type in ('eeg', 'meg')
-                    if ch_type in epochs]
-        for ch_type in ch_types:
-            picks = _pick_exclusive_channels(epochs.info, ch_type)
-            assert len(picks) == len(epochs.info['ch_names'])
-            deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
-            threshes = self.threshes_[ch_type]
-            for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
-                bad_epochs_idx = np.where(delta > thresh)[0]
-                # TODO: combine for different ch types
-                self.bad_epoch_counts[bad_epochs_idx] += 1
-                self._drop_log[bad_epochs_idx, ch_idx] = 1
+
+        ch_names = [epochs.ch_names[p] for p in picks]
+
+        deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
+        threshes = [self.threshes_[ch_name] for ch_name in ch_names]
+        for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
+            bad_epochs_idx = np.where(delta > thresh)[0]
+            # TODO: combine for different ch types
+            self.bad_epoch_counts[bad_epochs_idx] += 1
+            self._drop_log[bad_epochs_idx, picks[ch_idx]] = 1
 
     def _get_bad_epochs(self):
         """Get the indices of bad epochs.
@@ -494,7 +516,8 @@ class LocalAutoReject(BaseAutoReject):
         drop_log = self._drop_log
         # 1: bad segment, # 2: interpolated, # 3: dropped
         self.fix_log = self._drop_log.copy()
-        ch_names = epochs.info['ch_names']
+        ch_names = [epochs.ch_names[pp] for pp in self.picks]
+        non_picks = np.setdiff1d(range(epochs.info['nchan']), self.picks)
         n_consensus = self.consensus_perc * len(ch_names)
         # TODO: raise error if preload is not True
         pos = 4 if hasattr(self, '_leave') else 2
@@ -505,19 +528,22 @@ class LocalAutoReject(BaseAutoReject):
                 continue
             else:
                 if n_bads <= self.n_interpolate:
-                    bad_chs = np.where(drop_log[epoch_idx] == 1)[0]
+                    bad_chs_mask = drop_log[epoch_idx] == 1
                 else:
                     # get peak-to-peak for channels in that epoch
-                    data = epochs[epoch_idx].get_data()[0, :, :]
+                    data = epochs[epoch_idx].get_data()[0]
                     peaks = np.ptp(data, axis=-1)
+                    peaks[non_picks] = -np.inf
                     # find channels which are bad by rejection threshold
-                    bad_chs = np.where(drop_log[epoch_idx] == 1)[0]
+                    bad_chs_mask = drop_log[epoch_idx] == 1
                     # find the ordering of channels amongst the bad channels
-                    sorted_ch_idx = np.argsort(peaks[bad_chs])[::-1]
+                    sorted_ch_idx_picks = np.argsort(peaks)[::-1]
                     # then select only the worst n_interpolate channels
-                    bad_chs = bad_chs[sorted_ch_idx[:self.n_interpolate]]
+                    bad_chs_mask[
+                        sorted_ch_idx_picks[:self.n_interpolate]] = True
 
-            self.fix_log[epoch_idx][bad_chs] = 2
+            self.fix_log[epoch_idx][bad_chs_mask] = 2
+            bad_chs = np.where(bad_chs_mask)[0]
             bad_chs = [ch_name for idx, ch_name in enumerate(ch_names)
                        if idx in bad_chs]
             epoch = epochs[epoch_idx]
@@ -542,6 +568,9 @@ class LocalAutoRejectCV(object):
         defaults to :func:`autoreject.compute_thresholds`.
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
+    picks : ndarray, shape(n_channels) | None
+        The channels to be considered for autoreject. If None, defaults
+        to data channels {'meg', 'eeg'}.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -557,12 +586,14 @@ class LocalAutoRejectCV(object):
 
     def __init__(self, n_interpolates=None, consensus_percs=None,
                  thresh_func=None, method='bayesian_optimization', cv=None,
+                 picks=None,
                  verbose='progressbar'):
         self.n_interpolates = n_interpolates
         self.consensus_percs = consensus_percs
         self.thresh_func = thresh_func
         self.cv = cv
         self.verbose = verbose
+        self.picks = picks
 
     @property
     def bad_segments(self):
@@ -589,16 +620,20 @@ class LocalAutoRejectCV(object):
         self : instance of LocalAutoRejectCV
             The instance.
         """
-        _check_data(epochs)
+        _check_data(epochs, verbose=self.verbose)
+        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
+
         if self.cv is None:
-            self.cv = KFold(len(epochs), n_folds=10)
+            self.cv = 10
+        if isinstance(self.cv, int):
+            self.cv = KFold(len(epochs), n_folds=self.cv)
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
-            if epochs.info['nchan'] < 4:
+            if len(self.picks) < 4:
                 raise ValueError('Too few channels. autoreject is unlikely'
                                  ' to be effective')
-            max_interp = min(epochs.info['nchan'], 32)
+            max_interp = min(len(self.picks), 32)
             self.n_interpolates = np.array([1, 4, max_interp])
 
         n_folds = len(self.cv)
@@ -606,10 +641,12 @@ class LocalAutoRejectCV(object):
                          n_folds))
 
         local_reject = LocalAutoReject(thresh_func=self.thresh_func,
-                                       verbose=self.verbose)
+                                       verbose=self.verbose,
+                                       picks=self.picks)
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
+        self.threshes_ = local_reject.threshes_
 
         local_reject._vote_epochs(epochs)
         bad_epoch_counts = local_reject.bad_epoch_counts.copy()
@@ -619,13 +656,15 @@ class LocalAutoRejectCV(object):
             # we can interpolate before doing cross-validation
             # because interpolation is independent across trials.
             local_reject.n_interpolate = n_interp
-            ch_types = [ch_type for ch_type in ('eeg', 'meg') if
-                        ch_type in epochs]
+            if 'eeg' in epochs:
+                ch_type = 'eeg'
+            elif 'meg' in epochs:
+                ch_type = 'meg'
             epochs_interp = epochs.copy()
-            for ch_type in ch_types:
-                local_reject._interpolate_bad_epochs(epochs_interp,
-                                                     ch_type=ch_type,
-                                                     verbose=self.verbose)
+
+            local_reject._interpolate_bad_epochs(epochs_interp,
+                                                 ch_type=ch_type,
+                                                 verbose=self.verbose)
             for fold, (train, test) in enumerate(_pbar(self.cv, desc='Fold',
                                                  position=3,
                                                  verbose=self.verbose)):
@@ -639,9 +678,9 @@ class LocalAutoRejectCV(object):
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
                                                    bad_epochs_idx)
                     local_reject.mean_ = _slicemean(
-                        epochs_interp[train].get_data(),
+                        epochs_interp[train].get_data()[:, self.picks],
                         good_epochs_idx, axis=0)
-                    X = epochs[test].get_data()
+                    X = epochs[test].get_data()[:, self.picks]
                     loss[idx, jdx, fold] = -local_reject.score(X)
 
         best_idx, best_jdx = np.unravel_index(loss.mean(axis=-1).argmin(),
@@ -667,7 +706,7 @@ class LocalAutoRejectCV(object):
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
         """
-        _check_data(epochs)
+        _check_data(epochs, verbose=self.verbose)
         if not hasattr(self, 'n_interpolate_'):
             raise ValueError('Please run autoreject.fit() method first')
         return self._local_reject.transform(epochs)

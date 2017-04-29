@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = io.read_raw_fif(raw_fname, add_eeg_ref=False, preload=False)
+raw = io.read_raw_fif(raw_fname, preload=False)
 raw.crop(0, 15)
 raw.info['projs'] = list()
 
@@ -29,11 +29,13 @@ def test_viz():
     picks = mne.pick_channels(raw.info['ch_names'],
                               ['MEG 2443', 'MEG 2442', 'MEG 2441'])
     epochs = mne.Epochs(raw, events, picks=picks, baseline=(None, 0),
-                        reject=None, preload=True)
+                        reject=None, preload=True,
+                        event_id={'1': 1, '2': 2, '3': 3, '4': 4})
     bad_epochs_idx = [0, 1, 3]
     n_epochs, n_channels, _ = epochs.get_data().shape
     fix_log = np.zeros((n_epochs, n_channels))
 
+    print(bad_epochs_idx)
     plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx, fix_log=fix_log)
     plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx)
     plot_epochs(epochs, fix_log=fix_log)

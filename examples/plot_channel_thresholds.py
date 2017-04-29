@@ -54,7 +54,7 @@ import numpy as np  # noqa
 from autoreject import compute_thresholds  # noqa
 
 threshes = compute_thresholds(epochs, method='random_search',
-                              random_state=42, verbose='progressbar')['meg']
+                              random_state=42, verbose='progressbar')
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify
@@ -71,7 +71,7 @@ plt.figure(figsize=(6, 5))
 plt.tick_params(axis='x', which='both', bottom='off', top='off')
 plt.tick_params(axis='y', which='both', left='off', right='off')
 
-plt.hist(scaling * np.array(threshes), 30, color='g', alpha=0.4)
+plt.hist(scaling * np.array(threshes.values()), 30, color='g', alpha=0.4)
 plt.xlabel('Threshold (%s)' % unit)
 plt.ylabel('Number of sensors')
 plt.xlim((100, 950))

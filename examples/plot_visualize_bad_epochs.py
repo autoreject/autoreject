@@ -66,7 +66,7 @@ for run in range(3, 7):
 
     exclude = []  # XXX
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
-                           eog=False, exclude=exclude)
+                           eog=True, exclude=exclude)
     events = mne.find_events(raw, stim_channel='STI101',
                              consecutive='increasing',
                              min_duration=0.003, verbose=True)
@@ -91,7 +91,7 @@ from functools import partial  # noqa
 this_epoch = epochs['famous']
 thresh_func = partial(compute_thresholds, random_state=42)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm')
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
 epochs_ar = ar.fit_transform(this_epoch.copy())
 
 ###############################################################################
