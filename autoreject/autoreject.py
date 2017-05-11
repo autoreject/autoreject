@@ -4,6 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
+import warnings
 import numpy as np
 from scipy.stats.distributions import uniform
 
@@ -36,13 +37,12 @@ def _check_data(epochs, verbose='progressbar'):
         epochs.drop_bad()
     except AttributeError:
         epochs.drop_bad_epochs()
-    drop_log = [epochs.drop_log[x] for x in epochs.selection]
     if any(len(drop) > 0 and drop != ['IGNORED']
-            for drop in drop_log):
+            for drop in epochs.drop_log):
         msg = ('Some epochs are being dropped (maybe due to '
-               'incomplete data). Please check that no epoch '
-               'is dropped when you call epochs.drop_bad_epochs().')
-        raise RuntimeError(msg)
+               'incomplete data). It is recommended to call '
+               'epochs.drop_bad_epochs() before running autoreject.')
+        warnings.warn(msg)
     n_bads = len(epochs.info['bads'])
 
     if sum(ch_type in epochs for ch_type in ('mag', 'grad', 'eeg')) > 1:

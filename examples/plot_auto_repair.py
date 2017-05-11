@@ -59,7 +59,7 @@ raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
 event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
                            'eve.fif')
-event_id = {'Auditory/Left': 1}
+event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}
 tmin, tmax = -0.2, 0.5
 
 events = mne.read_events(event_fname)
@@ -95,7 +95,7 @@ thresh_func = partial(compute_thresholds, method='random_search',
 
 ar = LocalAutoRejectCV(n_interpolates, consensus_percs,
                        thresh_func=thresh_func)
-epochs_clean = ar.fit_transform(epochs)
+epochs_clean = ar.fit_transform(epochs['Auditory/Left'])
 
 evoked = epochs.average()
 evoked_clean = epochs_clean.average()
