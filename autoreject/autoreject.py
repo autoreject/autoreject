@@ -540,7 +540,7 @@ class LocalAutoReject(BaseAutoReject):
                     sorted_ch_idx_picks = np.argsort(peaks)[::-1]
                     # then select only the worst n_interpolate channels
                     bad_chs_mask[
-                        sorted_ch_idx_picks[:self.n_interpolate]] = True
+                        sorted_ch_idx_picks[self.n_interpolate:]] = False
 
             self.fix_log[epoch_idx][bad_chs_mask] = 2
             bad_chs = np.where(bad_chs_mask)[0]
@@ -669,6 +669,11 @@ class LocalAutoRejectCV(object):
                                                  position=3,
                                                  verbose=self.verbose)):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
+                    # \kappa must be greater than \rho
+                    n_channels = local_reject._drop_log.shape[1]
+                    if consensus_perc * n_channels <= n_interp:
+                        loss[idx, jdx, fold] = np.inf
+                        continue
                     local_reject.consensus_perc = consensus_perc
                     local_reject.bad_epoch_counts = bad_epoch_counts[train]
 
