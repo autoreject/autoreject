@@ -375,21 +375,12 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     threshes = dict()
     ch_names = epochs_interp.ch_names
 
-    if n_jobs > 1:
-        my_thresh = delayed(_compute_thresh)
-        verbose = 10 if verbose is not False else 0
-        threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
-            my_thresh(data[:, pick], cv=cv, method=method,
-                      random_state=random_state) for pick in picks)
-        threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
-        return threshes
-
-    for ii, pick in enumerate(_pbar(picks, desc='Computing thresholds',
-                              verbose=verbose)):
-        thresh = _compute_thresh(data[:, pick], cv=cv, method=method,
-                                 random_state=random_state)
-        ch_name = ch_names[pick]
-        threshes[ch_name] = thresh
+    my_thresh = delayed(_compute_thresh)
+    verbose = 51 if verbose is not False else 0  # send output to stdout
+    threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
+        my_thresh(data[:, pick], cv=cv, method=method,
+                  random_state=random_state) for pick in picks)
+    threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
     return threshes
 
 
