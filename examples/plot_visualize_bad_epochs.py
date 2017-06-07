@@ -92,7 +92,7 @@ this_epoch = epochs['famous']
 thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
-epochs_ar = ar.fit_transform(this_epoch.copy())
+epochs_ar = ar.fit_transform(this_epoch)
 
 ###############################################################################
 # ... and visualize the bad epochs and sensors. Bad sensors which have been

@@ -723,7 +723,7 @@ class LocalAutoRejectCV(object):
         _check_data(epochs, verbose=self.verbose)
         if not hasattr(self, 'n_interpolate_'):
             raise ValueError('Please run autoreject.fit() method first')
-        return self._local_reject.transform(epochs)
+        return self._local_reject.transform(epochs.copy())
 
     def fit_transform(self, epochs):
         """Estimates the rejection params and finds bad epochs.
