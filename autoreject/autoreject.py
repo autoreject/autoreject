@@ -523,7 +523,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object which must be fixed.
         """
         drop_log = self._drop_log
-        # 1: bad segment, # 2: interpolated, # 3: dropped
+        # 1: bad segment, # 2: interpolated
         self.fix_log = self._drop_log.copy()
         ch_names = [epochs.ch_names[pp] for pp in self.picks]
         non_picks = np.setdiff1d(range(epochs.info['nchan']), self.picks)
