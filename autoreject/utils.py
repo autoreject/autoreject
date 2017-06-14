@@ -18,7 +18,7 @@ def _handle_picks(info, picks):
     return out
 
 
-def set_matplotlib_defaults(plt):
+def set_matplotlib_defaults(plt, style='ggplot'):
     """Set publication quality defaults for matplotlib.
 
     Parameters
@@ -27,7 +27,7 @@ def set_matplotlib_defaults(plt):
         The plt instance.
     """
     import matplotlib
-    matplotlib.style.use('ggplot')
+    matplotlib.style.use(style)
 
     fontsize = 17
     params = {'axes.labelsize': fontsize + 2,

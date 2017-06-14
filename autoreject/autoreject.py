@@ -697,6 +697,7 @@ class LocalAutoRejectCV(object):
                     X = epochs[test].get_data()[:, self.picks]
                     loss[idx, jdx, fold] = -local_reject.score(X)
 
+        self.loss = loss
         best_idx, best_jdx = np.unravel_index(loss.mean(axis=-1).argmin(),
                                               loss.shape[:2])
         consensus_perc = self.consensus_percs[best_idx]
