@@ -399,6 +399,22 @@ class LocalAutoReject(BaseAutoReject):
         If `'tqdm'`, use `tqdm.tqdm`.
         If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
+
+    Attributes
+    -----------
+    bad_segments : array, shape (n_epochs, n_channels)
+        A boolean matrix where 1 denotes a bad data segment
+        according to the sensor thresholds
+    fix_log : array, shape (n_epochs, n_channels)
+        Similar to bad_segments, but with entries 0, 1, and 2.
+            0 : good data segment
+            1 : bad data segment not interpolated
+            2 : bad data segment interpolated
+    bad_epochs_idx : array
+        The indices of bad epochs
+    threshes_ : dict
+        The sensor-level thresholds with channel names as keys
+        and the peak-to-peak thresholds as the values.
     """
     def __init__(self, thresh_func=None, consensus_perc=0.1,
                  n_interpolate=0, method='bayesian_optimization',
@@ -579,10 +595,27 @@ class LocalAutoRejectCV(object):
         If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
 
-    Returns
-    -------
-    local_ar : instance of LocalAutoReject
-        The fitted LocalAutoReject object.
+    Attributes
+    -----------
+    bad_segments : array, shape (n_epochs, n_channels)
+        A boolean matrix where 1 denotes a bad data segment
+        according to the sensor thresholds
+    fix_log : array, shape (n_epochs, n_channels)
+        Similar to bad_segments, but with entries 0, 1, and 2.
+            0 : good data segment
+            1 : bad data segment not interpolated
+            2 : bad data segment interpolated
+    bad_epochs_idx : array
+        The indices of bad epochs
+    threshes_ : dict
+        The sensor-level thresholds with channel names as keys
+        and the peak-to-peak thresholds as the values.
+    loss : array, shape (len(n_interpolates), len(consensus_percs))
+        The cross validation error for different parameter values.
+    consensus_percs_ : float
+        The estimated consensus_perc
+    n_interpolates_ : int
+        The estimated n_interpolated
     """
 
     def __init__(self, n_interpolates=None, consensus_percs=None,

@@ -33,3 +33,6 @@ If you use this code in your project, please cite::
 	Mainak Jas, Denis Engemann, Federico Raimondo, Yousra Bekhti, and Alexandre Gramfort,
 	"Automated rejection and repair of bad trials in MEG/EEG." In 6th International Workshop on
 	Pattern Recognition in Neuroimaging (PRNI). 2016.
+
+	Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort,
+	"Autoreject: Automated artifact rejection for MEG and EEG." arXiv preprint arXiv:1612.08194, 2016.
