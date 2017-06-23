@@ -98,6 +98,11 @@ def test_autoreject():
         epochs.copy().pick_channels(
             [epochs.ch_names[pp] for pp in picks[:3]]))
 
+    # Now we test that the .bad_segments has the shape
+    # of n_trials, n_sensors, such that n_sensors is the
+    # the full number sensors, before picking. We, hence,
+    # expect nothing to be rejected outside of our picks
+    # but rejections can occur inside our picks.
     assert_equal(ar.bad_segments.shape[1], len(epochs.ch_names))
     assert_true(np.any(ar.bad_segments[:, picks]))
     anti_picks = np.ones(len(epochs.ch_names), dtype=bool)
