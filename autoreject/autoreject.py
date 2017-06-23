@@ -404,14 +404,14 @@ class LocalAutoReject(BaseAutoReject):
     -----------
     bad_segments : array, shape (n_epochs, n_channels)
         A boolean matrix where 1 denotes a bad data segment
-        according to the sensor thresholds
+        according to the sensor thresholds.
     fix_log : array, shape (n_epochs, n_channels)
         Similar to bad_segments, but with entries 0, 1, and 2.
             0 : good data segment
             1 : bad data segment not interpolated
             2 : bad data segment interpolated
     bad_epochs_idx : array
-        The indices of bad epochs
+        The indices of bad epochs.
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
@@ -599,23 +599,23 @@ class LocalAutoRejectCV(object):
     -----------
     bad_segments : array, shape (n_epochs, n_channels)
         A boolean matrix where 1 denotes a bad data segment
-        according to the sensor thresholds
+        according to the sensor thresholds.
     fix_log : array, shape (n_epochs, n_channels)
         Similar to bad_segments, but with entries 0, 1, and 2.
             0 : good data segment
             1 : bad data segment not interpolated
             2 : bad data segment interpolated
     bad_epochs_idx : array
-        The indices of bad epochs
+        The indices of bad epochs.
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
     loss : array, shape (len(n_interpolates), len(consensus_percs))
         The cross validation error for different parameter values.
     consensus_percs_ : float
-        The estimated consensus_perc
+        The estimated consensus_perc.
     n_interpolates_ : int
-        The estimated n_interpolated
+        The estimated n_interpolated.
     """
 
     def __init__(self, n_interpolates=None, consensus_percs=None,
