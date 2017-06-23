@@ -34,6 +34,13 @@ def test_autoreject():
     include = [u'EEG %03d' % i for i in range(1, 45, 3)]
     picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
                            eog=True, include=include, exclude=[])
+    # raise error if preload is false
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0), decim=8,
+                        reject=None, preload=False)
+    ar = LocalAutoReject()
+    assert_raises(ValueError, ar.fit, epochs)
+
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
                         reject=None, preload=True)
