@@ -461,7 +461,8 @@ class LocalAutoReject(BaseAutoReject):
                                             bad_epochs_idx)
         self.mean_ = _slicemean(epochs.get_data(),
                                 self.good_epochs_idx, axis=0)
-        return epochs[self.good_epochs_idx]
+        epochs.drop(bad_epochs_idx, reason='AUTOREJECT')
+        return epochs
 
     def _vote_epochs(self, epochs):
         """Each channel votes for an epoch as good or bad

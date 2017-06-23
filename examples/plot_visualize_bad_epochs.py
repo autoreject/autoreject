@@ -136,6 +136,12 @@ plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
 
 epochs_ar.plot(scalings=dict(eeg=40e-6))
 
+
+###############################################################################
+# The epochs dropped by autoreject are also stored in epochs.drop_log
+
+epochs_ar.plot_drop_log()
+
 ###############################################################################
 # Finally, the evoked before and after autoreject, for sanity check. We use
 # the ``spatial_colors`` argument from MNE as it allows us to see that
