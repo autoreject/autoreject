@@ -31,7 +31,7 @@ def _check_data(epochs, verbose='progressbar'):
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
-    if getattr(epochs, 'preload', None) is False:
+    if epochs.preload is False:
         raise ValueError('Data must be preloaded.')
     n_bads = len(epochs.info['bads'])
 
