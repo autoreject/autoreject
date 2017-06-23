@@ -11,7 +11,7 @@ from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
 
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_raises, assert_true, assert_equal
 
 import matplotlib
 matplotlib.use('Agg')
@@ -94,9 +94,15 @@ def test_autoreject():
     pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
     assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
     assert_raises(
-        ValueError, ar.transform,
+        IndexError, ar.transform,
         epochs.copy().pick_channels(
             [epochs.ch_names[pp] for pp in picks[:3]]))
+
+    assert_equal(ar.bad_segments.shape[1], len(epochs.ch_names))
+    assert_true(np.any(ar.bad_segments[:, picks]))
+    anti_picks = np.ones(len(epochs.ch_names), dtype=bool)
+    anti_picks[picks] = False
+    assert_true(not np.any(ar.bad_segments[:, anti_picks]))
 
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')

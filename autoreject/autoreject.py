@@ -746,12 +746,6 @@ class LocalAutoRejectCV(object):
         if not hasattr(self, 'n_interpolate_'):
             raise ValueError('Please run autoreject.fit() method first')
 
-        non_matching_ch = set(self.threshes_) - {
-            epochs.ch_names[pp] for pp in self.picks}
-        if len(non_matching_ch) > 0:
-            raise ValueError('Not all channels used during fit are present'
-                             'In the data you want to transform!')
-
         _check_data(epochs, picks=self.picks, verbose=self.verbose)
         return self._local_reject.transform(epochs.copy())
 
