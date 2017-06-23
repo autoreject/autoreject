@@ -31,18 +31,8 @@ def _check_data(epochs, verbose='progressbar'):
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
-    # needed for len
-    try:
-        epochs.drop_bad()
-    except AttributeError:
-        epochs.drop_bad_epochs()
-    drop_log = [epochs.drop_log[x] for x in epochs.selection]
-    if any(len(drop) > 0 and drop != ['IGNORED']
-            for drop in drop_log):
-        msg = ('Some epochs are being dropped (maybe due to '
-               'incomplete data). Please check that no epoch '
-               'is dropped when you call epochs.drop_bad_epochs().')
-        raise RuntimeError(msg)
+    if epochs.preload is False:
+        raise ValueError('Data must be preloaded.')
     n_bads = len(epochs.info['bads'])
 
     if sum(ch_type in epochs for ch_type in ('mag', 'grad', 'eeg')) > 1:
@@ -363,6 +353,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
+    _check_data(epochs, verbose=verbose)
     n_epochs = len(epochs)
     picks = _handle_picks(info=epochs.info, picks=picks)
     epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)

@@ -172,9 +172,6 @@ def interpolate_bads(inst, reset_bads=True, mode='accurate'):
     from mne.channels.interpolation import _interpolate_bads_eeg
     mne.set_log_level('WARNING')  # to prevent cobyla printf error
 
-    if getattr(inst, 'preload', None) is False:
-        raise ValueError('Data must be preloaded.')
-
     _interpolate_bads_eeg(inst)
     _interpolate_bads_meg_fast(inst, mode=mode)
 
