@@ -10,40 +10,44 @@ also works for MEG data.
 import numpy as np
 from sklearn.externals.joblib import Parallel, delayed
 
+import mne
 from mne.channels.interpolation import _make_interpolation_matrix
 from mne.parallel import check_n_jobs
-from mne.io.pick import channel_indices_by_type
 from mne.utils import check_random_state
 
-from .utils import _pbar
+from .utils import _pbar, _handle_picks
 from .autoreject import _check_data
 
 
 def _iterate_epochs(ransac, epochs, idxs, verbose):
-    n_channels = len(epochs.info['ch_names'])
+    n_channels = len(ransac.picks)
     corrs = np.zeros((len(idxs), n_channels))
     for idx, _ in enumerate(_pbar(idxs, desc='Iterating epochs',
                             verbose=verbose)):
-        ransac.corr_ = ransac._compute_correlations(epochs[idx])
+        ransac.corr_ = ransac._compute_correlations(
+            epochs.get_data()[idx, ransac.picks])
         corrs[idx, :] = ransac.corr_
     return corrs
 
 
-def _get_channel_type(epochs):
-    idx = channel_indices_by_type(epochs.info)
-    invalid_ch_types_present = [key for key in idx.keys()
+def _get_channel_type(epochs, picks):
+    picked_info = mne.io.pick.pick_info(epochs.info, picks)
+    ch_types_picked = {
+        mne.io.meas_info.channel_type(picked_info, idx)
+        for idx in range(len(picks))}
+    invalid_ch_types_present = [key for key in ch_types_picked
                                 if key not in ['mag', 'grad', 'eeg'] and
                                 key in epochs]
     if len(invalid_ch_types_present) > 0:
         raise ValueError('Invalid channel types present in epochs.'
                          ' Expected ONLY `meg` or ONLY `eeg`. Got %s'
                          % ', '.join(invalid_ch_types_present))
-    if 'meg' in epochs and 'eeg' in epochs:
+    if 'meg' in ch_types_picked and 'eeg' in ch_types_picked:
         raise ValueError('Got mixed channel types. Pick either eeg or meg'
                          ' but not both')
-    if 'eeg' in epochs:
+    if 'eeg' in ch_types_picked:
         return 'eeg'
-    elif 'meg' in epochs:
+    elif 'meg' in ch_types_picked:
         return 'meg'
 
 
@@ -52,7 +56,8 @@ class Ransac(object):
 
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
                  unbroken_time=0.4, ch_type='eeg', n_jobs=1,
-                 random_state=435656, verbose='progressbar'):
+                 random_state=435656, picks=None,
+                 verbose='progressbar'):
         """Implements RAndom SAmple Consensus (RANSAC) method to detect bad sensors.
 
         Parameters
@@ -70,6 +75,9 @@ class Ransac(object):
             Number of parallel jobs.
         random_state : None | int
             To seed or not the random number generator.
+        picks : ndarray, shape(n_channels) | None
+            The channels to be considered for autoreject. If None, defaults
+            to data channels {'meg', 'eeg'}.
         verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
             The verbosity of progress messages.
             If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -97,12 +105,14 @@ class Ransac(object):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
+        self.picks = picks
 
     def _get_random_subsets(self, info):
         """ Get random channels"""
         # have to set the seed here
         rng = check_random_state(self.random_state)
-        n_channels = len(info['ch_names'])
+        picked_info = mne.io.pick.pick_info(info, self.picks)
+        n_channels = len(picked_info['ch_names'])
 
         # number of channels to interpolate from
         n_samples = int(np.round(self.min_channels * n_channels))
@@ -116,7 +126,7 @@ class Ransac(object):
         # get channel subsets as lists
         ch_subsets = []
         for pick in picks:
-            ch_subsets.append([info['ch_names'][p] for p in pick])
+            ch_subsets.append([picked_info['ch_names'][p] for p in pick])
 
         return ch_subsets
 
@@ -124,8 +134,9 @@ class Ransac(object):
         from .utils import _fast_map_meg_channels
 
         ch_subsets = self.ch_subsets_
-        pos = np.array([ch['loc'][:3] for ch in inst.info['chs']])
-        ch_names = inst.info['ch_names']
+        picked_info = mne.io.pick.pick_info(inst.info, self.picks)
+        pos = np.array([ch['loc'][:3] for ch in picked_info['chs']])
+        ch_names = picked_info['ch_names']
         n_channels = len(ch_names)
         pick_to = range(n_channels)
         mappings = []
@@ -146,29 +157,30 @@ class Ransac(object):
         mappings = np.concatenate(mappings)
         return mappings
 
-    def _compute_correlations(self, inst):
+    def _compute_correlations(self, data):
         """Compute correlation between prediction and real data."""
         mappings = self.mappings_
-        n_epochs, n_channels, n_times = inst.get_data().shape
+        n_channels, n_times = data.shape
 
         # get the predictions
-        y_pred = inst.get_data()[0].T.dot(mappings.T)
-        y_pred = y_pred.reshape((n_times, n_channels,
+        y_pred = data.T.dot(mappings.T)
+        y_pred = y_pred.reshape((n_times, len(self.picks),
                                  self.n_resample), order='F')
         # pool them using median
         # XXX: weird that original implementation sorts and takes middle value.
         # Isn't really the median if n_resample even
         y_pred = np.median(y_pred, axis=-1)
         # compute correlation
-        num = np.sum(inst.get_data()[0].T * y_pred, axis=0)
-        denom = (np.sqrt(np.sum(inst.get_data()[0].T ** 2, axis=0)) *
+        num = np.sum(data.T * y_pred, axis=0)
+        denom = (np.sqrt(np.sum(data.T ** 2, axis=0)) *
                  np.sqrt(np.sum(y_pred ** 2, axis=0)))
         corr = num / denom
         return corr
 
     def fit(self, epochs):
-        _check_data(epochs)
-        self.ch_type = _get_channel_type(epochs)
+        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
+        _check_data(epochs, picks=self.picks, verbose=self.verbose)
+        self.ch_type = _get_channel_type(epochs, self.picks)
         n_epochs = len(epochs)
         self.ch_subsets_ = self._get_random_subsets(epochs.info)
         self.mappings_ = self._get_mappings(epochs)
@@ -193,14 +205,15 @@ class Ransac(object):
 
         bad_idx = np.where(bad_log > self.unbroken_time * n_epochs)[0]
         if len(bad_idx) > 0:
-            self.bad_chs_ = [epochs.info['ch_names'][p] for p in bad_idx]
+            self.bad_chs_ = [
+                epochs.info['ch_names'][self.picks[p]] for p in bad_idx]
         else:
             self.bad_chs_ = []
         return self
 
     def transform(self, epochs):
         epochs = epochs.copy()
-        _check_data(epochs)
+        _check_data(epochs, picks=self.picks, verbose=self.verbose)
         epochs.info['bads'] = self.bad_chs_
         epochs.interpolate_bads(reset_bads=True)
         return epochs

@@ -21,33 +21,33 @@ raw.info['projs'] = list()
 
 def test_ransac():
     """Some basic tests for ransac."""
-    ransac = Ransac()
 
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
-    events = mne.find_events(raw)
-    include = [u'EEG %03d' % i for i in range(1, 15)]
-    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
-                           eog=False, include=include, exclude=[])
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        picks=picks, baseline=(None, 0), decim=8,
-                        reject=None)
 
-    X = epochs.get_data()
-    assert_raises(ValueError, ransac.fit, X)
-    # should not contain both channel types
-    assert_raises(ValueError, ransac.fit, epochs)
-    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
-                           eog=False, include=include, exclude=[])
-    # should not contain other channel types
+    events = mne.find_events(raw)
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        picks=picks, baseline=(None, 0), decim=8,
-                        reject=None)
-    assert_raises(ValueError, ransac.fit, epochs)
-    # now with only one channel type
-    picks = mne.pick_types(raw.info, meg=False, eeg=True)
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        picks=picks, baseline=(None, 0), decim=8,
+                        baseline=(None, 0), decim=8,
                         reject=None, preload=True)
+
+    picks = mne.pick_types(epochs.info, meg='mag', eeg=False, stim=False,
+                           eog=False, exclude=[])
+    print(picks[-3:])
+    ransac = Ransac(picks=picks)
     epochs_clean = ransac.fit_transform(epochs)
     assert_true(len(epochs_clean) == len(epochs))
+    # Pass numpy instead of epochs
+    X = epochs.get_data()
+    assert_raises(AttributeError, ransac.fit, X)
+    #
+    # should not contain both channel types
+    picks = mne.pick_types(epochs.info, meg=True, eeg=False, stim=False,
+                           eog=False, exclude=[])
+    ransac = Ransac(picks=picks)
+    assert_raises(ValueError, ransac.fit, epochs)
+    # should not contain other channel types.
+    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
+                           eog=False, exclude=[])
+
+    ransac = Ransac(picks=picks)
+    assert_raises(ValueError, ransac.fit, epochs)
