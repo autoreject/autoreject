@@ -29,10 +29,10 @@ def test_ransac():
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         baseline=(None, 0), decim=8,
                         reject=None, preload=True)
-
+    # normal case
     picks = mne.pick_types(epochs.info, meg='mag', eeg=False, stim=False,
                            eog=False, exclude=[])
-    print(picks[-3:])
+
     ransac = Ransac(picks=picks)
     epochs_clean = ransac.fit_transform(epochs)
     assert_true(len(epochs_clean) == len(epochs))
@@ -45,9 +45,9 @@ def test_ransac():
                            eog=False, exclude=[])
     ransac = Ransac(picks=picks)
     assert_raises(ValueError, ransac.fit, epochs)
+    #
     # should not contain other channel types.
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
                            eog=False, exclude=[])
-
     ransac = Ransac(picks=picks)
     assert_raises(ValueError, ransac.fit, epochs)

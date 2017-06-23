@@ -79,21 +79,21 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
 
 raw.info['projs'] = list()  # remove proj, don't proj while interpolating
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                    picks=picks, baseline=(None, 0), reject=None,
+                    baseline=(None, 0), reject=None,
                     verbose=False, detrend=0, preload=True)
 
 ###############################################################################
 # First, we set up the function to compute the sensor-level thresholds.
 
 from functools import partial  # noqa
-thresh_func = partial(compute_thresholds, method='random_search',
+thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
                       random_state=42)
 
 ###############################################################################
 # :class:`autoreject.LocalAutoRejectCV` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
-ar = LocalAutoRejectCV(n_interpolates, consensus_percs,
+ar = LocalAutoRejectCV(n_interpolates, consensus_percs, picks=picks,
                        thresh_func=thresh_func)
 epochs_clean = ar.fit_transform(epochs['Auditory/Left'])
 

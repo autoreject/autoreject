@@ -31,15 +31,26 @@ def test_autoreject():
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
 
+    ##########################################################################
+    # picking epochs
     include = [u'EEG %03d' % i for i in range(1, 45, 3)]
     picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
-                           eog=False, include=include, exclude=[])
+                           eog=True, include=include, exclude=[])
+
     # raise error if preload is false
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
                         reject=None, preload=False)
     ar = LocalAutoReject()
     assert_raises(ValueError, ar.fit, epochs)
+    epochs.load_data()
+    ar.fit(epochs)
+    assert_true(len(ar.picks) == len(picks) - 1)
+
+    ##########################################################################
+    # picking AutoReject
+    picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
+                           eog=False, include=include, exclude=[])
 
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         baseline=(None, 0), decim=8,
@@ -77,10 +88,15 @@ def test_autoreject():
     assert_raises(ValueError, ar.transform, epochs)
 
     ar.fit(epochs)
+    assert_true(isinstance(ar.threshes_, dict))
     assert_true(len(ar.picks) == len(picks))
     assert_true(len(ar.threshes_.keys()) == len(ar.picks))
     pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
     assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
+    assert_raises(
+        ValueError, ar.transform,
+        epochs.copy().pick_channels(
+            [epochs.ch_names[pp] for pp in picks[:3]]))
 
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')

@@ -361,7 +361,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
-    _check_data(epochs, verbose=verbose)
+    _check_data(epochs, picks, verbose=verbose)
     n_epochs = len(epochs)
     picks = _handle_picks(info=epochs.info, picks=picks)
     epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)
@@ -743,9 +743,16 @@ class LocalAutoRejectCV(object):
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
         """
-        _check_data(epochs, picks=self.picks, verbose=self.verbose)
         if not hasattr(self, 'n_interpolate_'):
             raise ValueError('Please run autoreject.fit() method first')
+
+        non_matching_ch = set(self.threshes_) - {
+            epochs.ch_names[pp] for pp in self.picks}
+        if len(non_matching_ch) > 0:
+            raise ValueError('Not all channels used during fit are present'
+                             'In the data you want to transform!')
+
+        _check_data(epochs, picks=self.picks, verbose=self.verbose)
         return self._local_reject.transform(epochs.copy())
 
     def fit_transform(self, epochs):

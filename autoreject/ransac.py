@@ -55,7 +55,7 @@ class Ransac(object):
     """RANSAC algorithm to find bad sensors and repair them."""
 
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
-                 unbroken_time=0.4, ch_type='eeg', n_jobs=1,
+                 unbroken_time=0.4, n_jobs=1,
                  random_state=435656, picks=None,
                  verbose='progressbar'):
         """Implements RAndom SAmple Consensus (RANSAC) method to detect bad sensors.
