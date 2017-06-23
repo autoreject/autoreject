@@ -26,7 +26,7 @@ mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
 
-def _check_data(epochs, verbose='progressbar'):
+def _check_data(epochs, picks, verbose='progressbar'):
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
@@ -35,7 +35,12 @@ def _check_data(epochs, verbose='progressbar'):
         raise ValueError('Data must be preloaded.')
     n_bads = len(epochs.info['bads'])
 
-    if sum(ch_type in epochs for ch_type in ('mag', 'grad', 'eeg')) > 1:
+    picked_info = mne.io.pick.pick_info(epochs.info, picks)
+    ch_types_picked = {
+        mne.io.meas_info.channel_type(picked_info, idx)
+        for idx in range(len(picks))}
+
+    if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg')) > 1:
         raise ValueError('AutoReject handles only one channel type for now')
 
     if n_bads > 0:
@@ -464,8 +469,7 @@ class LocalAutoReject(BaseAutoReject):
         epochs : instance of mne.Epochs
             The epochs object for which bad epochs must be found.
         """
-        _check_data(epochs, verbose=self.verbose)
-
+        _check_data(epochs, picks=self.picks, verbose=self.verbose)
         self._vote_epochs(epochs)
         self._interpolate_bad_epochs(epochs, verbose=self.verbose)
 
@@ -651,8 +655,8 @@ class LocalAutoRejectCV(object):
         self : instance of LocalAutoRejectCV
             The instance.
         """
-        _check_data(epochs, verbose=self.verbose)
         self.picks = _handle_picks(info=epochs.info, picks=self.picks)
+        _check_data(epochs, picks=self.picks, verbose=self.verbose)
 
         if self.cv is None:
             self.cv = 10
@@ -739,7 +743,7 @@ class LocalAutoRejectCV(object):
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
         """
-        _check_data(epochs, verbose=self.verbose)
+        _check_data(epochs, picks=self.picks, verbose=self.verbose)
         if not hasattr(self, 'n_interpolate_'):
             raise ValueError('Please run autoreject.fit() method first')
         return self._local_reject.transform(epochs.copy())

@@ -33,7 +33,7 @@ def test_autoreject():
 
     include = [u'EEG %03d' % i for i in range(1, 45, 3)]
     picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
-                           eog=True, include=include, exclude=[])
+                           eog=False, include=include, exclude=[])
     # raise error if preload is false
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=8,
@@ -42,7 +42,7 @@ def test_autoreject():
     assert_raises(ValueError, ar.fit, epochs)
 
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        picks=picks, baseline=(None, 0), decim=8,
+                        baseline=(None, 0), decim=8,
                         reject=None, preload=True)
 
     X = epochs.get_data()
@@ -67,22 +67,22 @@ def test_autoreject():
     assert_raises(ValueError, validation_curve, ar, X, None,
                   param_name, param_range)
 
-    ar = LocalAutoReject()
+    ar = LocalAutoReject(picks=picks)
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
 
-    ar = LocalAutoRejectCV(cv=3)
-    assert_raises(ValueError, ar.fit, X)
+    ar = LocalAutoRejectCV(cv=3, picks=picks)
+    assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
 
     ar.fit(epochs)
-    assert_true(len(ar.picks) == len(picks) - 1)
+    assert_true(len(ar.picks) == len(picks))
     assert_true(len(ar.threshes_.keys()) == len(ar.picks))
-    pick_eog = mne.pick_types(epochs.info, eeg=False, eog=True)
+    pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
     assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
 
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
     for method in ['random_search', 'bayesian_optimization']:
-        compute_thresholds(epochs, method=method)
+        compute_thresholds(epochs, picks=picks, method=method)
