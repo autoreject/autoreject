@@ -69,7 +69,7 @@ events = mne.read_events(event_fname)
 # only one channel type at a time.
 
 raw.info['bads'] = []
-picks = mne.pick_types(raw.info, meg='mag', eeg=False, stim=False, eog=False,
+picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
 
 ###############################################################################
@@ -121,7 +121,7 @@ for ax in axes:
     ax.tick_params(axis='y', which='both', left='off', right='off')
 
 ylim = dict(grad=(-170, 200))
-evoked.pick_types(meg='mag', exclude=[])
+evoked.pick_types(meg='grad', exclude=[])
 evoked.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
 axes[0].set_title('Before autoreject')
 evoked_clean.pick_types(meg='grad', exclude=[])

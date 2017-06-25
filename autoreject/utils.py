@@ -166,7 +166,6 @@ def _interpolate_bads_eeg(inst, picks):
     inst : mne.io.Raw, mne.Epochs or mne.Evoked
         The data to interpolate. Must be preloaded.
     """
-    from mne import pick_types
     from mne.bem import _fit_sphere
     from mne.utils import logger, warn
     from mne.channels.interpolation import (_make_interpolation_matrix,
@@ -216,14 +215,15 @@ def _interpolate_bads_eeg(inst, picks):
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     """Interpolate bad channels from data in good channels.
     """
-    from mne.channels.interpolation import _do_interp_dots
     from mne import pick_types, pick_channels, pick_info
 
     # We can have pre-picked instances or not.
     # And we need to handle it.
 
+    inst_picked = True
     if len(inst.ch_names) > len(picks):
         picked_info = pick_info(inst.info, picks)
+        inst_picked = False
     else:
         picked_info = inst.info.copy()
 
@@ -248,17 +248,29 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     if len(picks_meg) == 0 or len(picks_bad) == 0:
         return
 
+    # we need to make sure that only meg channels are passed here
+    # as the MNE interpolation code is not fogriving.
+    # This is why we picked the info.
     mapping = _fast_map_meg_channels(
-        picked_info, pick_from=picks_good, pick_to=picks_bad,
+        picked_info.copy(), pick_from=picks_good, pick_to=picks_bad,
         mode=mode)
-
-    # recompute picks_good, picks_bad
-    _, _, picks_bad_ = get_picks_bad_good(inst.info)
-    # mapping_ = np.empty(len(ch_names), len(ch_))
+    # the downside is that the mapping matrix now does not match
+    # the unpicked info of the data.
+    # Since we may have picked the info, we need to double map
+    # the indices.
+    _, picks_good_, picks_bad_orig = get_picks_bad_good(inst.info.copy())
     ch_names_a = [picked_info['ch_names'][pp] for pp in picks_bad]
-    ch_names_b = [inst.info['ch_names'][pp] for pp in picks_bad_]
+    ch_names_b = [inst.info['ch_names'][pp] for pp in picks_bad_orig]
     assert ch_names_a == ch_names_b
-    _do_interp_dots(inst, mapping, picks_good, picks_bad_)
+    if not inst_picked:
+        picks_good_ = [pp for pp in picks if pp in picks_good_]
+    assert len(picks_good_) == len(picks_good)
+
+    # XXX all trouble is probably here
+    inst._data[:, picks_bad_orig, :] = (
+        # multiply correctly with interpolation matrix
+        np.einsum('ij,xjy->xiy',  # subpick data
+                  mapping, inst._data[:, picks_good_]))
 
 
 def _fast_map_meg_channels(info, pick_from, pick_to,
@@ -275,7 +287,6 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     # XXX: hack to silence _compute_mapping_matrix
     verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
     mne.set_log_level('WARNING')
-
 
     def _compute_dots(info, mode='fast'):
         """Compute all-to-all dots.
