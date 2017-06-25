@@ -255,7 +255,9 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     # recompute picks_good, picks_bad
     _, _, picks_bad_ = get_picks_bad_good(inst.info)
     # mapping_ = np.empty(len(ch_names), len(ch_))
-
+    ch_names_a = [picked_info['ch_names'][pp] for pp in picks_bad]
+    ch_names_b = [inst.info['ch_names'][pp] for pp in picks_bad_]
+    assert ch_names_a == ch_names_b
     _do_interp_dots(inst, mapping, picks_good, picks_bad_)
 
 
