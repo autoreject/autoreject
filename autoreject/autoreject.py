@@ -566,7 +566,7 @@ class LocalAutoReject(BaseAutoReject):
                        if idx in bad_chs]
             epoch = epochs[epoch_idx]
             epoch.info['bads'] = bad_chs
-            interpolate_bads(epoch, reset_bads=True)
+            interpolate_bads(epoch, picks=self.picks, reset_bads=True)
             epochs._data[epoch_idx] = epoch._data
 
 

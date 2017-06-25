@@ -69,14 +69,13 @@ events = mne.read_events(event_fname)
 # only one channel type at a time.
 
 raw.info['bads'] = []
-picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
+picks = mne.pick_types(raw.info, meg='mag', eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
 
 ###############################################################################
 # Now, we can create epochs. The ``reject`` params will be set to ``None``
 # because we do not want epochs to be dropped when instantiating
 # :class:`mne.Epochs`.
-
 raw.info['projs'] = list()  # remove proj, don't proj while interpolating
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     baseline=(None, 0), reject=None,
@@ -93,12 +92,15 @@ thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
 # :class:`autoreject.LocalAutoRejectCV` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
+
+epochs.ch_names
 ar = LocalAutoRejectCV(n_interpolates, consensus_percs, picks=picks,
                        thresh_func=thresh_func)
 epochs_clean = ar.fit_transform(epochs['Auditory/Left'])
 
 evoked = epochs.average()
 evoked_clean = epochs_clean.average()
+
 
 ###############################################################################
 # Now, we will manually mark the bad channels just for plotting.
@@ -119,7 +121,7 @@ for ax in axes:
     ax.tick_params(axis='y', which='both', left='off', right='off')
 
 ylim = dict(grad=(-170, 200))
-evoked.pick_types(meg='grad', exclude=[])
+evoked.pick_types(meg='mag', exclude=[])
 evoked.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
 axes[0].set_title('Before autoreject')
 evoked_clean.pick_types(meg='grad', exclude=[])

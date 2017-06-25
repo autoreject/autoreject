@@ -49,67 +49,70 @@ def test_autoreject():
 
     ##########################################################################
     # picking AutoReject
-    picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
-                           eog=False, include=include, exclude=[])
 
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        baseline=(None, 0), decim=8,
-                        reject=None, preload=True)
+    picks_list = [('mag', False, []), (False, True, include)]
+    for meg, eeg, include_ in picks_list:
+        picks = mne.pick_types(raw.info, meg=meg, eeg=eeg, stim=False,
+                               eog=False, include=include_, exclude=[])
 
-    X = epochs.get_data()
-    n_epochs, n_channels, n_times = X.shape
-    X = X.reshape(n_epochs, -1)
+        epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                            baseline=(None, 0), decim=8,
+                            reject=None, preload=True)
 
-    ar = GlobalAutoReject()
-    assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_channels=n_channels)
-    assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_times=n_times)
-    assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_channels=n_channels, n_times=n_times,
-                          thresh=40e-6)
-    ar.fit(X)
+        X = epochs.get_data()
+        n_epochs, n_channels, n_times = X.shape
+        X = X.reshape(n_epochs, -1)
 
-    reject = get_rejection_threshold(epochs)
-    assert_true(reject, isinstance(reject, dict))
+        ar = GlobalAutoReject()
+        assert_raises(ValueError, ar.fit, X)
+        ar = GlobalAutoReject(n_channels=n_channels)
+        assert_raises(ValueError, ar.fit, X)
+        ar = GlobalAutoReject(n_times=n_times)
+        assert_raises(ValueError, ar.fit, X)
+        ar = GlobalAutoReject(n_channels=n_channels, n_times=n_times,
+                              thresh=40e-6)
+        ar.fit(X)
 
-    param_name = 'thresh'
-    param_range = np.linspace(40e-6, 200e-6, 10)
-    assert_raises(ValueError, validation_curve, ar, X, None,
-                  param_name, param_range)
+        reject = get_rejection_threshold(epochs)
+        assert_true(reject, isinstance(reject, dict))
 
-    ar = LocalAutoReject(picks=picks)
-    assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
-                  param_name, param_range)
+        param_name = 'thresh'
+        param_range = np.linspace(40e-6, 200e-6, 10)
+        assert_raises(ValueError, validation_curve, ar, X, None,
+                      param_name, param_range)
 
-    ar = LocalAutoRejectCV(cv=3, picks=picks)
-    assert_raises(AttributeError, ar.fit, X)
-    assert_raises(ValueError, ar.transform, X)
-    assert_raises(ValueError, ar.transform, epochs)
+        ar = LocalAutoReject(picks=picks)
+        assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
+                      param_name, param_range)
 
-    ar.fit(epochs)
-    assert_true(isinstance(ar.threshes_, dict))
-    assert_true(len(ar.picks) == len(picks))
-    assert_true(len(ar.threshes_.keys()) == len(ar.picks))
-    pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
-    assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
-    assert_raises(
-        IndexError, ar.transform,
-        epochs.copy().pick_channels(
-            [epochs.ch_names[pp] for pp in picks[:3]]))
+        ar = LocalAutoRejectCV(cv=3, picks=picks)
+        assert_raises(AttributeError, ar.fit, X)
+        assert_raises(ValueError, ar.transform, X)
+        assert_raises(ValueError, ar.transform, epochs)
 
-    # Now we test that the .bad_segments has the shape
-    # of n_trials, n_sensors, such that n_sensors is the
-    # the full number sensors, before picking. We, hence,
-    # expect nothing to be rejected outside of our picks
-    # but rejections can occur inside our picks.
-    assert_equal(ar.bad_segments.shape[1], len(epochs.ch_names))
-    assert_true(np.any(ar.bad_segments[:, picks]))
-    anti_picks = np.ones(len(epochs.ch_names), dtype=bool)
-    anti_picks[picks] = False
-    assert_true(not np.any(ar.bad_segments[:, anti_picks]))
+        ar.fit(epochs)
+        # Now we test that the .bad_segments has the shape
+        # of n_trials, n_sensors, such that n_sensors is the
+        # the full number sensors, before picking. We, hence,
+        # expect nothing to be rejected outside of our picks
+        # but rejections can occur inside our picks.
+        assert_equal(ar.bad_segments.shape[1], len(epochs.ch_names))
+        assert_true(np.any(ar.bad_segments[:, picks]))
+        anti_picks = np.ones(len(epochs.ch_names), dtype=bool)
+        anti_picks[picks] = False
+        assert_true(not np.any(ar.bad_segments[:, anti_picks]))
 
-    epochs.load_data()
-    assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
-    for method in ['random_search', 'bayesian_optimization']:
-        compute_thresholds(epochs, picks=picks, method=method)
+        assert_true(isinstance(ar.threshes_, dict))
+        assert_true(len(ar.picks) == len(picks))
+        assert_true(len(ar.threshes_.keys()) == len(ar.picks))
+        pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
+        assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
+        assert_raises(
+            IndexError, ar.transform,
+            epochs.copy().pick_channels(
+                [epochs.ch_names[pp] for pp in picks[:3]]))
+
+        epochs.load_data()
+        assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
+        for method in ['random_search', 'bayesian_optimization']:
+            compute_thresholds(epochs, picks=picks, method=method)

@@ -74,14 +74,15 @@ for run in range(3, 7):
     mne.io.set_eeg_reference(raw)
     epoch = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
                        picks=picks, baseline=None,
-                       preload=False, reject=None, decim=4)
+                       preload=False, reject=None, decim=7)
     epochs.append(epoch)
 
     # Same `dev_head_t` for all runs so that we can concatenate them.
     epoch.info['dev_head_t'] = epochs[0].info['dev_head_t']
 
-epochs = mne.epochs.concatenate_epochs(epochs)
+raw.info['sfreq']
 
+epochs = mne.epochs.concatenate_epochs(epochs)
 ###############################################################################
 # Now, we apply autoreject
 
