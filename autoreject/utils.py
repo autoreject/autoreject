@@ -216,7 +216,7 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     """Interpolate bad channels from data in good channels.
     """
     from mne import pick_types, pick_channels, pick_info
-
+    from mne.channels.interpolation import _do_interp_dots
     # We can have pre-picked instances or not.
     # And we need to handle it.
 
@@ -243,7 +243,6 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
         return picks_meg, picks_good, picks_bad
 
     picks_meg, picks_good, picks_bad = get_picks_bad_good(picked_info)
-
     # return without doing anything if there are no meg channels
     if len(picks_meg) == 0 or len(picks_bad) == 0:
         return
@@ -268,12 +267,12 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     ch_names_a = [picked_info['ch_names'][pp] for pp in picks_good]
     ch_names_b = [inst.info['ch_names'][pp] for pp in picks_good_]
     assert ch_names_a == ch_names_b
-
     # XXX all trouble is probably here
-    inst._data[:, picks_bad_orig, :] = (
-        # multiply correctly with interpolation matrix
-        np.einsum('ij,xjy->xiy',  # subpick data
-                  mapping, inst._data[:, picks_good_]))
+    # inst._data[:, picks_bad_orig, :] = (
+    #     # multiply correctly with interpolation matrix
+    #     np.einsum('ij,xjy->xiy',  # subpick data
+    #               mapping, inst._data[:, picks_good_]))
+    _do_interp_dots(inst, mapping, picks_good_, picks_bad_orig)
 
 
 def _fast_map_meg_channels(info, pick_from, pick_to,

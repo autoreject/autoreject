@@ -535,7 +535,7 @@ class LocalAutoReject(BaseAutoReject):
         drop_log = self._drop_log
         # 1: bad segment, # 2: interpolated
         self.fix_log = self._drop_log.copy()
-        ch_names = [epochs.ch_names[pp] for pp in self.picks]
+        ch_names = epochs.ch_names
         non_picks = np.setdiff1d(range(epochs.info['nchan']), self.picks)
         # TODO: raise error if preload is not True
         pos = 4 if hasattr(self, '_leave') else 2
@@ -564,6 +564,7 @@ class LocalAutoReject(BaseAutoReject):
             bad_chs = np.where(bad_chs_mask)[0]
             bad_chs = [ch_name for idx, ch_name in enumerate(ch_names)
                        if idx in bad_chs]
+
             epoch = epochs[epoch_idx]
             epoch.info['bads'] = bad_chs
             interpolate_bads(epoch, picks=self.picks, reset_bads=True)
