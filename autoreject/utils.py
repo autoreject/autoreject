@@ -106,7 +106,7 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
     ch_names = [inst.info['ch_names'][p] for p in picks]
     for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
                                         desc=mesg, verbose=verbose)):
-        inst_clean = inst.copy().pick_channels(ch_names)
+        inst_clean = inst.copy()
         inst_clean.info['bads'] = [ch]
         interpolate_bads(inst_clean, picks=picks, reset_bads=True, mode='fast')
 
@@ -268,10 +268,6 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     ch_names_b = [inst.info['ch_names'][pp] for pp in picks_good_]
     assert ch_names_a == ch_names_b
     # XXX all trouble is probably here
-    # inst._data[:, picks_bad_orig, :] = (
-    #     # multiply correctly with interpolation matrix
-    #     np.einsum('ij,xjy->xiy',  # subpick data
-    #               mapping, inst._data[:, picks_good_]))
     _do_interp_dots(inst, mapping, picks_good_, picks_bad_orig)
 
 
