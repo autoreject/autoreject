@@ -152,7 +152,6 @@ class Ransac(object):
                                  for name in ch_subsets[idx]])
             mapping = np.zeros((n_channels, n_channels))
             if self.ch_type == 'meg':
-                # XXX Mainak here we need to similar things as in AR
                 mapping[:, pick_from] = _fast_map_meg_channels(
                     picked_info.copy(), pick_from, pick_to)
             elif self.ch_type == 'eeg':
