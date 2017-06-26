@@ -16,7 +16,7 @@ from mne.parallel import check_n_jobs
 from mne.utils import check_random_state
 
 from .utils import _pbar, _handle_picks
-from .autoreject import _check_data
+from .utils import _check_data
 
 
 def _iterate_epochs(ransac, epochs, idxs, verbose):

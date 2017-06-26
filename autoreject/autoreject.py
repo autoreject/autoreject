@@ -9,7 +9,6 @@ from scipy.stats.distributions import uniform
 
 import mne
 from mne.io.pick import channel_indices_by_type
-from mne.utils import logger
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -18,37 +17,12 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
-                    _handle_picks)
+                    _handle_picks, _check_data)
 
 from .bayesopt import expected_improvement, bayes_opt
 
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
-
-
-def _check_data(epochs, picks, verbose='progressbar'):
-    BaseEpochs = _get_epochs_type()
-    if not isinstance(epochs, BaseEpochs):
-        raise ValueError('Only accepts MNE epochs objects.')
-
-    if epochs.preload is False:
-        raise ValueError('Data must be preloaded.')
-    n_bads = len(epochs.info['bads'])
-
-    picked_info = mne.io.pick.pick_info(epochs.info, picks)
-    ch_types_picked = {
-        mne.io.meas_info.channel_type(picked_info, idx)
-        for idx in range(len(picks))}
-
-    if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg')) > 1:
-        raise ValueError('AutoReject handles only one channel type for now')
-
-    if n_bads > 0:
-        if verbose is not False:
-            logger.info(
-                '%i channels are marked as bad. These will be ignored.'
-                'If you want them to be considered by autoreject please '
-                'remove them from epochs.info["bads"].' % n_bads)
 
 
 def _slicemean(obj, this_slice, axis):
@@ -361,6 +335,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
+    picks = _handle_picks(epochs.info, picks)
     _check_data(epochs, picks, verbose=verbose)
     n_epochs = len(epochs)
     picks = _handle_picks(info=epochs.info, picks=picks)

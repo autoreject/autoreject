@@ -34,16 +34,13 @@ events = mne.read_events(event_fname)
 # Now that we have the events, we can extract the trials for the selection
 # of channels defined by ``picks``.
 
-include = []
-picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False,
-                       eog=False, include=include, exclude='bads')
-
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                    picks=picks, baseline=(None, 0),
+                    baseline=(None, 0),
                     reject=None, verbose=False, preload=True)
 
-epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
-                  include=include, exclude='bads')
+picks = mne.pick_types(epochs.info, meg='grad', eeg=False, stim=False,
+                       eog=False, exclude='bads')
+
 
 ###############################################################################
 # Now, we can define a threshold range over which the threshold must be found
@@ -53,7 +50,8 @@ epochs.pick_types(meg='grad', eeg=False, stim=False, eog=False,
 import numpy as np  # noqa
 from autoreject import compute_thresholds  # noqa
 
-threshes = compute_thresholds(epochs, method='random_search',
+threshes = compute_thresholds(epochs, picks=picks,
+                              method='random_search',
                               random_state=42, verbose='progressbar')
 
 ###############################################################################
@@ -71,7 +69,8 @@ plt.figure(figsize=(6, 5))
 plt.tick_params(axis='x', which='both', bottom='off', top='off')
 plt.tick_params(axis='y', which='both', left='off', right='off')
 
-plt.hist(scaling * np.array(threshes.values()), 30, color='g', alpha=0.4)
+plt.hist(scaling * np.array(list(threshes.values())), 30,
+         color='g', alpha=0.4)
 plt.xlabel('Threshold (%s)' % unit)
 plt.ylabel('Number of sensors')
 plt.xlim((100, 950))
