@@ -50,8 +50,6 @@ events = mne.read_events(event_fname)
 # only one channel type at a time.
 
 raw.info['bads'] = []
-picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
-                       include=[], exclude=[])
 
 ###############################################################################
 # Now, we can create epochs. The ``reject`` params will be set to ``None``
@@ -60,15 +58,19 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
 
 raw.info['projs'] = list()  # remove proj, don't proj while interpolating
 epochs = Epochs(raw, events, event_id, tmin, tmax,
-                picks=picks, baseline=(None, 0), reject=None,
+                baseline=(None, 0), reject=None,
                 verbose=False, detrend=0, preload=True)
+picks = mne.pick_types(epochs.info, meg='grad', eeg=False,
+                       stim=False, eog=False,
+                       include=[], exclude=[])
+
 
 ###############################################################################
 # We import ``Ransac`` and run the familiar ``fit_transform`` method.
 from autoreject import Ransac  # noqa
 from autoreject.utils import interpolate_bads  # noqa
 
-ransac = Ransac(verbose='progressbar', n_jobs=1)
+ransac = Ransac(verbose='progressbar', picks=picks, n_jobs=1)
 epochs_clean = ransac.fit_transform(epochs)
 
 ###############################################################################

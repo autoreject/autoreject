@@ -42,13 +42,17 @@ def _get_channel_type(epochs, picks):
         raise ValueError('Invalid channel types present in epochs.'
                          ' Expected ONLY `meg` or ONLY `eeg`. Got %s'
                          % ', '.join(invalid_ch_types_present))
-    if 'meg' in ch_types_picked and 'eeg' in ch_types_picked:
+
+    has_meg = any(kk in ch_types_picked for kk in ('mag', 'grad'))
+    if 'eeg' in ch_types_picked and has_meg:
         raise ValueError('Got mixed channel types. Pick either eeg or meg'
                          ' but not both')
     if 'eeg' in ch_types_picked:
         return 'eeg'
-    elif 'meg' in ch_types_picked:
+    elif has_meg:
         return 'meg'
+    else:
+        raise ValueError('Oh no! Your channel type is not known.')
 
 
 class Ransac(object):
@@ -148,8 +152,9 @@ class Ransac(object):
                                  for name in ch_subsets[idx]])
             mapping = np.zeros((n_channels, n_channels))
             if self.ch_type == 'meg':
-                mapping[:, pick_from] = _fast_map_meg_channels(inst, pick_from,
-                                                               pick_to)
+                # XXX Mainak here we need to similar things as in AR
+                mapping[:, pick_from] = _fast_map_meg_channels(
+                    inst.info.copy(), pick_from, pick_to)
             elif self.ch_type == 'eeg':
                 mapping[:, pick_from] = _make_interpolation_matrix(
                     pos[pick_from], pos[pick_to], alpha=1e-5)
@@ -174,6 +179,7 @@ class Ransac(object):
         num = np.sum(data.T * y_pred, axis=0)
         denom = (np.sqrt(np.sum(data.T ** 2, axis=0)) *
                  np.sqrt(np.sum(y_pred ** 2, axis=0)))
+
         corr = num / denom
         return corr
 
