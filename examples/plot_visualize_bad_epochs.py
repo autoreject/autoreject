@@ -69,9 +69,10 @@ for run in range(3, 7):
                              min_duration=0.003, verbose=True)
     # Read epochs
     mne.io.set_eeg_reference(raw)
+
     epoch = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
                        baseline=None,
-                       preload=False, reject=None, decim=7)
+                       preload=False, reject=None, decim=4)
     epochs.append(epoch)
 
     # Same `dev_head_t` for all runs so that we can concatenate them.
@@ -94,7 +95,7 @@ picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
 thresh_func = partial(compute_thresholds, picks=picks,
                       random_state=42, n_jobs=1)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
 epochs_ar = ar.fit_transform(this_epoch)
 
 ###############################################################################
