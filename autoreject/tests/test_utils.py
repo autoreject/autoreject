@@ -44,11 +44,11 @@ def test_utils():
     picks_eeg = mne.pick_types(evoked.info, meg=False, eeg=True, exclude=[])
     picks_bad_meg = mne.pick_channels(evoked.ch_names, include=['MEG 2443'])
     picks_bad_eeg = mne.pick_channels(evoked.ch_names, include=['EEG 053'])
+    evoked_orig = evoked.copy()
     for picks, picks_bad in zip([picks_meg, picks_eeg],
                                 [picks_bad_meg, picks_bad_eeg]):
         evoked_autoreject = interpolate_bads(evoked, picks=picks,
                                              reset_bads=False)
-        evoked_orig = evoked.copy()
         evoked.interpolate_bads(reset_bads=False)
         assert_array_equal(evoked.data[picks_bad],
                            evoked_autoreject.data[picks_bad])
