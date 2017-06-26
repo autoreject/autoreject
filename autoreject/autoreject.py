@@ -497,7 +497,6 @@ class LocalAutoReject(BaseAutoReject):
         self.bad_epoch_counts = np.zeros((len(epochs), ))
 
         ch_names = [epochs.ch_names[p] for p in picks]
-
         deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
         threshes = [self.threshes_[ch_name] for ch_name in ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
@@ -512,7 +511,7 @@ class LocalAutoReject(BaseAutoReject):
         # TODO: this must be done separately for each channel type?
         self.sorted_epoch_idx = np.argsort(self.bad_epoch_counts)[::-1]
         bad_epoch_counts = np.sort(self.bad_epoch_counts)[::-1]
-        n_channels = self._drop_log.shape[1]
+        n_channels = len(self.picks)
         n_consensus = self.consensus_perc * n_channels
         if np.max(bad_epoch_counts) >= n_consensus:
             self.n_epochs_drop = np.sum(self.bad_epoch_counts >=
@@ -702,7 +701,7 @@ class LocalAutoRejectCV(object):
                                                  verbose=self.verbose)):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
                     # \kappa must be greater than \rho
-                    n_channels = local_reject._drop_log.shape[1]
+                    n_channels = len(self.picks)
                     if consensus_perc * n_channels <= n_interp:
                         loss[idx, jdx, fold] = np.inf
                         continue
