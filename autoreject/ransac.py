@@ -154,7 +154,7 @@ class Ransac(object):
             if self.ch_type == 'meg':
                 # XXX Mainak here we need to similar things as in AR
                 mapping[:, pick_from] = _fast_map_meg_channels(
-                    inst.info.copy(), pick_from, pick_to)
+                    picked_info.copy(), pick_from, pick_to)
             elif self.ch_type == 'eeg':
                 mapping[:, pick_from] = _make_interpolation_matrix(
                     pos[pick_from], pos[pick_to], alpha=1e-5)
