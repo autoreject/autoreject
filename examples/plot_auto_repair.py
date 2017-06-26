@@ -136,13 +136,16 @@ plt.tight_layout()
 set_matplotlib_defaults(plt)
 
 plt.figure(figsize=(12, 6))
-im = plt.imshow(ar.bad_segments, cmap='Reds', interpolation='nearest')
+im = plt.imshow(ar.bad_segments[:, picks], cmap='Reds',
+                interpolation='nearest')
+
+ch_names = [epochs.ch_names[pp] for pp in picks][7::10]
 ax = im.get_axes()
 ax.grid(False)
 ax.set_xlabel('Sensors')
 ax.set_ylabel('Trials')
-plt.setp(ax, xticks=range(7, epochs.info['nchan'], 10),
-         xticklabels=epochs.info['ch_names'][7::10])
+plt.setp(ax, xticks=range(7, len(picks), 10),
+         xticklabels=ch_names)
 plt.setp(ax.get_yticklabels(), rotation=0)
 plt.setp(ax.get_xticklabels(), rotation=90)
 ax.tick_params(axis=u'both', which=u'both', length=0)
