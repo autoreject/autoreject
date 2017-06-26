@@ -116,13 +116,15 @@ fig.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
+ch_names = [epochs.ch_names[ii] for ii in ransac.picks][7::10]
 fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-ax.imshow(ransac.bad_log, cmap='Reds', interpolation='nearest')
+ax.imshow(ransac.bad_log, cmap='Reds',
+          interpolation='nearest')
 ax.grid(False)
 ax.set_xlabel('Sensors')
 ax.set_ylabel('Trials')
-plt.setp(ax, xticks=range(7, epochs.info['nchan'], 10),
-         xticklabels=epochs.info['ch_names'][7::10])
+plt.setp(ax, xticks=range(7, len(ransac.picks), 10),
+         xticklabels=ch_names)
 plt.setp(ax.get_yticklabels(), rotation=0)
 plt.setp(ax.get_xticklabels(), rotation=90)
 ax.tick_params(axis=u'both', which=u'both', length=0)
