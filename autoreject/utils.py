@@ -171,72 +171,18 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels.
     """
     import mne
+    from mne.channels.interpolation import _interpolate_bads_eeg
+
     mne.set_log_level('WARNING')  # to prevent cobyla printf error
 
     # this needs picks, assume our instance is complete and intact
-    _interpolate_bads_eeg(inst, picks=picks)
+    _interpolate_bads_eeg(inst)
     _interpolate_bads_meg_fast(inst, picks=picks, mode=mode)
 
     if reset_bads is True:
         inst.info['bads'] = []
 
     return inst
-
-
-def _interpolate_bads_eeg(inst, picks):
-    """Interpolate bad EEG channels.
-
-    Operates in place.
-
-    Parameters
-    ----------
-    inst : mne.io.Raw, mne.Epochs or mne.Evoked
-        The data to interpolate. Must be preloaded.
-    """
-    from mne.bem import _fit_sphere
-    from mne.utils import logger, warn
-    from mne.channels.interpolation import (_make_interpolation_matrix,
-                                            _do_interp_dots)
-
-    # we map the full instance but we have already picked the isntance
-    bads_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
-    goods_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
-
-    picks = mne.pick_types(inst.info, meg=True, eeg=False)
-    inst.info._check_consistency()
-    bads_idx[picks] = [
-        inst.info['ch_names'][ch] in inst.info['bads'] for ch in picks]
-
-    if len(picks) == 0 or len(bads_idx) == 0:
-        return
-
-    goods_idx[picks] = True
-    goods_idx[bads_idx] = False
-
-    pos = inst._get_channel_positions(picks)
-
-    # Make sure only EEG are used
-    bads_idx_pos = bads_idx[picks]
-    goods_idx_pos = goods_idx[picks]
-
-    pos_good = pos[goods_idx_pos]
-    pos_bad = pos[bads_idx_pos]
-
-    # test spherical fit
-    radius, center = _fit_sphere(pos_good)
-    distance = np.sqrt(np.sum((pos_good - center) ** 2, 1))
-    distance = np.mean(distance / radius)
-    if np.abs(1. - distance) > 0.1:
-        warn('Your spherical fit is poor, interpolation results are '
-             'likely to be inaccurate.')
-
-    logger.info('Computing interpolation matrix from {0} sensor '
-                'positions'.format(len(pos_good)))
-
-    interpolation = _make_interpolation_matrix(pos_good, pos_bad)
-
-    logger.info('Interpolating {0} sensors'.format(len(pos_bad)))
-    _do_interp_dots(inst, interpolation, goods_idx, bads_idx)
 
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
@@ -294,7 +240,6 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     ch_names_a = [picked_info['ch_names'][pp] for pp in picks_good]
     ch_names_b = [inst.info['ch_names'][pp] for pp in picks_good_]
     assert ch_names_a == ch_names_b
-    # XXX all trouble is probably here
     _do_interp_dots(inst, mapping, picks_good_, picks_bad_orig)
 
 

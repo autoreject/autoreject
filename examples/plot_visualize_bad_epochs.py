@@ -64,23 +64,19 @@ for run in range(3, 7):
     raw.rename_channels({'EEG061': 'EOG061', 'EEG062': 'EOG062',
                          'EEG063': 'ECG063', 'EEG064': 'MISC'})
 
-    exclude = []  # XXX
-    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=False,
-                           eog=True, exclude=exclude)
     events = mne.find_events(raw, stim_channel='STI101',
                              consecutive='increasing',
                              min_duration=0.003, verbose=True)
     # Read epochs
     mne.io.set_eeg_reference(raw)
     epoch = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
-                       picks=picks, baseline=None,
+                       baseline=None,
                        preload=False, reject=None, decim=7)
     epochs.append(epoch)
 
     # Same `dev_head_t` for all runs so that we can concatenate them.
     epoch.info['dev_head_t'] = epochs[0].info['dev_head_t']
 
-raw.info['sfreq']
 
 epochs = mne.epochs.concatenate_epochs(epochs)
 ###############################################################################
@@ -90,18 +86,24 @@ from autoreject import LocalAutoRejectCV, compute_thresholds  # noqa
 from functools import partial  # noqa
 
 this_epoch = epochs['famous']
-thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
+exclude = []  # XXX
+picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
+                       eog=True, exclude=exclude)
+
+thresh_func = partial(compute_thresholds, picks=picks,
+                      random_state=42, n_jobs=1)
+
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 epochs_ar = ar.fit_transform(this_epoch)
 
 ###############################################################################
 # We can visualize the cross validation curve over two variables
 
-import numpy as np # noqa
-import matplotlib.pyplot as plt # noqa
-import matplotlib.patches as patches # noqa
-from autoreject import set_matplotlib_defaults # noqa
+import numpy as np  # noqa
+import matplotlib.pyplot as plt  # noqa
+import matplotlib.patches as patches  # noqa
+from autoreject import set_matplotlib_defaults  # noqa
 
 set_matplotlib_defaults(plt, style='seaborn-white')
 loss = ar.loss.mean(axis=-1)
