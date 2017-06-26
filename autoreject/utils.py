@@ -265,6 +265,9 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     if not inst_picked:
         picks_good_ = [pp for pp in picks if pp in picks_good_]
     assert len(picks_good_) == len(picks_good)
+    ch_names_a = [picked_info['ch_names'][pp] for pp in picks_good]
+    ch_names_b = [inst.info['ch_names'][pp] for pp in picks_good_]
+    assert ch_names_a == ch_names_b
 
     # XXX all trouble is probably here
     inst._data[:, picks_bad_orig, :] = (
