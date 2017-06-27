@@ -94,7 +94,7 @@ picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
 
 thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
+ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 epochs_ar = ar.fit_transform(this_epoch)
 
 ###############################################################################
