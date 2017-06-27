@@ -90,10 +90,9 @@ this_epoch = epochs['famous']
 
 exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
-                       eog=True, exclude=exclude)
+                       eog=False, exclude=exclude)
 
-thresh_func = partial(compute_thresholds, picks=picks,
-                      random_state=42, n_jobs=1)
+thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=None)
 epochs_ar = ar.fit_transform(this_epoch)
