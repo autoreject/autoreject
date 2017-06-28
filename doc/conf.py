@@ -16,6 +16,7 @@ import sys
 import os
 import sphinx_gallery
 import sphinx_bootstrap_theme
+from numpydoc import numpydoc, docscrape  # noqa
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -37,6 +38,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx_gallery.gen_gallery',
+    'numpydoc',
 ]
 
 # generate autosummary even if no references
