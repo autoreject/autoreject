@@ -11,6 +11,7 @@ dependencies:
     - pip install mne
     - pip install scikit-learn==0.18
     - pip install scikit-optimize tqdm
+    - pip install numpydoc
     - pip install -e .
     # we need to do this here so the datasets will be cached
     # pipefail is necessary to propagate exit codes
