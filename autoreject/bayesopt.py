@@ -31,7 +31,8 @@ def expected_improvement(gp, best_y):
     return ev
 
 
-def bayes_opt(f, initial_x, acquisition, max_iter=100, debug=False):
+def bayes_opt(f, initial_x, acquisition, max_iter=100, debug=False,
+              random_state=None):
     """The actual bayesian optimization function.
 
     f is the very expensive function we want to minimize.
@@ -46,7 +47,7 @@ def bayes_opt(f, initial_x, acquisition, max_iter=100, debug=False):
     y = [f(x) for x in initial_x]
     best_x = initial_x[np.argmin(y)]
     best_f = y[np.argmin(y)]
-    gp = gaussian_process.GaussianProcessRegressor()
+    gp = gaussian_process.GaussianProcessRegressor(random_state=random_state)
 
     if debug:
         print("iter", -1, "best_x", best_x, best_f)

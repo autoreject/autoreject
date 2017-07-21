@@ -315,7 +315,8 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 40
         initial_x = all_threshes[idx]
         best_thresh, _ = bayes_opt(func, initial_x, expected_improvement,
-                                   max_iter=10, debug=False)
+                                   max_iter=10, debug=False,
+                                   random_state=random_state)
 
     return best_thresh
 
