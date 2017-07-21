@@ -338,7 +338,6 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     picks = _handle_picks(epochs.info, picks)
     _check_data(epochs, picks, verbose=verbose)
     n_epochs = len(epochs)
-    picks = _handle_picks(info=epochs.info, picks=picks)
     epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)
     data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
                           axis=0)  # non-data channels will be duplicate
@@ -346,7 +345,6 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
                                 random_state=random_state)
 
-    threshes = dict()
     ch_names = epochs_interp.ch_names
 
     my_thresh = delayed(_compute_thresh)

@@ -51,7 +51,7 @@ import numpy as np  # noqa
 from autoreject import compute_thresholds  # noqa
 
 threshes = compute_thresholds(epochs, picks=picks,
-                              method='random_search',
+                              method='bayesian_optimization',
                               random_state=42, verbose='progressbar')
 
 ###############################################################################
