@@ -539,13 +539,12 @@ class LocalAutoReject(BaseAutoReject):
         self.fix_log = self._drop_log.copy()
         ch_names = [epochs.ch_names[pp] for pp in self.picks]
         non_picks = np.setdiff1d(range(epochs.info['nchan']), self.picks)
-        n_consensus = self.consensus_perc * len(ch_names)
         # TODO: raise error if preload is not True
         pos = 4 if hasattr(self, '_leave') else 2
         for epoch_idx in _pbar(range(len(epochs)), desc='Repairing epochs',
                                position=pos, leave=True, verbose=verbose):
             n_bads = drop_log[epoch_idx].sum()
-            if n_bads == 0 or n_bads > n_consensus:
+            if n_bads == 0:
                 continue
             else:
                 if n_bads <= self.n_interpolate:
