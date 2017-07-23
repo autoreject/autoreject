@@ -315,7 +315,7 @@ sphinx_gallery_conf = {
     'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
     'reference_url': {
-        'mne': 'http://martinos.org/mne/stable',
+        'mne': 'http://mne-tools.github.io/stable/',
         'autoreject': 'http://autoreject.github.io/',
         'numpy': 'http://docs.scipy.org/doc/numpy-1.9.1',
         'scipy': 'http://docs.scipy.org/doc/scipy-0.17.0/reference',
