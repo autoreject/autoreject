@@ -31,7 +31,7 @@ def expected_improvement(gp, best_y):
     return ev
 
 
-def bayes_opt(f, initial_x, acquisition, max_iter=100, debug=False,
+def bayes_opt(f, initial_x, bounds, acquisition, max_iter=100, debug=False,
               random_state=None):
     """The actual bayesian optimization function.
 
@@ -55,7 +55,8 @@ def bayes_opt(f, initial_x, acquisition, max_iter=100, debug=False,
     for i in range(max_iter):
         gp.fit(np.array(X)[:, None], np.array(y))
         new_x = scipy.optimize.fmin_l_bfgs_b(acquisition(gp, best_f),
-                                             x0=best_x, approx_grad=True)[0]
+                                             x0=best_x, approx_grad=True,
+                                             bounds=bounds)[0]
         new_f = f(new_x)
         X.append(new_x[0])
         y.append(new_f)
