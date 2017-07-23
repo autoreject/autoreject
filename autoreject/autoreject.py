@@ -670,7 +670,8 @@ class LocalAutoRejectCV(object):
             if len(self.picks) < 4:
                 raise ValueError('Too few channels. autoreject is unlikely'
                                  ' to be effective')
-            max_interp = min(len(self.picks), 32)
+            # XXX: dont interpolate all channels
+            max_interp = min(len(self.picks) - 1, 32)
             self.n_interpolates = np.array([1, 4, max_interp])
 
         n_folds = len(self.cv)
