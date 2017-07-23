@@ -468,12 +468,7 @@ class LocalAutoReject(BaseAutoReject):
         _check_data(epochs, verbose=self.verbose)
 
         self._vote_epochs(epochs)
-        if 'eeg' in epochs:
-            ch_type = 'eeg'
-        elif 'meg' in epochs:
-            ch_type = 'meg'
-        self._interpolate_bad_epochs(epochs, ch_type=ch_type,
-                                     verbose=self.verbose)
+        self._interpolate_bad_epochs(epochs, verbose=self.verbose)
 
         bad_epochs_idx = self._get_bad_epochs()
         self._bad_epochs_idx = np.sort(bad_epochs_idx)
@@ -526,7 +521,7 @@ class LocalAutoReject(BaseAutoReject):
 
         return bad_epochs_idx
 
-    def _interpolate_bad_epochs(self, epochs, ch_type, verbose='progressbar'):
+    def _interpolate_bad_epochs(self, epochs, verbose='progressbar'):
         """interpolate the bad epochs.
 
         Parameters
@@ -694,14 +689,9 @@ class LocalAutoRejectCV(object):
             # we can interpolate before doing cross-validation
             # because interpolation is independent across trials.
             local_reject.n_interpolate = n_interp
-            if 'eeg' in epochs:
-                ch_type = 'eeg'
-            elif 'meg' in epochs:
-                ch_type = 'meg'
             epochs_interp = epochs.copy()
 
             local_reject._interpolate_bad_epochs(epochs_interp,
-                                                 ch_type=ch_type,
                                                  verbose=self.verbose)
             for fold, (train, test) in enumerate(_pbar(self.cv, desc='Fold',
                                                  position=3,
