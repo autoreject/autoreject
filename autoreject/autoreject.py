@@ -300,7 +300,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         cache = dict()
 
         def func(thresh):
-            idx = np.where(thresh - all_threshes >= 0)[0][0]
+            idx = np.where(thresh - all_threshes >= 0)[0][-1]
             thresh = all_threshes[idx]
             est.set_params(thresh=thresh)
             if thresh not in cache:
