@@ -2,10 +2,8 @@
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 
-import numpy as np
 import mne
-from mne.utils import logger
-
+import warnings
 from sklearn.externals.joblib import Memory
 
 mem = Memory(cachedir='cachedir')
@@ -30,7 +28,7 @@ def _check_data(epochs, picks, verbose='progressbar'):
 
     if n_bads > 0:
         if verbose is not False:
-            logger.info(
+            warnings.warn(
                 '%i channels are marked as bad. These will be ignored.'
                 'If you want them to be considered by autoreject please '
                 'remove them from epochs.info["bads"].' % n_bads)
