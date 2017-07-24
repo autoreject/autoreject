@@ -48,50 +48,49 @@ def test_autoreject():
 
     ar.fit(epochs)
     assert_true(len(ar.picks) == len(picks) - 1)
-    print('picking epochs test done')
+
+    # epochs with no picks.
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        baseline=(None, 0), decim=10,
+                        reject=None, preload=True)[:10]
+    # let's drop some channels to speed up
+    pre_picks = mne.pick_types(epochs.info, meg=True, eeg=True)
+    drop_ch_names = [epochs.ch_names[pp] for pp in pre_picks][::4]
+    drop_ch_names += [epochs.ch_names[pp] for pp in pre_picks][1::4]
+    drop_ch_names += [epochs.ch_names[pp] for pp in pre_picks][2::4]
+
+    epochs.drop_channels(drop_ch_names)
+
+    X = epochs.get_data()
+    n_epochs, n_channels, n_times = X.shape
+    X = X.reshape(n_epochs, -1)
+
+    ar = GlobalAutoReject()
+    assert_raises(ValueError, ar.fit, X)
+    ar = GlobalAutoReject(n_channels=n_channels)
+    assert_raises(ValueError, ar.fit, X)
+    ar = GlobalAutoReject(n_times=n_times)
+    assert_raises(ValueError, ar.fit, X)
+    ar = GlobalAutoReject(n_channels=n_channels, n_times=n_times,
+                          thresh=40e-6)
+    ar.fit(X)
+
+    reject = get_rejection_threshold(epochs)
+    assert_true(reject, isinstance(reject, dict))
+
+    param_name = 'thresh'
+    param_range = np.linspace(40e-6, 200e-6, 10)
+    assert_raises(ValueError, validation_curve, ar, X, None,
+                  param_name, param_range)
+
     ##########################################################################
     # picking AutoReject
-
     picks_list = [('mag', False, []), (False, True, include)]
     for ii, (meg, eeg, include_) in enumerate(picks_list):
-        print('picking AR for meg=%s, eeg=%s' % (meg, eeg))
-        epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                            baseline=(None, 0), decim=10,
-                            reject=None, preload=True)[:10]
-        # let's drop some channels to speed up
-        pre_picks = mne.pick_types(epochs.info, meg=True, eeg=True)
-        drop_ch_names = [epochs.ch_names[pp] for pp in pre_picks][::4]
-        drop_ch_names += [epochs.ch_names[pp] for pp in pre_picks][1::4]
-        drop_ch_names += [epochs.ch_names[pp] for pp in pre_picks][2::4]
-
-        epochs.drop_channels(drop_ch_names)
 
         picks = mne.pick_types(
             epochs.info, meg=meg, eeg=eeg, stim=False, eog=False,
             include=include_, exclude=[])
-
-        X = epochs.get_data()
-        n_epochs, n_channels, n_times = X.shape
-        X = X.reshape(n_epochs, -1)
-
-        if ii == 0:
-            ar = GlobalAutoReject()
-            assert_raises(ValueError, ar.fit, X)
-            ar = GlobalAutoReject(n_channels=n_channels)
-            assert_raises(ValueError, ar.fit, X)
-            ar = GlobalAutoReject(n_times=n_times)
-            assert_raises(ValueError, ar.fit, X)
-            ar = GlobalAutoReject(n_channels=n_channels, n_times=n_times,
-                                  thresh=40e-6)
-            ar.fit(X)
-
-            reject = get_rejection_threshold(epochs)
-            assert_true(reject, isinstance(reject, dict))
-
-            param_name = 'thresh'
-            param_range = np.linspace(40e-6, 200e-6, 10)
-            assert_raises(ValueError, validation_curve, ar, X, None,
-                          param_name, param_range)
 
         ar = LocalAutoReject(picks=picks)
         assert_raises(NotImplementedError, validation_curve, ar, epochs, None,

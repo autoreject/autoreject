@@ -50,8 +50,7 @@ picks = mne.pick_types(epochs.info, meg='grad', eeg=False, stim=False,
 import numpy as np  # noqa
 from autoreject import compute_thresholds  # noqa
 
-threshes = compute_thresholds(epochs, picks=picks,
-                              method='bayesian_optimization',
+threshes = compute_thresholds(epochs, picks=picks, method='random_search',
                               random_state=42, verbose='progressbar')
 
 ###############################################################################
