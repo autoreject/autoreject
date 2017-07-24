@@ -280,8 +280,8 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     my_origin = _check_origin((0., 0., 0.04), info_from)
     int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils_from, 'meg')
 
-    # this function needsa clean input. It hates the presence of other
-    # channels
+    # This function needs a clean input. It hates the presence of other
+    # channels than MEG channels. Make sure all is picked.
     self_dots, cross_dots = _compute_fast_dots(
         info, mode=mode)
 

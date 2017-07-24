@@ -109,9 +109,9 @@ def test_autoreject():
         # but rejections can occur inside our picks.
         assert_equal(ar.bad_segments.shape[1], len(epochs.ch_names))
         assert_true(np.any(ar.bad_segments[:, picks]))
-        anti_picks = np.ones(len(epochs.ch_names), dtype=bool)
-        anti_picks[picks] = False
-        assert_true(not np.any(ar.bad_segments[:, anti_picks]))
+        non_picks = np.ones(len(epochs.ch_names), dtype=bool)
+        non_picks[picks] = False
+        assert_true(not np.any(ar.bad_segments[:, non_picks]))
 
         assert_true(isinstance(ar.threshes_, dict))
         assert_true(len(ar.picks) == len(picks))
