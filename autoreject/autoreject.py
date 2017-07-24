@@ -302,8 +302,8 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
             thresh = all_threshes[idx]
-            est.set_params(thresh=thresh)
             if thresh not in cache:
+                est.set_params(thresh=thresh)
                 obj = -np.mean(cross_val_score(est, this_data, cv=cv))
                 cache.update({thresh: obj})
             return cache[thresh]

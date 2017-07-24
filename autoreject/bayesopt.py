@@ -56,6 +56,7 @@ def bayes_opt(f, initial_x, bounds, acquisition, max_iter=100, debug=False,
         gp.fit(np.array(X)[:, None], np.array(y))
         new_x = scipy.optimize.fmin_l_bfgs_b(acquisition(gp, best_f),
                                              x0=best_x, approx_grad=True,
+                                             epsilon=1e-16,
                                              bounds=bounds)[0]
         new_f = f(new_x)
         X.append(new_x[0])
