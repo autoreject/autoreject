@@ -14,6 +14,8 @@ Auto Reject
 
 This repository hosts code to automatically reject trials and repair sensors for M/EEG data.
 
+.. image:: http://autoreject.github.io/_images/sphx_glr_plot_visualize_bad_epochs_002.png
+
 Dependencies
 ------------
 
