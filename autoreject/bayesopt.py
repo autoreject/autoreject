@@ -14,24 +14,21 @@ import warnings
 from sklearn import gaussian_process
 import numpy as np
 
-import scipy.optimize
 import scipy.stats as st
 
 
-def expected_improvement(gp, best_y):
+def expected_improvement(gp, best_y, x):
     """The expected improvement acquisition function.
 
     The equation is explained in Eq (3) of the tutorial."""
-    def ev(x):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            y, y_std = gp.predict(x * np.ones((1, 1)), return_std=True)
-        Z = (y[0] - best_y) / (y_std[0] + 1e-12)
-        return (y[0] - best_y) * st.norm.cdf(Z) + y_std[0] * st.norm.pdf(Z)
-    return ev
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        y, y_std = gp.predict(x[:, None], return_std=True)
+    Z = (y - best_y) / (y_std + 1e-12)
+    return (y - best_y) * st.norm.cdf(Z) + y_std * st.norm.pdf(Z)
 
 
-def bayes_opt(f, initial_x, bounds, acquisition, max_iter=100, debug=False,
+def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
               random_state=None):
     """The actual bayesian optimization function.
 
@@ -54,17 +51,14 @@ def bayes_opt(f, initial_x, bounds, acquisition, max_iter=100, debug=False,
 
     for i in range(max_iter):
         gp.fit(np.array(X)[:, None], np.array(y))
-        new_x = scipy.optimize.fmin_l_bfgs_b(acquisition(gp, best_f),
-                                             x0=best_x, approx_grad=True,
-                                             epsilon=1e-16,
-                                             bounds=bounds)[0]
+        new_x = all_x[acquisition(gp, best_f, all_x).argmin()]
         new_f = f(new_x)
-        X.append(new_x[0])
+        X.append(new_x)
         y.append(new_f)
 
         if new_f < best_f:
             best_f = new_f
-            best_x = new_x[0]
+            best_x = new_x
 
         if debug:
             print("iter", i, "best_x", best_x, best_f)

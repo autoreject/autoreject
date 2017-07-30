@@ -293,8 +293,8 @@ def _compute_thresh(this_data, method='bayesian_optimization',
             [n_epochs - 1]))  # ensure last point is in init
         idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 40
         initial_x = all_threshes[idx]
-        bounds = [(all_threshes[0], all_threshes[-1])]
-        best_thresh, _ = bayes_opt(func, initial_x, bounds,
+        best_thresh, _ = bayes_opt(func, initial_x,
+                                   all_threshes,
                                    expected_improvement,
                                    max_iter=10, debug=False,
                                    random_state=random_state)
