@@ -184,7 +184,8 @@ class Ransac(object):
 
     def fit(self, epochs):
         self.picks = _handle_picks(info=epochs.info, picks=self.picks)
-        _check_data(epochs, picks=self.picks, verbose=self.verbose)
+        _check_data(epochs, picks=self.picks,
+                    ch_constraint='single_channel_type', verbose=self.verbose)
         self.ch_type = _get_channel_type(epochs, self.picks)
         n_epochs = len(epochs)
         self.ch_subsets_ = self._get_random_subsets(epochs.info)
@@ -218,7 +219,8 @@ class Ransac(object):
 
     def transform(self, epochs):
         epochs = epochs.copy()
-        _check_data(epochs, picks=self.picks, verbose=self.verbose)
+        _check_data(epochs, picks=self.picks,
+                    ch_constraint='single_channel_type', verbose=self.verbose)
         epochs.info['bads'] = self.bad_chs_
         epochs.interpolate_bads(reset_bads=True)
         return epochs

@@ -25,7 +25,7 @@ raw.info['projs'] = list()
 
 
 def test_autoreject():
-    """Basic essential autoreject functionality."""
+    """Test basic essential autoreject functionality."""
 
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
@@ -85,7 +85,8 @@ def test_autoreject():
 
     ##########################################################################
     # picking AutoReject
-    picks_list = [('mag', False, []), (False, True, include)]
+    picks_list = [('mag', False, []),
+                  ]
     for ii, (meg, eeg, include_) in enumerate(picks_list):
 
         picks = mne.pick_types(
@@ -101,7 +102,8 @@ def test_autoreject():
         assert_raises(ValueError, ar.transform, X)
         assert_raises(ValueError, ar.transform, epochs)
 
-        ar.fit(epochs)
+        epochs_clean = ar.fit_transform(epochs)
+        assert_equal(epochs_clean.ch_names, epochs.ch_names)
         # Now we test that the .bad_segments has the shape
         # of n_trials, n_sensors, such that n_sensors is the
         # the full number sensors, before picking. We, hence,

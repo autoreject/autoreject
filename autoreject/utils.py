@@ -9,7 +9,18 @@ from sklearn.externals.joblib import Memory
 mem = Memory(cachedir='cachedir')
 
 
-def _check_data(epochs, picks, verbose='progressbar'):
+def _get_ch_type_from_picks(picks, info):
+    """Get the channel types from picks."""
+    keys = list()
+    for pp in picks:
+        key = mne.io.pick.channel_type(info=info, idx=pp)
+        if key not in keys:
+            keys.append(key)
+    return keys
+
+
+def _check_data(epochs, picks, ch_constraint='data_channels',
+                verbose='progressbar'):
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
@@ -23,8 +34,16 @@ def _check_data(epochs, picks, verbose='progressbar'):
         mne.io.meas_info.channel_type(picked_info, idx)
         for idx in range(len(picks))}
 
-    if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg')) > 1:
-        raise ValueError('AutoReject handles only one channel type for now')
+    if ch_constraint == 'data_channels':
+        if not all(ch in ('mag', 'grad', 'eeg') for ch in ch_types_picked):
+            raise ValueError('AutoReject only supports mag, grad, and eeg '
+                             'at this point.')
+    elif ch_constraint == 'single_channel_type':
+        if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg')) > 1:
+            raise ValueError('AutoReject only supports mag, grad, and eeg '
+                             'at this point.')
+    else:
+        raise ValueError('bad value for ch_constraint.')
 
     if n_bads > 0:
         if verbose is not False:

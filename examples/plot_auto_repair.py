@@ -98,7 +98,7 @@ ar = LocalAutoRejectCV(n_interpolates, consensus_percs, picks=picks,
                        thresh_func=thresh_func)
 epochs_clean = ar.fit_transform(epochs['Auditory/Left'])
 
-evoked = epochs.average()
+evoked = epochs['Auditory/Left'].average()
 evoked_clean = epochs_clean.average()
 
 
