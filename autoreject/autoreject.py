@@ -536,9 +536,9 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object from which the channel-level thresholds are
             estimated.
         """
+        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
                     ch_constraint='single_channel_type')
-        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
         self.threshes_ = self.thresh_func(
             epochs.copy(), picks=self.picks, verbose=self.verbose)
 
@@ -685,7 +685,7 @@ class LocalAutoRejectCV(object):
             if key not in keys:
                 keys.append(key)
         if len(sub_picks_) > 1:
-            sub_picks = [sub_picks_[kk] for kk in keys]
+            sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
         return sub_picks
 
     def fit(self, epochs):
@@ -703,45 +703,6 @@ class LocalAutoRejectCV(object):
         """
         self.picks = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks, verbose=self.verbose)
-
-        # start recursion here if multiple channel types are present.
-        sub_picks = self._check_sub_picks(info=epochs.info, picks=self.picks)
-        if sub_picks is not False:
-            # store accumulation stuff here
-            threshes = dict()  # update
-            bad_segments = 0.0  # numpy broadcast + sum
-            fix_log = 0.0  # ...
-
-            bad_epochs_idx = list()
-            sub_ar = LocalAutoRejectCV(
-                n_interpolates=self.n_interpolates,
-                consensus_percs=self.consensus_percs,
-                thresh_func=self.thresh_func, cv=self.cv,
-                verbose=self.verbose)
-
-            for this_picks in sub_picks:
-                sub_ar.picks = this_picks
-                sub_ar.fit(epochs)
-                threshes.update(sub_ar.threshes_)
-                bad_segments += sub_ar.bad_segments
-                fix_log += sub_ar.fix_log
-                bad_epochs_idx = np.union1d(sub_ar.bad_epochs_idx_,
-                                            bad_epochs_idx)
-            good_epochs_idx = [ii for ii in range(len(epochs))
-                               if ii not in bad_epochs_idx]
-            # assemble stuff, update and return self
-            self.threshes_ = threshes
-            self.local_reject_ = sub_ar.local_reject_
-            self.local_reject_.threshes_ = threshes
-            self.local_reject_.fix_log_ = fix_log
-            self.local_reject_.drop_log_ = bad_segments
-            self.local_reject_.bad_epochs_idx_ = bad_epochs_idx
-            self.local_reject_.good_epochs_idx_ = good_epochs_idx
-            self.n_interpolate_ = sub_ar.n_interpolates_
-            self.consensus_perc_ = sub_ar.consensus_perc_
-            return self
-
-        # Continue here if only one channel type is present.
         if self.cv is None:
             self.cv = 10
         if isinstance(self.cv, int):
@@ -756,6 +717,52 @@ class LocalAutoRejectCV(object):
             max_interp = min(len(self.picks) - 1, 32)
             self.n_interpolates = np.array([1, 4, max_interp])
 
+        # Start recursion here if multiple channel types are present.
+        sub_picks = self._check_sub_picks(info=epochs.info, picks=self.picks)
+        if sub_picks is not False:
+            # store accumulation stuff here
+            threshes = dict()  # update
+            bad_segments = 0.0  # numpy broadcast + sum
+            fix_log = 0.0  # ...
+            bad_epochs_idx = list()
+            consensus_perc = dict()
+            n_interpolate = dict()
+            for ch_type, this_picks in sub_picks:
+                sub_ar = LocalAutoRejectCV(
+                    n_interpolates=self.n_interpolates,
+                    consensus_percs=self.consensus_percs,
+                    thresh_func=self.thresh_func, cv=self.cv,
+                    verbose=self.verbose)
+                sub_ar.picks = this_picks
+                sub_ar.fit(epochs)
+                threshes.update(sub_ar.threshes_)
+                bad_segments += sub_ar.bad_segments
+                fix_log += sub_ar.fix_log
+                bad_epochs_idx = np.union1d(
+                    sub_ar.local_reject_.bad_epochs_idx_,
+                    bad_epochs_idx).astype(int)
+
+                consensus_perc[ch_type] = sub_ar.consensus_perc_[ch_type]
+                n_interpolate[ch_type] = sub_ar.n_interpolate_[ch_type]
+
+            good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
+                                           bad_epochs_idx).astype(int)
+            # assemble stuff, update and return self
+            self.threshes_ = threshes
+            self.local_reject_ = sub_ar.local_reject_
+            self.local_reject_.threshes_ = threshes
+            self.local_reject_.fix_log_ = fix_log
+            self.local_reject_.drop_log_ = bad_segments
+            self.local_reject_.bad_epochs_idx_ = bad_epochs_idx
+            self.local_reject_.good_epochs_idx_ = good_epochs_idx
+
+            self.n_interpolate_ = n_interpolate
+            self.local_reject_.n_interpolate = n_interpolate
+            self.consensus_perc_ = consensus_perc
+            self.local_reject_.consensus_perc = consensus_perc
+            return self
+
+        # Continue here if only one channel type is present.
         n_folds = len(self.cv)
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_folds))
@@ -841,12 +848,29 @@ class LocalAutoRejectCV(object):
         _check_data(epochs, picks=self.picks, verbose=self.verbose)
         sub_picks = self._check_sub_picks(info=epochs.info, picks=self.picks)
         if sub_picks is not False:
+
+            bad_epochs_idx = list()
+            for ii, (ch_type, this_picks) in enumerate(sub_picks):
+                self.local_reject_.picks = this_picks
+                out = self.local_reject_._annotate_epochs(
+                    self.threshes_, epochs)
+                bad_epochs_idx_ = out[4]
+                bad_epochs_idx = np.union1d(bad_epochs_idx, bad_epochs_idx_)
+            good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
+                                           bad_epochs_idx)
+            if len(good_epochs_idx) == 0:
+                raise ValueError('All epochs are bad. Sorry.')
             epochs_clean = mne.EpochsArray(
-                data=np.zeros((len(epochs.ch_names),
-                              self.local_reject_.good_epochs_idx_)),
-                info=epochs.info.copy()
+                data=np.zeros((len(good_epochs_idx),
+                               len(epochs.ch_names),
+                               len(epochs.times)),
+                              dtype=epochs.get_data().dtype),
+                info=epochs.info.copy(),
+                events=epochs.events[good_epochs_idx],
+                event_id={k: v for k, v in epochs.event_id.items()},
+                tmin=epochs.tmin
             )
-            for ii, this_picks in enumerate(sub_picks):
+            for ii, (ch_type, this_picks) in enumerate(sub_picks):
                 self.local_reject_.picks = this_picks
                 X = self.local_reject_.transform(epochs).get_data()
                 epochs_clean.get_data()[:, sub_picks] = X
