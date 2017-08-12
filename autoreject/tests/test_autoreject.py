@@ -21,16 +21,16 @@ matplotlib.use('Agg')
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = io.read_raw_fif(raw_fname, preload=False)
-raw.crop(0, 20)
+raw.crop(0, 60)
 raw.info['projs'] = list()
 
 
 def test_autoreject():
     """Test basic essential autoreject functionality."""
 
-    event_id = {'Visual/Left': 3}
+    event_id = None
     tmin, tmax = -0.2, 0.5
-    events = mne.find_events(raw)
+    events = mne.find_events(raw)[:20]
 
     ##########################################################################
     # picking epochs
@@ -53,16 +53,19 @@ def test_autoreject():
     # epochs with no picks.
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         baseline=(None, 0), decim=10,
-                        reject=None, preload=True)[:10]
+                        reject=None, preload=True)[:20]
     # let's drop some channels to speed up
     pre_picks = mne.pick_types(epochs.info, meg=True, eeg=True)
-    drop_ch_names = [epochs.ch_names[pp] for pp in pre_picks][::4]
-    drop_ch_names += [epochs.ch_names[pp] for pp in pre_picks][1::4]
-    drop_ch_names += [epochs.ch_names[pp] for pp in pre_picks][2::4]
+    pre_picks = np.r_[
+        mne.pick_types(epochs.info, meg='mag', eeg=False)[::30],
+        mne.pick_types(epochs.info, meg='grad', eeg=False)[::60],
+        mne.pick_types(epochs.info, meg=False, eeg=True)[::16]]
+    pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
+    epochs.pick_channels(pick_ch_names)
+    epochs_fit = epochs[:10]
+    epochs_new = epochs[10:]
 
-    epochs.drop_channels(drop_ch_names)
-
-    X = epochs.get_data()
+    X = epochs_fit.get_data()
     n_epochs, n_channels, n_times = X.shape
     X = X.reshape(n_epochs, -1)
 
@@ -72,28 +75,22 @@ def test_autoreject():
     assert_raises(ValueError, ar.fit, X)
     ar = GlobalAutoReject(n_times=n_times)
     assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_channels=n_channels, n_times=n_times,
-                          thresh=40e-6)
-    ar.fit(X)
+    ar_global = GlobalAutoReject(
+        n_channels=n_channels, n_times=n_times, thresh=40e-6)
+    ar_global.fit(X)
 
     reject = get_rejection_threshold(epochs)
     assert_true(reject, isinstance(reject, dict))
 
     param_name = 'thresh'
     param_range = np.linspace(40e-6, 200e-6, 10)
-    assert_raises(ValueError, validation_curve, ar, X, None,
+    assert_raises(ValueError, validation_curve, ar_global, X, None,
                   param_name, param_range)
 
     ##########################################################################
     # picking AutoReject
     picks_list = [('mag', True, []),
                   ]
-
-    epochs_fit = epochs[2:]
-    epochs_new = mne.Epochs(raw, events, event_id, tmin, tmax,
-                            baseline=(None, 0), decim=10,
-                            reject=None, preload=True)[10:15]
-
     for ii, (meg, eeg, include_) in enumerate(picks_list):
 
         picks = mne.pick_types(
@@ -111,7 +108,7 @@ def test_autoreject():
         assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                       param_name, param_range)
 
-        ar = LocalAutoRejectCV(cv=3, picks=picks)
+        ar = LocalAutoRejectCV(cv=3, picks=picks, n_interpolates=[0, 2])
         assert_raises(AttributeError, ar.fit, X)
         assert_raises(ValueError, ar.transform, X)
         assert_raises(ValueError, ar.transform, epochs)
