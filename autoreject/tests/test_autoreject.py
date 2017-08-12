@@ -149,8 +149,11 @@ def test_autoreject():
         assert_array_equal(fix_log, ar.fix_log)
         assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
         assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
-        assert_true(not np.allclose(epochs_new_clean.get_data(),
-                                    epochs_new.get_data()))
+
+        is_same = epochs_new_clean.get_data() == epochs_new.get_data()
+        if not np.isscalar(is_same):
+            is_same = np.isscalar(is_same)
+        assert_true(not is_same)
 
         assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
         # Now we test that the .bad_segments has the shape

@@ -569,20 +569,20 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object for which bad epochs must be found.
         """
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
-                    ch_constraint='single_channel_type')
+                    ch_constraint='data_channels')
         if not all(epochs.ch_names[pp] in self.threshes_ for pp in self.picks):
             raise ValueError('You are passing channels which were not present '
                              'at fit-time. Please fit it again, this time '
                              'correctly.')
         epochs_out = epochs.copy()
-        sub_picks = _check_sub_picks(self.picks, info=epochs.info)
+        sub_picks = _check_sub_picks(picks=self.picks, info=epochs_out.info)
         if sub_picks is not False:
             bad_epochs_idx = list()
             bad_channels_list = list()
+            old_picks = self.picks
             for ii, (ch_type, this_picks) in enumerate(sub_picks):
-                self.local_reject_.picks = this_picks
-                out = self.local_reject_._annotate_epochs(
-                    self.threshes_, epochs)
+                self.picks = this_picks
+                out = self._annotate_epochs(self.threshes_, epochs)
                 bad_channels_list.append(out[2])
                 bad_epochs_idx_ = out[4]
                 bad_epochs_idx = np.union1d(bad_epochs_idx, bad_epochs_idx_)
@@ -591,7 +591,6 @@ class LocalAutoReject(BaseAutoReject):
             if len(good_epochs_idx) == 0:
                 raise ValueError('All epochs are bad. Sorry.')
 
-            old_picks = self.picks
             for ii, (ch_type, this_picks) in enumerate(sub_picks):
                 self.picks = this_picks
                 self._interpolate_bad_epochs(
@@ -610,8 +609,8 @@ class LocalAutoReject(BaseAutoReject):
                 epochs_out, bad_channels=bad_channels,
                 verbose=self.verbose)
 
-        epochs.drop(bad_epochs_idx, reason='AUTOREJECT')
-        return epochs
+        epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
+        return epochs_out
 
     def _interpolate_bad_epochs(
             self, epochs, bad_channels, verbose='progressbar'):
