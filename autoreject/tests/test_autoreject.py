@@ -1,4 +1,5 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+#         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
 import numpy as np
@@ -108,7 +109,9 @@ def test_autoreject():
         assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                       param_name, param_range)
 
-        ar = LocalAutoRejectCV(cv=3, picks=picks, n_interpolates=[0, 2])
+        ar = LocalAutoRejectCV(cv=3, picks=picks,
+                               n_interpolates=[1, 2],
+                               consensus_percs=[0.5, 1])
         assert_raises(AttributeError, ar.fit, X)
         assert_raises(ValueError, ar.transform, X)
         assert_raises(ValueError, ar.transform, epochs)
@@ -137,17 +140,17 @@ def test_autoreject():
             np.arange(len(epochs_fit)))
 
         # test that state does not change
+        epochs_clean = ar.transform(epochs_fit)  # apply same data
+        assert_array_equal(fix_log, ar.fix_log)
+        assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
+        assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+
         epochs_new_clean = ar.transform(epochs_new)  # apply to new data
         assert_array_equal(fix_log, ar.fix_log)
         assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
         assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
         assert_true(not np.allclose(epochs_new_clean.get_data(),
                                     epochs_new.get_data()))
-
-        epochs_clean = ar.transform(epochs_fit)  # apply same data
-        assert_array_equal(fix_log, ar.fix_log)
-        assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-        assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
 
         assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
         # Now we test that the .bad_segments has the shape

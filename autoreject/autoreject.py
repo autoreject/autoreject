@@ -4,8 +4,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
-from collections import defaultdict
-
 import numpy as np
 from scipy.stats.distributions import uniform
 
@@ -19,7 +17,8 @@ from sklearn.cross_validation import KFold, StratifiedShuffleSplit
 from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
-                    _handle_picks, _check_data, _get_ch_type_from_picks)
+                    _handle_picks, _check_data, _get_ch_type_from_picks,
+                    _check_sub_picks)
 
 from .bayesopt import expected_improvement, bayes_opt
 
@@ -571,13 +570,46 @@ class LocalAutoReject(BaseAutoReject):
         """
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
                     ch_constraint='single_channel_type')
+        if not all(epochs.ch_names[pp] in self.threshes_ for pp in self.picks):
+            raise ValueError('You are passing channels which were not present '
+                             'at fit-time. Please fit it again, this time '
+                             'correctly.')
+        epochs_out = epochs.copy()
+        sub_picks = _check_sub_picks(self.picks, info=epochs.info)
+        if sub_picks is not False:
+            bad_epochs_idx = list()
+            bad_channels_list = list()
+            for ii, (ch_type, this_picks) in enumerate(sub_picks):
+                self.local_reject_.picks = this_picks
+                out = self.local_reject_._annotate_epochs(
+                    self.threshes_, epochs)
+                bad_channels_list.append(out[2])
+                bad_epochs_idx_ = out[4]
+                bad_epochs_idx = np.union1d(bad_epochs_idx, bad_epochs_idx_)
+            good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
+                                           bad_epochs_idx)
+            if len(good_epochs_idx) == 0:
+                raise ValueError('All epochs are bad. Sorry.')
 
-        (drop_log, bad_sensor_counts, bad_channels, fix_log,
-         bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
-             threshes=self.threshes_, epochs=epochs)
+            old_picks = self.picks
+            for ii, (ch_type, this_picks) in enumerate(sub_picks):
+                self.picks = this_picks
+                self._interpolate_bad_epochs(
+                    epochs_out, bad_channels=bad_channels_list[ii],
+                    verbose=self.verbose)
+            self.picks = old_picks
 
-        self._interpolate_bad_epochs(epochs, bad_channels=bad_channels,
-                                     verbose=self.verbose)
+        else:
+            (_, _, bad_channels, _,
+             bad_epochs_idx, _) = self._annotate_epochs(
+                 threshes=self.threshes_, epochs=epochs)
+            if len(good_epochs_idx) == 0:
+                raise ValueError('All epochs are bad. Sorry.')
+
+            self._interpolate_bad_epochs(
+                epochs_out, bad_channels=bad_channels,
+                verbose=self.verbose)
+
         epochs.drop(bad_epochs_idx, reason='AUTOREJECT')
         return epochs
 
@@ -673,21 +705,6 @@ class LocalAutoRejectCV(object):
     def bad_epochs_idx(self):
         return self.local_reject_.bad_epochs_idx_
 
-    def _check_sub_picks(self, info, picks):
-        """Get the picks grouped by channel type."""
-        sub_picks = False
-        # do magic here
-        sub_picks_ = defaultdict(list)
-        keys = list()
-        for pp in picks:
-            key = mne.io.pick.channel_type(info=info, idx=pp)
-            sub_picks_[key].append(pp)
-            if key not in keys:
-                keys.append(key)
-        if len(sub_picks_) > 1:
-            sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
-        return sub_picks
-
     def fit(self, epochs):
         """Fit the epochs on the LocalAutoReject object.
 
@@ -718,7 +735,7 @@ class LocalAutoRejectCV(object):
             self.n_interpolates = np.array([1, 4, max_interp])
 
         # Start recursion here if multiple channel types are present.
-        sub_picks = self._check_sub_picks(info=epochs.info, picks=self.picks)
+        sub_picks = _check_sub_picks(info=epochs.info, picks=self.picks)
         if sub_picks is not False:
             # store accumulation stuff here
             threshes = dict()  # update
@@ -846,36 +863,12 @@ class LocalAutoRejectCV(object):
             raise ValueError('Please run autoreject.fit() method first')
 
         _check_data(epochs, picks=self.picks, verbose=self.verbose)
-        sub_picks = self._check_sub_picks(info=epochs.info, picks=self.picks)
-        if sub_picks is not False:
+        old_picks = self.local_reject_.picks
+        self.local_reject_.picks = self.picks
 
-            bad_epochs_idx = list()
-            for ii, (ch_type, this_picks) in enumerate(sub_picks):
-                self.local_reject_.picks = this_picks
-                out = self.local_reject_._annotate_epochs(
-                    self.threshes_, epochs)
-                bad_epochs_idx_ = out[4]
-                bad_epochs_idx = np.union1d(bad_epochs_idx, bad_epochs_idx_)
-            good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
-                                           bad_epochs_idx)
-            if len(good_epochs_idx) == 0:
-                raise ValueError('All epochs are bad. Sorry.')
-            epochs_clean = mne.EpochsArray(
-                data=np.zeros((len(good_epochs_idx),
-                               len(epochs.ch_names),
-                               len(epochs.times)),
-                              dtype=epochs.get_data().dtype),
-                info=epochs.info.copy(),
-                events=epochs.events[good_epochs_idx],
-                event_id={k: v for k, v in epochs.event_id.items()},
-                tmin=epochs.tmin
-            )
-            for ii, (ch_type, this_picks) in enumerate(sub_picks):
-                self.local_reject_.picks = this_picks
-                X = self.local_reject_.transform(epochs).get_data()
-                epochs_clean.get_data()[:, sub_picks] = X
-        else:
-            epochs_clean = self.local_reject_.transform(epochs.copy())
+        epochs_clean = self.local_reject_.transform(epochs)
+
+        self.local_reject_.picks = old_picks
         return epochs_clean
 
     def fit_transform(self, epochs):

@@ -1,9 +1,10 @@
 """Utility functions for autoreject."""
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
+from collections import defaultdict
+import warnings
 
 import mne
-import warnings
 from sklearn.externals.joblib import Memory
 
 mem = Memory(cachedir='cachedir')
@@ -61,6 +62,22 @@ def _handle_picks(info, picks):
     else:
         out = picks
     return out
+
+
+def _check_sub_picks(info, picks):
+    """Get the picks grouped by channel type."""
+    sub_picks = False
+    # do magic here
+    sub_picks_ = defaultdict(list)
+    keys = list()
+    for pp in picks:
+        key = mne.io.pick.channel_type(info=info, idx=pp)
+        sub_picks_[key].append(pp)
+        if key not in keys:
+            keys.append(key)
+    if len(sub_picks_) > 1:
+        sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
+    return sub_picks
 
 
 def set_matplotlib_defaults(plt, style='ggplot'):
