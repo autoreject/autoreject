@@ -443,7 +443,7 @@ class LocalAutoReject(BaseAutoReject):
         picks = _handle_picks(info=epochs.info, picks=self.picks)
 
         drop_log = np.zeros((n_epochs, len(epochs.ch_names)))
-        bad_epoch_counts = np.zeros((len(epochs), ))
+        bad_sensor_counts = np.zeros((len(epochs), ))
 
         ch_names = [epochs.ch_names[p] for p in picks]
         deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
@@ -451,9 +451,9 @@ class LocalAutoReject(BaseAutoReject):
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
             # TODO: combine for different ch types
-            bad_epoch_counts[bad_epochs_idx] += 1
+            bad_sensor_counts[bad_epochs_idx] += 1
             drop_log[bad_epochs_idx, picks[ch_idx]] = 1
-        return drop_log, bad_epoch_counts
+        return drop_log, bad_sensor_counts
 
     def _get_epochs_interpolation(self, epochs, drop_log,
                                   ch_type, verbose='progressbar'):
@@ -491,14 +491,14 @@ class LocalAutoReject(BaseAutoReject):
             bad_channels.append(bad_chs)
         return bad_channels, fix_log
 
-    def _get_bad_epochs(self, bad_epoch_counts, ch_type):
+    def _get_bad_epochs(self, bad_sensor_counts, ch_type):
         """Get the indices of bad epochs."""
-        sorted_epoch_idx = np.argsort(bad_epoch_counts)[::-1]
-        bad_epoch_counts = np.sort(bad_epoch_counts)[::-1]
+        sorted_epoch_idx = np.argsort(bad_sensor_counts)[::-1]
+        bad_sensor_counts = np.sort(bad_sensor_counts)[::-1]
         n_channels = len(self.picks)
         n_consensus = self.consensus_perc[ch_type] * n_channels
-        if np.max(bad_epoch_counts) >= n_consensus:
-            n_epochs_drop = np.sum(bad_epoch_counts >=
+        if np.max(bad_sensor_counts) >= n_consensus:
+            n_epochs_drop = np.sum(bad_sensor_counts >=
                                    n_consensus) + 1
             bad_epochs_idx = sorted_epoch_idx[:n_epochs_drop]
         else:
@@ -511,20 +511,20 @@ class LocalAutoReject(BaseAutoReject):
         """Get essential annotations for epochs given thresholds."""
         ch_type = _get_ch_type_from_picks(self.picks, epochs.info)[0]
 
-        drop_log, bad_epoch_counts = self._vote_bad_epochs(epochs)
+        drop_log, bad_sensor_counts = self._vote_bad_epochs(epochs)
 
         bad_channels, fix_log = self._get_epochs_interpolation(
             epochs, drop_log=drop_log, ch_type=ch_type)
 
         (bad_epochs_idx, sorted_epoch_idx,
          n_epochs_drop) = self._get_bad_epochs(
-             bad_epoch_counts, ch_type=ch_type)
+             bad_sensor_counts, ch_type=ch_type)
 
         bad_epochs_idx = np.sort(bad_epochs_idx)
         good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
                                        bad_epochs_idx)
 
-        return (drop_log, bad_epoch_counts, bad_channels, fix_log,
+        return (drop_log, bad_sensor_counts, bad_channels, fix_log,
                 bad_epochs_idx, good_epochs_idx)
 
     def fit(self, epochs):
@@ -542,13 +542,13 @@ class LocalAutoReject(BaseAutoReject):
         self.threshes_ = self.thresh_func(
             epochs.copy(), picks=self.picks, verbose=self.verbose)
 
-        (drop_log, bad_epoch_counts, bad_channels, fix_log,
+        (drop_log, bad_sensor_counts, bad_channels, fix_log,
          bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
              threshes=self.threshes_, epochs=epochs)
 
         self.drop_log_ = drop_log
         self.fix_log_ = fix_log
-        self.bad_epoch_counts_ = bad_epoch_counts
+        self.bad_sensor_counts_ = bad_sensor_counts
         self.bad_channels_ = bad_channels
         self.bad_epochs_idx_ = bad_epochs_idx
         self.good_epochs_idx_ = good_epochs_idx
@@ -572,7 +572,7 @@ class LocalAutoReject(BaseAutoReject):
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
                     ch_constraint='single_channel_type')
 
-        (drop_log, bad_epoch_counts, bad_channels, fix_log,
+        (drop_log, bad_sensor_counts, bad_channels, fix_log,
          bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
              threshes=self.threshes_, epochs=epochs)
 
@@ -770,7 +770,7 @@ class LocalAutoRejectCV(object):
         local_reject.fit(epochs)
         self.threshes_ = local_reject.threshes_
 
-        drop_log, bad_epoch_counts = local_reject._vote_bad_epochs(epochs)
+        drop_log, bad_sensor_counts = local_reject._vote_bad_epochs(epochs)
         desc = 'n_interp'
 
         for jdx, n_interp in enumerate(_pbar(self.n_interpolates, desc=desc,
@@ -797,10 +797,10 @@ class LocalAutoRejectCV(object):
                         continue
 
                     local_reject.consensus_perc[ch_type] = consensus_perc
-                    local_reject.bad_epoch_counts = bad_epoch_counts[train]
+                    local_reject.bad_sensor_counts = bad_sensor_counts[train]
 
                     bad_epochs_idx, _, _ = local_reject._get_bad_epochs(
-                        local_reject.bad_epoch_counts, ch_type=ch_type)
+                        local_reject.bad_sensor_counts, ch_type=ch_type)
                     local_reject._bad_epochs_idx = np.sort(bad_epochs_idx)
                     n_train = len(epochs[train])
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
