@@ -363,7 +363,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
 
 
 class LocalAutoReject(BaseAutoReject):
-    """Automatically reject bad epochs and repair bad trials.
+    r"""Automatically reject bad epochs and repair bad trials.
 
     Parameters
     ----------
@@ -596,7 +596,7 @@ class LocalAutoReject(BaseAutoReject):
 
 
 class LocalAutoRejectCV(object):
-    """Efficiently find n_interp and n_consensus.
+    r"""Efficiently find n_interp and n_consensus.
 
     Parameters
     ----------
@@ -727,6 +727,8 @@ class LocalAutoRejectCV(object):
                 fix_log += sub_ar.fix_log
                 bad_epochs_idx = np.union1d(sub_ar.bad_epochs_idx_,
                                             bad_epochs_idx)
+            good_epochs_idx = [ii for ii in range(len(epochs))
+                               if ii not in bad_epochs_idx]
             # assemble stuff, update and return self
             self.threshes_ = threshes
             self.local_reject_ = sub_ar.local_reject_
@@ -734,6 +736,7 @@ class LocalAutoRejectCV(object):
             self.local_reject_.fix_log_ = fix_log
             self.local_reject_.drop_log_ = bad_segments
             self.local_reject_.bad_epochs_idx_ = bad_epochs_idx
+            self.local_reject_.good_epochs_idx_ = good_epochs_idx
             self.n_interpolate_ = sub_ar.n_interpolates_
             self.consensus_perc_ = sub_ar.consensus_perc_
             return self
@@ -761,7 +764,7 @@ class LocalAutoRejectCV(object):
                                        verbose=self.verbose,
                                        picks=self.picks)
         ch_type = _get_ch_type_from_picks(
-            picks=self.picks, info=epochs.info)
+            picks=self.picks, info=epochs.info)[0]
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
@@ -797,7 +800,7 @@ class LocalAutoRejectCV(object):
                     local_reject.bad_epoch_counts = bad_epoch_counts[train]
 
                     bad_epochs_idx, _, _ = local_reject._get_bad_epochs(
-                        local_reject.bad_epoch_counts)
+                        local_reject.bad_epoch_counts, ch_type=ch_type)
                     local_reject._bad_epochs_idx = np.sort(bad_epochs_idx)
                     n_train = len(epochs[train])
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),

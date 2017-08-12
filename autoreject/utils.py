@@ -166,7 +166,7 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
 
 
 def fetch_file(url, file_name, resume=True, timeout=10.):
-    """Load requested file, downloading it if needed or requested
+    """Load requested file, downloading it if needed or requested.
 
     Parameters
     ----------
@@ -185,8 +185,7 @@ def fetch_file(url, file_name, resume=True, timeout=10.):
 
 
 def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
-    """Interpolate bad MEG and EEG channels.
-    """
+    """Interpolate bad MEG and EEG channels."""
     import mne
     from mne.channels.interpolation import _interpolate_bads_eeg
 
@@ -203,8 +202,7 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
 
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
-    """Interpolate bad channels from data in good channels.
-    """
+    """Interpolate bad channels from data in good channels."""
     from mne import pick_types, pick_channels, pick_info
     from mne.channels.interpolation import _do_interp_dots
     # We can have pre-picked instances or not.
@@ -276,8 +274,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     mne.set_log_level('WARNING')
 
     def _compute_dots(info, mode='fast'):
-        """Compute all-to-all dots.
-        """
+        """Compute all-to-all dots."""
         templates = _read_coil_defs()
         coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
                                   templates)
