@@ -135,7 +135,7 @@ def test_autoreject():
         np.sort(np.r_[bad_epochs_idx, good_epochs_idx]),
         np.arange(len(epochs_fit)))
 
-    # test that state does not change
+    # test that transform does not change state of ar
     epochs_fit.fit_ = True
     epochs_clean = ar.transform(epochs_fit)  # apply same data
     assert_array_equal(fix_log, ar.fix_log)
