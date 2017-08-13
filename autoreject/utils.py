@@ -1,6 +1,8 @@
 """Utility functions for autoreject."""
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
+#          Denis A. Engemann <denis.engemann@gmail.com>
+
 from collections import defaultdict
 import warnings
 

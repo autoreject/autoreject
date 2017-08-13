@@ -577,6 +577,15 @@ class LocalAutoReject(BaseAutoReject):
     def transform(self, epochs):
         """Fix and find the bad epochs.
 
+        .. note::
+           LocalAutoReject partially supports multiple channels.
+           While fitting, at this point requires selection of channel types,
+           the transform can handle multiple channel types, if `.threshes_`
+           parameter contains all necessary channels and `.consensus_perc`
+           and `n_interpolate` have meaningful channel type specific
+           settings. These are commonly obtained from
+           :func:`autoreject.LocalAutoRejectCV`.
+
         Parameters
         ----------
         epochs : instance of mne.Epochs
@@ -643,6 +652,12 @@ class LocalAutoReject(BaseAutoReject):
 class LocalAutoRejectCV(object):
     r"""Efficiently find n_interp and n_consensus.
 
+    .. note::
+       LocalAutoRejectCV by design supports multiple channels.
+       If no picks are passed separate solutions will be computed for each
+       channel type and internally combines. This then readily supports
+       cleaning unseen epochs from the different channel types used during fit.
+
     Parameters
     ----------
     consensus_percs : array | None
@@ -660,7 +675,8 @@ class LocalAutoRejectCV(object):
         Defaults to cv=10
     picks : ndarray, shape(n_channels) | None
         The channels to be considered for autoreject. If None, defaults
-        to data channels {'meg', 'eeg'}.
+        to data channels {'meg', 'eeg'}, which will lead fitting and combining
+        autoreject solutions across these channel types.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.

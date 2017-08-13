@@ -8,6 +8,7 @@ visualize the bad sensors in each trial
 """
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+#         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
 ###############################################################################
@@ -102,6 +103,12 @@ ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 
 ar.fit(this_epoch[::3])  # use *for example* only 1 third of the data for fit.
 epochs_ar = ar.transform(this_epoch)  # but clean all data.
+
+# Note that LocalAutoRejectCV by design supports multiple channels.
+# If no picks are passed separate solutions will be computed for each channel
+# type and internally combines. This then readily supports cleaning
+# unseen epochs from the different channel types used during fit.
+# Here we only use a subset of channels to save time.
 
 ###############################################################################
 # We can visualize the cross validation curve over two variables
