@@ -93,110 +93,100 @@ def test_autoreject():
 
     ##########################################################################
     # picking AutoReject
-    picks_list = [('mag', True, []),
-                  ]
-    for ii, (meg, eeg, include_) in enumerate(picks_list):
+    picks = mne.pick_types(
+        epochs.info, meg='mag', eeg=True, stim=False, eog=False,
+        include=[], exclude=[])
+    ch_types = ['mag', 'eeg']
 
-        picks = mne.pick_types(
-            epochs.info, meg=meg, eeg=eeg, stim=False, eog=False,
-            include=include_, exclude=[])
-        ch_types = []
-        if meg == 'mag' or meg == 'meg':
-            ch_types.append('mag')
-        if meg == 'grad' or meg == 'meg':
-            ch_types.append('grad')
-        if eeg is True:
-            ch_types.append('eeg')
+    ar = LocalAutoReject(picks=picks)
+    assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
+                  param_name, param_range)
 
-        ar = LocalAutoReject(picks=picks)
-        assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
-                      param_name, param_range)
+    thresh_func = partial(compute_thresholds,
+                          method='bayesian_optimization',
+                          random_state=42)
+    ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
+                           n_interpolates=[1, 2],
+                           consensus_percs=[0.5, 1])
+    assert_raises(AttributeError, ar.fit, X)
+    assert_raises(ValueError, ar.transform, X)
+    assert_raises(ValueError, ar.transform, epochs)
 
-        thresh_func = partial(compute_thresholds,
-                              method='bayesian_optimization',
-                              random_state=42)
-        ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
-                               n_interpolates=[1, 2],
-                               consensus_percs=[0.5, 1])
-        assert_raises(AttributeError, ar.fit, X)
-        assert_raises(ValueError, ar.transform, X)
-        assert_raises(ValueError, ar.transform, epochs)
+    ar.fit(epochs_fit)
+    fix_log = ar.fix_log
+    bad_epochs_idx = ar.local_reject_.bad_epochs_idx_
+    good_epochs_idx = ar.local_reject_.good_epochs_idx_
+    for ch_type in ch_types:
+        # test that kappa & rho are selected
+        assert_true(
+            ar.n_interpolate_[ch_type] in ar.n_interpolates)
+        assert_true(
+            ar.consensus_perc_[ch_type] in ar.consensus_percs)
+        # test that local autoreject is synced with AR-CV instance
+        assert_equal(
+            ar.n_interpolate_[ch_type],
+            ar.local_reject_.n_interpolate[ch_type])
+        assert_equal(
+            ar.consensus_perc_[ch_type],
+            ar.local_reject_.consensus_perc[ch_type])
 
-        ar.fit(epochs_fit)
-        fix_log = ar.fix_log
-        bad_epochs_idx = ar.local_reject_.bad_epochs_idx_
-        good_epochs_idx = ar.local_reject_.good_epochs_idx_
-        for ch_type in ch_types:
-            # test that kappa & rho are selected
-            assert_true(
-                ar.n_interpolate_[ch_type] in ar.n_interpolates)
-            assert_true(
-                ar.consensus_perc_[ch_type] in ar.consensus_percs)
-            # test that local autoreject is synced with AR-CV instance
-            assert_equal(
-                ar.n_interpolate_[ch_type],
-                ar.local_reject_.n_interpolate[ch_type])
-            assert_equal(
-                ar.consensus_perc_[ch_type],
-                ar.local_reject_.consensus_perc[ch_type])
+    # test complementarity of goods and bads
+    assert_array_equal(
+        np.sort(np.r_[bad_epochs_idx, good_epochs_idx]),
+        np.arange(len(epochs_fit)))
 
-        # test complementarity of goods and bads
-        assert_array_equal(
-            np.sort(np.r_[bad_epochs_idx, good_epochs_idx]),
-            np.arange(len(epochs_fit)))
+    # test that state does not change
+    epochs_fit.fit_ = True
+    epochs_clean = ar.transform(epochs_fit)  # apply same data
+    assert_array_equal(fix_log, ar.fix_log)
+    assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
+    assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
 
-        # test that state does not change
-        epochs_fit.fit_ = True
-        epochs_clean = ar.transform(epochs_fit)  # apply same data
-        assert_array_equal(fix_log, ar.fix_log)
-        assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-        assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+    epochs_new_clean = ar.transform(epochs_new)  # apply to new data
+    assert_array_equal(fix_log, ar.fix_log)
+    assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
+    assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
 
-        epochs_new_clean = ar.transform(epochs_new)  # apply to new data
-        assert_array_equal(fix_log, ar.fix_log)
-        assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-        assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+    is_same = epochs_new_clean.get_data() == epochs_new.get_data()
+    if not np.isscalar(is_same):
+        is_same = np.isscalar(is_same)
+    assert_true(not is_same)
 
-        is_same = epochs_new_clean.get_data() == epochs_new.get_data()
-        if not np.isscalar(is_same):
-            is_same = np.isscalar(is_same)
-        assert_true(not is_same)
+    assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
+    # Now we test that the .bad_segments has the shape
+    # of n_trials, n_sensors, such that n_sensors is the
+    # the full number sensors, before picking. We, hence,
+    # expect nothing to be rejected outside of our picks
+    # but rejections can occur inside our picks.
+    assert_equal(ar.bad_segments.shape[1], len(epochs_fit.ch_names))
+    assert_true(np.any(ar.bad_segments[:, picks]))
+    non_picks = np.ones(len(epochs_fit.ch_names), dtype=bool)
+    non_picks[picks] = False
+    assert_true(not np.any(ar.bad_segments[:, non_picks]))
 
-        assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
-        # Now we test that the .bad_segments has the shape
-        # of n_trials, n_sensors, such that n_sensors is the
-        # the full number sensors, before picking. We, hence,
-        # expect nothing to be rejected outside of our picks
-        # but rejections can occur inside our picks.
-        assert_equal(ar.bad_segments.shape[1], len(epochs_fit.ch_names))
-        assert_true(np.any(ar.bad_segments[:, picks]))
-        non_picks = np.ones(len(epochs_fit.ch_names), dtype=bool)
-        non_picks[picks] = False
-        assert_true(not np.any(ar.bad_segments[:, non_picks]))
+    assert_true(isinstance(ar.threshes_, dict))
+    assert_true(len(ar.picks) == len(picks))
+    assert_true(len(ar.threshes_.keys()) == len(ar.picks))
+    pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
+    assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
+    assert_raises(
+        IndexError, ar.transform,
+        epochs.copy().pick_channels(
+            [epochs.ch_names[pp] for pp in picks[:3]]))
 
-        assert_true(isinstance(ar.threshes_, dict))
-        assert_true(len(ar.picks) == len(picks))
-        assert_true(len(ar.threshes_.keys()) == len(ar.picks))
-        pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
-        assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
-        assert_raises(
-            IndexError, ar.transform,
-            epochs.copy().pick_channels(
-                [epochs.ch_names[pp] for pp in picks[:3]]))
+    epochs.load_data()
+    assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
+    index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
+                          for ii, pp in enumerate(picks)])
+    threshes_a = compute_thresholds(
+        epochs_fit, picks=picks, method='random_search')
+    assert_equal(set(threshes_a.keys()), set(ch_names))
+    threshes_b = compute_thresholds(
+        epochs_fit, picks=picks, method='bayesian_optimization')
+    assert_equal(set(threshes_b.keys()), set(ch_names))
 
-        epochs.load_data()
-        assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
-        index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
-                              for ii, pp in enumerate(picks)])
-        threshes_a = compute_thresholds(
-            epochs_fit, picks=picks, method='random_search')
-        assert_equal(set(threshes_a.keys()), set(ch_names))
-        threshes_b = compute_thresholds(
-            epochs_fit, picks=picks, method='bayesian_optimization')
-        assert_equal(set(threshes_b.keys()), set(ch_names))
-
-        # arrays are really different but quite similar.
-        # XXX this actually varies quite substantially
-        # assert_true(np.corrcoef(
-        #                 list(threshes_a.values()),
-        #                 list(threshes_b.values()))[0, 1] ** 2 > 0.8)
+    # arrays are really different but quite similar.
+    # XXX this actually varies quite substantially
+    # assert_true(np.corrcoef(
+    #                 list(threshes_a.values()),
+    #                 list(threshes_b.values()))[0, 1] ** 2 > 0.8)
