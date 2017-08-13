@@ -60,7 +60,7 @@ def test_autoreject():
     # let's drop some channels to speed up
     pre_picks = mne.pick_types(epochs.info, meg=True, eeg=True)
     pre_picks = np.r_[
-        mne.pick_types(epochs.info, meg='mag', eeg=False)[::30],
+        mne.pick_types(epochs.info, meg='mag', eeg=False)[::15],
         mne.pick_types(epochs.info, meg='grad', eeg=False)[::60],
         mne.pick_types(epochs.info, meg=False, eeg=True)[::16],
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
