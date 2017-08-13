@@ -341,23 +341,32 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
     picks = _handle_picks(epochs.info, picks)
-    _check_data(epochs, picks, verbose=verbose)
-    n_epochs = len(epochs)
-    epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)
-    data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
-                          axis=0)  # non-data channels will be duplicate
-    y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
-    cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
-                                random_state=random_state)
+    _check_data(epochs, picks, verbose=verbose,
+                ch_constraint='data_channels')
+    sub_picks = _check_sub_picks(picks=picks, info=epochs.info)
+    if sub_picks is not False:
+        threshes = dict()
+        for ch_type, this_picks in sub_picks:
+            threshes.update(compute_thresholds(
+                epochs=epochs, method=method, random_state=random_state,
+                picks=this_picks, verbose=verbose, n_jobs=n_jobs))
+    else:
+        n_epochs = len(epochs)
+        epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)
+        data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
+                              axis=0)  # non-data channels will be duplicate
+        y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
+        cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
+                                    random_state=random_state)
 
-    ch_names = epochs_interp.ch_names
+        ch_names = epochs_interp.ch_names
 
-    my_thresh = delayed(_compute_thresh)
-    verbose = 51 if verbose is not False else 0  # send output to stdout
-    threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        my_thresh(data[:, pick], cv=cv, method=method,
-                  random_state=random_state) for pick in picks)
-    threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
+        my_thresh = delayed(_compute_thresh)
+        verbose = 51 if verbose is not False else 0  # send output to stdout
+        threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
+            my_thresh(data[:, pick], cv=cv, method=method,
+                      random_state=random_state) for pick in picks)
+        threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
     return threshes
 
 

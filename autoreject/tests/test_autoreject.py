@@ -60,7 +60,8 @@ def test_autoreject():
     pre_picks = np.r_[
         mne.pick_types(epochs.info, meg='mag', eeg=False)[::30],
         mne.pick_types(epochs.info, meg='grad', eeg=False)[::60],
-        mne.pick_types(epochs.info, meg=False, eeg=True)[::16]]
+        mne.pick_types(epochs.info, meg=False, eeg=True)[::16],
+        mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     epochs.pick_channels(pick_ch_names)
     epochs_fit = epochs[:10]
@@ -140,6 +141,7 @@ def test_autoreject():
             np.arange(len(epochs_fit)))
 
         # test that state does not change
+        epochs_fit.fit_ = True
         epochs_clean = ar.transform(epochs_fit)  # apply same data
         assert_array_equal(fix_log, ar.fix_log)
         assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
@@ -179,5 +181,17 @@ def test_autoreject():
 
         epochs.load_data()
         assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
-        for method in ['random_search', 'bayesian_optimization']:
-            compute_thresholds(epochs, picks=picks, method=method)
+        index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
+                              for ii, pp in enumerate(picks)])
+        threshes_a = compute_thresholds(
+            epochs_fit, picks=picks, method='random_search')
+        assert_equal(set(threshes_a.keys()), set(ch_names))
+        threshes_b = compute_thresholds(
+            epochs_fit, picks=picks, method='bayesian_optimization')
+        assert_equal(set(threshes_b.keys()), set(ch_names))
+
+        # arrays are really different but quite similar.
+        # XXX this actually varies quite substantially
+        assert_true(np.corrcoef(
+                        list(threshes_a.values()),
+                        list(threshes_b.values()))[0, 1] ** 2 > 0.85)
