@@ -87,15 +87,21 @@ from autoreject import LocalAutoRejectCV, compute_thresholds  # noqa
 from functools import partial  # noqa
 
 this_epoch = epochs['famous']
-
 exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
 thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
+# Note that once the parameters are learned, any data can be repaired
+# that contains channels that were used during fit.
+# This also means that, under favorable circumstances, time may be saved
+# By fitting autoreject on a representative subsample of the data.
+
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
-epochs_ar = ar.fit_transform(this_epoch)
+
+ar.fit(this_epoch[::3])  # use *for example* only 1 third of the data for fit.
+epochs_ar = ar.transform(this_epoch)  # but clean all data.
 
 ###############################################################################
 # We can visualize the cross validation curve over two variables
@@ -106,7 +112,7 @@ import matplotlib.patches as patches  # noqa
 from autoreject import set_matplotlib_defaults  # noqa
 
 set_matplotlib_defaults(plt, style='seaborn-white')
-loss = ar.loss.mean(axis=-1)
+loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
 plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
 plt.xticks(range(len(ar.consensus_percs)), ar.consensus_percs)
@@ -123,6 +129,7 @@ plt.xlabel(r'Consensus percentage $\kappa$')
 plt.ylabel(r'Max sensors interpolated $\rho$')
 plt.title('Mean cross validation error (x 1e6)')
 plt.colorbar()
+plt.show()
 
 ###############################################################################
 # ... and visualize the bad epochs and sensors. Bad sensors which have been

@@ -614,7 +614,7 @@ class LocalAutoReject(BaseAutoReject):
 
         else:
             (_, _, bad_channels, _,
-             bad_epochs_idx, _) = self._annotate_epochs(
+             bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
                  threshes=self.threshes_, epochs=epochs)
             if len(good_epochs_idx) == 0:
                 raise ValueError('All epochs are bad. Sorry.')
