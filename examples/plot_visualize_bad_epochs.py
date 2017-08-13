@@ -101,8 +101,8 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 
-ar.fit(this_epoch[::3])  # use *for example* only 1 third of the data for fit.
-epochs_ar = ar.transform(this_epoch)  # but clean all data.
+ar.fit(this_epoch)
+epochs_ar = ar.transform(this_epoch)
 
 # Note that LocalAutoRejectCV by design supports multiple channels.
 # If no picks are passed separate solutions will be computed for each channel
