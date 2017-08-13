@@ -543,6 +543,11 @@ class LocalAutoReject(BaseAutoReject):
         epochs : instance of mne.Epochs
             The epochs object from which the channel-level thresholds are
             estimated.
+
+        Returns
+        -------
+        self : instance of LocalAutoReject
+            The instance.
         """
         self.picks = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
@@ -810,7 +815,7 @@ class LocalAutoRejectCV(object):
             # because interpolation is independent across trials.
             local_reject.n_interpolate[ch_type] = n_interp
             bad_channels, _ = local_reject._get_epochs_interpolation(
-                 epochs, drop_log=drop_log, ch_type=ch_type)
+                epochs, drop_log=drop_log, ch_type=ch_type)
             local_reject.bad_channels_ = bad_channels
 
             epochs_interp = epochs.copy()
@@ -865,6 +870,11 @@ class LocalAutoRejectCV(object):
         ----------
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
+
+        Returns
+        -------
+        epochs_clean : instance of mne.Epochs
+            The cleaned epochs
         """
         if len(self.n_interpolate_) == 0:
             raise ValueError('Please run autoreject.fit() method first')
@@ -885,5 +895,10 @@ class LocalAutoRejectCV(object):
         ----------
         epochs : instance of mne.Epochs
             The epochs object which must be cleaned.
+
+        Returns
+        -------
+        epochs_clean : instance of mne.Epochs
+            The cleaned epochs
         """
         return self.fit(epochs).transform(epochs)

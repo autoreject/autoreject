@@ -62,11 +62,6 @@ The API is the same:
 
 For more details check out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_auto_examples_plot_auto_repair.py>`.
 
-.. note::
-
-	Fow now, we do not guarantee if autoreject (local) will work for more than one channel type. We intend to support multiple channel
-	types, but in the future. Contributions to make this happen are welcome.
-
 Bug reports
 ===========
 
