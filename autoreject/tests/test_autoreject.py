@@ -2,6 +2,8 @@
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
+from functools import partial
+
 import numpy as np
 from numpy.testing import assert_array_equal
 
@@ -110,8 +112,10 @@ def test_autoreject():
         assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                       param_name, param_range)
 
-        ar = LocalAutoRejectCV(cv=3, picks=picks,
-                               method='random_search',  # stable results
+        thresh_func = partial(compute_thresholds,
+                              method='bayesian_optimization',
+                              random_state=42)
+        ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
                                n_interpolates=[1, 2],
                                consensus_percs=[0.5, 1])
         assert_raises(AttributeError, ar.fit, X)

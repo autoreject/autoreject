@@ -687,8 +687,7 @@ class LocalAutoRejectCV(object):
     """
 
     def __init__(self, n_interpolates=None, consensus_percs=None,
-                 thresh_func=None, method='bayesian_optimization', cv=None,
-                 picks=None,
+                 thresh_func=None, cv=None, picks=None,
                  verbose='progressbar'):
         """Init it."""
         self.n_interpolates = n_interpolates
