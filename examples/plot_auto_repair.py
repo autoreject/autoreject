@@ -69,7 +69,7 @@ events = mne.read_events(event_fname)
 # only one channel type at a time.
 
 raw.info['bads'] = []
-picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=False,
+picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False, eog=False,
                        include=[], exclude=[])
 
 ###############################################################################
@@ -93,13 +93,17 @@ thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
 
-epochs.ch_names
 ar = LocalAutoRejectCV(n_interpolates, consensus_percs, picks=picks,
                        thresh_func=thresh_func)
-epochs_clean = ar.fit_transform(epochs['Auditory/Left'])
 
-evoked = epochs['Auditory/Left'].average()
+# we can fit on one part of the epochs
+ar.fit(epochs['Auditory/Left'])
+
+# and transform any other data which include a subset of the channels
+# used in fit
+epochs_clean = ar.transform(epochs['Auditory/Right'])
 evoked_clean = epochs_clean.average()
+evoked = epochs['Auditory/Right'].average()
 
 
 ###############################################################################
