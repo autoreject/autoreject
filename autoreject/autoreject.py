@@ -474,7 +474,7 @@ class LocalAutoReject(BaseAutoReject):
         bad_channels = list()
         n_interpolate = self.n_interpolate[ch_type]
         for epoch_idx in range(len(epochs)):
-            n_bads = drop_log[epoch_idx].sum()
+            n_bads = drop_log[epoch_idx, self.picks].sum()
             if n_bads == 0:
                 continue
             else:
