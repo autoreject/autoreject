@@ -4,6 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
+import warnings
 import numpy as np
 from scipy.stats.distributions import uniform
 
@@ -631,8 +632,13 @@ class LocalAutoReject(BaseAutoReject):
             self._interpolate_bad_epochs(
                 epochs_out, bad_channels=bad_channels,
                 verbose=self.verbose)
-
-        epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
+        if np.any(bad_epochs_idx):
+            epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
+        else:
+            warnings.warn(
+                "No bad epochs were found for your data. Returning "
+                "a copy of the data you wanted to clean. Interpolation "
+                "may have been done.")
         return epochs_out
 
     def _interpolate_bad_epochs(
