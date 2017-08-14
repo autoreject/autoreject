@@ -94,21 +94,24 @@ picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
 
 thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
-# Note that once the parameters are learned, any data can be repaired
-# that contains channels that were used during fit.
-# This also means that, under favorable circumstances, time may be saved
-# By fitting autoreject on a representative subsample of the data.
+###############################################################################
+# Note that :class:`autoreject.LocalAutoRejectCV` by design supports multiple
+# channels. If no picks are passed separate solutions will be computed for each
+# channel type and internally combines. This then readily supports cleaning
+# unseen epochs from the different channel types used during fit.
+# Here we only use a subset of channels to save time.
+
+###############################################################################
+# Also note that once the parameters are learned, any data can be repaired
+# that contains channels that were used during fit. This also means that time
+# may be saved by fitting :class:`autoreject.LocalAutoRejectCV` on a
+# representative subsample of the data.
+
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 
 ar.fit(this_epoch)
 epochs_ar = ar.transform(this_epoch)
-
-# Note that LocalAutoRejectCV by design supports multiple channels.
-# If no picks are passed separate solutions will be computed for each channel
-# type and internally combines. This then readily supports cleaning
-# unseen epochs from the different channel types used during fit.
-# Here we only use a subset of channels to save time.
 
 ###############################################################################
 # We can visualize the cross validation curve over two variables

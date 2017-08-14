@@ -93,8 +93,9 @@ thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
 # :class:`autoreject.LocalAutoRejectCV` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
-
-# Note that LocalAutoRejectCV by design supports multiple channels.
+###############################################################################
+# Note that:class:`autoreject.LocalAutoRejectCV` by design supports
+# multiple channels.
 # If no picks are passed separate solutions will be computed for each channel
 # type and internally combines. This then readily supports cleaning
 # unseen epochs from the different channel types used during fit.
