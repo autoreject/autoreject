@@ -103,15 +103,12 @@ thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
 ar = LocalAutoRejectCV(n_interpolates, consensus_percs, picks=picks,
                        thresh_func=thresh_func)
 
-# We can fit on one part of the epochs
+# Not that fitting and transforming can be done on different compatible
+# portions of data if needed.
 ar.fit(epochs['Auditory/Left'])
-
-# And transform any other data which include a subset of the channels
-# used in fit.
-# This may save time.
-epochs_clean = ar.transform(epochs['Auditory/Right'])
+epochs_clean = ar.transform(epochs['Auditory/Left'])
 evoked_clean = epochs_clean.average()
-evoked = epochs['Auditory/Right'].average()
+evoked = epochs['Auditory/Left'].average()
 
 ###############################################################################
 # Now, we will manually mark the bad channels just for plotting.

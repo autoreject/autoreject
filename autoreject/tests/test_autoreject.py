@@ -184,9 +184,3 @@ def test_autoreject():
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
     assert_equal(set(threshes_b.keys()), set(ch_names))
-
-    # arrays are really different but quite similar.
-    # XXX this actually varies quite substantially
-    # assert_true(np.corrcoef(
-    #                 list(threshes_a.values()),
-    #                 list(threshes_b.values()))[0, 1] ** 2 > 0.8)
