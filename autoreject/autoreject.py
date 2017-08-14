@@ -434,11 +434,11 @@ class LocalAutoReject(BaseAutoReject):
 
     @property
     def bad_segments(self):
-        return self._drop_log
+        return self.drop_log_
 
     @property
     def bad_epochs_idx(self):
-        return self._bad_epochs_idx
+        return self.bad_epochs_idx_
 
     def _vote_bad_epochs(self, epochs):
         """Each channel votes for an epoch as good or bad.
@@ -632,6 +632,7 @@ class LocalAutoReject(BaseAutoReject):
             self._interpolate_bad_epochs(
                 epochs_out, bad_channels=bad_channels,
                 verbose=self.verbose)
+        boom
         if np.any(bad_epochs_idx):
             epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
         else:
@@ -858,7 +859,7 @@ class LocalAutoRejectCV(object):
                     local_reject.bad_sensor_counts = bad_sensor_counts[train]
 
                     bad_epochs_idx, _, _ = local_reject._get_bad_epochs(
-                        local_reject.bad_sensor_counts, ch_type=ch_type)
+                        bad_sensor_counts, ch_type=ch_type)
                     local_reject._bad_epochs_idx = np.sort(bad_epochs_idx)
                     n_train = len(epochs[train])
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
