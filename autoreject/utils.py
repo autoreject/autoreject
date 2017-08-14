@@ -108,7 +108,7 @@ def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
         from mne.utils import ProgressBar
 
         _ProgressBar = ProgressBar
-        if not mne.utils.check_version('mne', '0.14dev0'):
+        if mne.utils.check_version('mne', '0.14'):
             class _ProgressBar(ProgressBar):
                 def __iter__(self):
                     """Iterate to auto-increment the pbar with 1."""
