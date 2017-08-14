@@ -632,7 +632,6 @@ class LocalAutoReject(BaseAutoReject):
             self._interpolate_bad_epochs(
                 epochs_out, bad_channels=bad_channels,
                 verbose=self.verbose)
-        boom
         if np.any(bad_epochs_idx):
             epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
         else:
@@ -860,7 +859,7 @@ class LocalAutoRejectCV(object):
 
                     bad_epochs_idx, _, _ = local_reject._get_bad_epochs(
                         bad_sensor_counts, ch_type=ch_type)
-                    local_reject._bad_epochs_idx = np.sort(bad_epochs_idx)
+                    local_reject.bad_epochs_idx_ = np.sort(bad_epochs_idx)
                     n_train = len(epochs[train])
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
                                                    bad_epochs_idx)
