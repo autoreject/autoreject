@@ -7,6 +7,7 @@ from collections import defaultdict
 import warnings
 
 import mne
+from mne.utils import check_version as is_version_greater_than
 from sklearn.externals.joblib import Memory
 
 mem = Memory(cachedir='cachedir')
@@ -108,7 +109,7 @@ def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
         from mne.utils import ProgressBar
 
         _ProgressBar = ProgressBar
-        if mne.utils.check_version('mne', '0.14'):
+        if not is_version_greater_than('mne', '0.14'):
             class _ProgressBar(ProgressBar):
                 def __iter__(self):
                     """Iterate to auto-increment the pbar with 1."""
