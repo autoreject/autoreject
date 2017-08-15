@@ -883,8 +883,11 @@ class LocalAutoRejectCV(object):
         local_reject.consensus_perc[ch_type] = consensus_perc
         local_reject.n_interpolate[ch_type] = n_interpolate
         local_reject._leave = False
-        local_reject.fix_log_ = local_reject._annotate_epochs(
-            threshes=local_reject.threshes_, epochs=epochs)[3]
+        out = local_reject._annotate_epochs(
+            threshes=local_reject.threshes_, epochs=epochs)
+        local_reject.fix_log_ = out[3]
+        local_reject.bad_epochs_idx_ = out[4]
+        local_reject.good_epochs_idx_ = out[5]
         self.local_reject_ = local_reject
         return self
 
