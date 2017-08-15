@@ -492,6 +492,7 @@ class LocalAutoReject(BaseAutoReject):
                     # then select only the worst n_interpolate channels
                     interp_chs_mask[
                         sorted_ch_idx_picks[n_interpolate:]] = False
+
             fix_log[epoch_idx][interp_chs_mask] = 2
             interp_chs = np.where(interp_chs_mask)[0]
             interp_chs = [ch_name for idx, ch_name in enumerate(ch_names)
@@ -706,9 +707,9 @@ class LocalAutoRejectCV(object):
         and the peak-to-peak thresholds as the values.
     loss : array, shape (len(n_interpolates), len(consensus_percs))
         The cross validation error for different parameter values.
-    consensus_percs_ : float
+    consensus_perc_ : float
         The estimated consensus_perc.
-    n_interpolates_ : int
+    n_interpolate_ : int
         The estimated n_interpolated.
     """
 
