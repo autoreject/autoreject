@@ -58,7 +58,7 @@ for run in range(3, 7):
                              'run_%02d_raw.fif' % run)
     raw = mne.io.read_raw_fif(run_fname, preload=True)
     raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
-    raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
+    raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=8, verbose='INFO')
 
     raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
                            'EEG063': 'ecg', 'EEG064': 'misc'})
@@ -92,7 +92,7 @@ exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
-thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
+thresh_func = partial(compute_thresholds, random_state=42, n_jobs=2)
 
 ###############################################################################
 # Note that :class:`autoreject.LocalAutoRejectCV` by design supports multiple
