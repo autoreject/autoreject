@@ -53,9 +53,6 @@ from autoreject import compute_thresholds  # noqa
 threshes = compute_thresholds(epochs, picks=picks, method='random_search',
                               random_state=42, verbose='progressbar')
 
-threshes_ = [compute_thresholds(epochs[:15], picks=picks, method='random_search',
-                    random_state=42, verbose='progressbar') for _ in range(10)]
-
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify
 # that the thresholds are indeed different for different sensors.
