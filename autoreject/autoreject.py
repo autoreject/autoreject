@@ -68,7 +68,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
-    data_picks = _handle_picks(epochs.info, picks=None)
+    data_picks = _handle_picks(picks=None, info=epochs.info)
     X = epochs.get_data()[:, data_picks, :]
     n_epochs, n_channels, n_times = X.shape
 
@@ -341,7 +341,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
-    picks = _handle_picks(epochs.info, picks)
+    picks = _handle_picks(picks=picks, info=epochs.info)
     _check_data(epochs, picks, verbose=verbose,
                 ch_constraint='data_channels')
     sub_picks = _check_sub_picks(picks=picks, info=epochs.info)
@@ -437,7 +437,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object for which bad epochs must be found.
         """
         n_epochs = len(epochs)
-        picks = _handle_picks(info=epochs.info, picks=picks)
+        picks = _handle_picks(picks=picks, info=epochs.info)
 
         drop_log = np.zeros((n_epochs, len(epochs.ch_names)))
         bad_sensor_counts = np.zeros((len(epochs), ))
@@ -505,7 +505,8 @@ class LocalAutoReject(BaseAutoReject):
 
     def _annotate_epochs(self, threshes, epochs, picks):
         """Get essential annotations for epochs given thresholds."""
-        ch_type = _get_ch_type_from_picks(self.picks_, epochs.info)[0]
+        ch_type = _get_ch_type_from_picks(
+            picks=self.picks_, info=epochs.info)[0]
 
         drop_log, bad_sensor_counts = self._vote_bad_epochs(
             epochs, picks=picks)
@@ -601,14 +602,14 @@ class LocalAutoReject(BaseAutoReject):
         self : instance of LocalAutoReject
             The instance.
         """
-        self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
-        _check_data(epochs, picks=self.picks, verbose=self.verbose,
+        self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
+        _check_data(epochs, picks=self.picks_, verbose=self.verbose,
                     ch_constraint='single_channel_type')
         ch_type = _get_ch_type_from_picks(picks=self.picks_, info=epochs.info)
         self.n_interpolate_[ch_type] = self.n_interpolate
         self.consensus_[ch_type] = self.consensus
         self.threshes_ = self.thresh_func(
-            epochs.copy(), picks=self.picks, verbose=self.verbose)
+            epochs.copy(), picks=self.picks_, verbose=self.verbose)
 
         annot = self.annotate_epochs(epochs=epochs, picks=self.picks_)
 
@@ -754,7 +755,7 @@ class LocalAutoRejectCV(object):
         self : instance of LocalAutoRejectCV
             The instance.
         """
-        self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
+        self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
         if self.cv is None:
             self.cv = 10
@@ -771,7 +772,7 @@ class LocalAutoRejectCV(object):
             self.n_interpolates = np.array([1, 4, max_interp])
 
         # Start recursion here if multiple channel types are present.
-        sub_picks = _check_sub_picks(info=epochs.info, picks=self.picks_)
+        sub_picks = _check_sub_picks(picks=self.picks_, info=epochs.info)
         if sub_picks is not False:
             # store accumulation stuff here
             threshes = dict()  # update
