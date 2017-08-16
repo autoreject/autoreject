@@ -66,8 +66,8 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     epochs.pick_channels(pick_ch_names)
-    epochs_fit = epochs[:10]
-    epochs_new = epochs[10:]
+    epochs_fit = epochs[:12]  # make sure to use different size of epochs
+    epochs_new = epochs[12:]
 
     X = epochs_fit.get_data()
     n_epochs, n_channels, n_times = X.shape
@@ -96,6 +96,10 @@ def test_autoreject():
     picks = mne.pick_types(
         epochs.info, meg='mag', eeg=True, stim=False, eog=False,
         include=[], exclude=[])
+    non_picks = mne.pick_types(
+        epochs.info, meg='grad', eeg=False, stim=False, eog=False,
+        include=[], exclude=[])
+
     ch_types = ['mag', 'eeg']
 
     ar = LocalAutoReject(picks=picks)
@@ -113,39 +117,62 @@ def test_autoreject():
     assert_raises(ValueError, ar.transform, epochs)
 
     ar.fit(epochs_fit)
-    fix_log = ar.fix_log
-    bad_epochs_idx = ar.local_reject_.bad_epochs_idx_
-    good_epochs_idx = ar.local_reject_.good_epochs_idx_
+    annot = ar.annotate_epochs(epochs)
     for ch_type in ch_types:
         # test that kappa & rho are selected
         assert_true(
             ar.n_interpolate_[ch_type] in ar.n_interpolates)
         assert_true(
-            ar.consensus_perc_[ch_type] in ar.consensus_percs)
+            ar.consensus_[ch_type] in ar.consensus)
         # test that local autoreject is synced with AR-CV instance
         assert_equal(
             ar.n_interpolate_[ch_type],
-            ar.local_reject_.n_interpolate[ch_type])
+            ar.local_reject_.n_interpolate_[ch_type])
         assert_equal(
-            ar.consensus_perc_[ch_type],
-            ar.local_reject_.consensus_perc[ch_type])
+            ar.consensus_[ch_type],
+            ar.local_reject_.consensus_[ch_type])
 
     # test complementarity of goods and bads
     assert_array_equal(
-        np.sort(np.r_[bad_epochs_idx, good_epochs_idx]),
+        np.sort(np.r_[annot['bad_epochs_idx'],
+                      annot['good_epochs_idx']]),
         np.arange(len(epochs_fit)))
 
     # test that transform does not change state of ar
-    epochs_fit.fit_ = True
     epochs_clean = ar.transform(epochs_fit)  # apply same data
-    assert_array_equal(fix_log, ar.fix_log)
-    assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-    assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+    annot2 = ar.annotate_epochs(epochs_fit)
+    assert_array_equal(annot['fix_log'], annot2['fix_log'])
+    assert_array_equal(annot['bad_epochs_idx'], annot2['bad_epochs_idx'])
+    assert_array_equal(annot['good_epochs_idx'], annot2['good_epochs_idx'])
 
     epochs_new_clean = ar.transform(epochs_new)  # apply to new data
-    assert_array_equal(fix_log, ar.fix_log)
-    assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-    assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+    annot_new = ar.annotate_epochs(epochs_fit)
+    assert_array_equal(
+        np.sort(np.r_[annot_new['bad_epochs_idx'],
+                      annot_new['good_epochs_idx']]),
+        np.arange(len(epochs_new)))
+
+    assert_true(
+        len(annot_new['bad_epochs_idx']) != len(annot['bad_epochs_idx']))
+
+    # test fix_log and picks /channel types tracking
+    ch_types_orig, picks_orig = zip(*annot_new['picks_by_type'])
+    picks_orig = np.concatenate(picks_orig)
+    assert_equal(ch_types, list(ch_types_orig))
+    assert_array_equal(picks, picks_orig)
+
+    # test correct entries in fix log
+    assert_true(annot_new['fix_log'][:, picks_orig].sum() > 0)
+    assert_true(annot_new['fix_log'][:, non_picks].sum() > 0)
+    assert_equal(annot_new['fix_log'].shape,
+                 (len(epochs), len(picks_orig) + len(non_picks)))
+
+    # test correct interpolations by type
+    for ch_type, this_picks in annot_new['picks_by_type']:
+        interp_counts = np.sum(
+            annot_new['fix_log'][:, this_picks] == 2, axis=1)
+        interp_channels = [len(cc) for cc in annot_new['interp_bads'][ch_type]]
+        assert_array_equal(interp_counts, interp_channels)
 
     is_same = epochs_new_clean.get_data() == epochs_new.get_data()
     if not np.isscalar(is_same):
@@ -153,16 +180,6 @@ def test_autoreject():
     assert_true(not is_same)
 
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
-    # Now we test that the .bad_segments has the shape
-    # of n_trials, n_sensors, such that n_sensors is the
-    # the full number sensors, before picking. We, hence,
-    # expect nothing to be rejected outside of our picks
-    # but rejections can occur inside our picks.
-    assert_equal(ar.bad_segments.shape[1], len(epochs_fit.ch_names))
-    assert_true(np.any(ar.bad_segments[:, picks]))
-    non_picks = np.ones(len(epochs_fit.ch_names), dtype=bool)
-    non_picks[picks] = False
-    assert_true(not np.any(ar.bad_segments[:, non_picks]))
 
     assert_true(isinstance(ar.threshes_, dict))
     assert_true(len(ar.picks) == len(picks))
