@@ -112,7 +112,7 @@ ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 
 ar.fit(this_epoch)
 epochs_ar = ar.transform(this_epoch)
-
+annots = ar.annotate_epochs(this_epoch)
 ###############################################################################
 # We can visualize the cross validation curve over two variables
 
@@ -147,8 +147,8 @@ plt.show()
 # Bad trials are also in red.
 
 from autoreject import plot_epochs  # noqa
-plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
-            fix_log=ar.fix_log, scalings=dict(eeg=40e-6),
+plot_epochs(this_epoch, bad_epochs_idx=annots['bad_epochs_idx'],
+            fix_log=annots['fix_log'], scalings=dict(eeg=40e-6),
             title='')
 
 ###############################################################################

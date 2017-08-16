@@ -57,7 +57,7 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
                 'remove them from epochs.info["bads"].' % n_bads)
 
 
-def _handle_picks(info, picks):
+def _handle_picks(picks, info):
     """Pick the data channls or return picks."""
     if picks is None:
         out = mne.pick_types(
@@ -67,7 +67,7 @@ def _handle_picks(info, picks):
     return out
 
 
-def _check_sub_picks(info, picks):
+def _check_sub_picks(picks, info):
     """Get the picks grouped by channel type."""
     sub_picks = False
     # do magic here
