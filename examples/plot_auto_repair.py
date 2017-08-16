@@ -111,6 +111,7 @@ epochs_clean = ar.transform(epochs['Auditory/Left'])
 evoked_clean = epochs_clean.average()
 evoked = epochs['Auditory/Left'].average()
 
+annots = ar.annotate_epochs(epochs)
 ###############################################################################
 # Now, we will manually mark the bad channels just for plotting.
 
@@ -145,7 +146,7 @@ plt.tight_layout()
 set_matplotlib_defaults(plt)
 
 plt.figure(figsize=(12, 6))
-im = plt.imshow(ar.bad_segments[:, picks], cmap='Reds',
+im = plt.imshow(annots['fix_log'][:, picks], cmap='Reds',
                 interpolation='nearest')
 
 ch_names = [epochs.ch_names[pp] for pp in picks][7::10]

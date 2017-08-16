@@ -68,7 +68,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
 
-    data_picks = _handle_picks(epochs.info, picks=None)
+    data_picks = _handle_picks(picks=None, info=epochs.info)
     X = epochs.get_data()[:, data_picks, :]
     n_epochs, n_channels, n_times = X.shape
 
@@ -341,7 +341,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     """
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
-    picks = _handle_picks(epochs.info, picks)
+    picks = _handle_picks(picks=picks, info=epochs.info)
     _check_data(epochs, picks, verbose=verbose,
                 ch_constraint='data_channels')
     sub_picks = _check_sub_picks(picks=picks, info=epochs.info)
@@ -378,7 +378,7 @@ class LocalAutoReject(BaseAutoReject):
     ----------
     epochs : instance of mne.Epochs
         The epochs object
-    consensus_perc : float (0 to 1.0)
+    consensus : float (0 to 1.0)
         Percentage of channels that must agree as a fraction of
         the total number of channels. This sets :math:`\\kappa/Q`.
     n_interpolate : int (default 0)
@@ -398,22 +398,18 @@ class LocalAutoReject(BaseAutoReject):
 
     Attributes
     -----------
-    bad_segments : array, shape (n_epochs, n_channels)
-        A boolean matrix where 1 denotes a bad data segment
-        according to the sensor thresholds.
-    fix_log : array, shape (n_epochs, n_channels)
-        Similar to bad_segments, but with entries 0, 1, and 2.
-            0 : good data segment
-            1 : bad data segment not interpolated
-            2 : bad data segment interpolated
-    bad_epochs_idx : array
-        The indices of bad epochs.
+    picks_ : ndarray, shape(n_channels,)
+        The channels actually used by autoreject.
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
+    consensus_ : dict of float
+        The estimated consensus by channel type.
+    n_interpolate_ : dict of int
+        The estimated n_interpolated by channel type.
     """
 
-    def __init__(self, consensus_perc=0.1,
+    def __init__(self, consensus=0.1,
                  n_interpolate=0, thresh_func=None,
                  method='bayesian_optimization',
                  picks=None,
@@ -421,26 +417,18 @@ class LocalAutoReject(BaseAutoReject):
         """Init it."""
         if thresh_func is None:
             thresh_func = compute_thresholds
-        if not (0 <= consensus_perc <= 1):
-            raise ValueError('"consensus_perc" must be between 0 and 1. '
-                             'You gave me %s.' % consensus_perc)
-        self.consensus_perc = {
-            ch: consensus_perc for ch in ('mag', 'grad', 'eeg')}
-        self.n_interpolate = {
-            ch: n_interpolate for ch in ('mag', 'grad', 'eeg')}
+        if not (0 <= consensus <= 1):
+            raise ValueError('"consensus" must be between 0 and 1. '
+                             'You gave me %s.' % consensus)
+        self.consensus = consensus
+        self.consensus_ = dict()
+        self.n_interpolate = n_interpolate
+        self.n_interpolate_ = dict()
         self.thresh_func = thresh_func
         self.picks = picks
         self.verbose = verbose
 
-    @property
-    def bad_segments(self):
-        return self.drop_log_
-
-    @property
-    def bad_epochs_idx(self):
-        return self.bad_epochs_idx_
-
-    def _vote_bad_epochs(self, epochs):
+    def _vote_bad_epochs(self, epochs, picks):
         """Each channel votes for an epoch as good or bad.
 
         Parameters
@@ -449,7 +437,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object for which bad epochs must be found.
         """
         n_epochs = len(epochs)
-        picks = _handle_picks(info=epochs.info, picks=self.picks)
+        picks = _handle_picks(picks=picks, info=epochs.info)
 
         drop_log = np.zeros((n_epochs, len(epochs.ch_names)))
         bad_sensor_counts = np.zeros((len(epochs), ))
@@ -459,22 +447,21 @@ class LocalAutoReject(BaseAutoReject):
         threshes = [self.threshes_[ch_name] for ch_name in ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
-            # TODO: combine for different ch types
             bad_sensor_counts[bad_epochs_idx] += 1
             drop_log[bad_epochs_idx, picks[ch_idx]] = 1
         return drop_log, bad_sensor_counts
 
     def _get_epochs_interpolation(self, epochs, drop_log,
-                                  ch_type, verbose='progressbar'):
+                                  ch_type, picks, verbose='progressbar'):
         """Interpolate the bad epochs."""
         # 1: bad segment, # 2: interpolated
         fix_log = drop_log.copy()
         ch_names = epochs.ch_names
-        non_picks = np.setdiff1d(range(epochs.info['nchan']), self.picks)
+        non_picks = np.setdiff1d(range(epochs.info['nchan']), picks)
         interp_channels = list()
-        n_interpolate = self.n_interpolate[ch_type]
+        n_interpolate = self.n_interpolate_[ch_type]
         for epoch_idx in range(len(epochs)):
-            n_bads = drop_log[epoch_idx, self.picks].sum()
+            n_bads = drop_log[epoch_idx, picks].sum()
             if n_bads == 0:
                 continue
             else:
@@ -500,12 +487,12 @@ class LocalAutoReject(BaseAutoReject):
             interp_channels.append(interp_chs)
         return interp_channels, fix_log
 
-    def _get_bad_epochs(self, bad_sensor_counts, ch_type):
+    def _get_bad_epochs(self, bad_sensor_counts, ch_type, picks):
         """Get the indices of bad epochs."""
         sorted_epoch_idx = np.argsort(bad_sensor_counts)[::-1]
         bad_sensor_counts = np.sort(bad_sensor_counts)[::-1]
-        n_channels = len(self.picks)
-        n_consensus = self.consensus_perc[ch_type] * n_channels
+        n_channels = len(picks)
+        n_consensus = self.consensus[ch_type] * n_channels
         if np.max(bad_sensor_counts) >= n_consensus:
             n_epochs_drop = np.sum(bad_sensor_counts >=
                                    n_consensus) + 1
@@ -516,18 +503,20 @@ class LocalAutoReject(BaseAutoReject):
 
         return bad_epochs_idx, sorted_epoch_idx, n_epochs_drop
 
-    def _annotate_epochs(self, threshes, epochs):
+    def _annotate_epochs(self, threshes, epochs, picks):
         """Get essential annotations for epochs given thresholds."""
-        ch_type = _get_ch_type_from_picks(self.picks, epochs.info)[0]
+        ch_type = _get_ch_type_from_picks(
+            picks=self.picks_, info=epochs.info)[0]
 
-        drop_log, bad_sensor_counts = self._vote_bad_epochs(epochs)
+        drop_log, bad_sensor_counts = self._vote_bad_epochs(
+            epochs, picks=picks)
 
         interp_channels, fix_log = self._get_epochs_interpolation(
-            epochs, drop_log=drop_log, ch_type=ch_type)
+            epochs, drop_log=drop_log, ch_type=ch_type, picks=picks)
 
         (bad_epochs_idx, sorted_epoch_idx,
          n_epochs_drop) = self._get_bad_epochs(
-             bad_sensor_counts, ch_type=ch_type)
+             bad_sensor_counts, ch_type=ch_type, picks=picks)
 
         bad_epochs_idx = np.sort(bad_epochs_idx)
         good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
@@ -535,6 +524,69 @@ class LocalAutoReject(BaseAutoReject):
 
         return (drop_log, bad_sensor_counts, interp_channels, fix_log,
                 bad_epochs_idx, good_epochs_idx)
+
+    def annotate_epochs(self, epochs, picks=None):
+        """Annotate epochs.
+
+        .. note::
+           If multiple channel types are present, annot['bad_epochs_idx']
+           reflects the union of bad trials across channel types.
+
+        Parameters
+        ----------
+        epochs : instance of mne.Epochs
+            The epoched data to be annotated.
+        picks : np.ndarray, shape(n_channels, ) | list | None
+            The channel indices to be used. If None, the .picks attribute
+            will be used.
+
+        Returns
+        -------
+        annot : dict
+            fix_log : array, shape (n_epochs, n_channels)
+                Similar to bad_segments, but with entries 0, 1, and 2.
+                    0 : good data segment
+                    1 : bad data segment not interpolated
+                    2 : bad data segment interpolated
+            bad_epochs_idx : array
+                The indices of bad epochs.
+            good_epochs_idx : array
+                The indices of good epochs.
+            interp_channels : dict of list of list of str
+                The names of the channels to be interpolated
+                for each trial by channel type.
+            picks_by_type : list of tuple
+                The channel type an picks in the order they were fitted.
+                This can be useful to iterate over the 'fix_log' and the
+                'interp_channels'.
+        """
+        picks = (self.picks_ if picks is None else picks)
+        sub_picks = _check_sub_picks(picks=picks, info=epochs.info)
+        if sub_picks is not False:
+            annot = dict(fix_log=0.0, bad_epochs_idx=list(),
+                         interp_channels=dict(), picks_by_type=list())
+            for ch_type, this_picks in sub_picks:
+                out = self.annotate_epochs(epochs, picks=sub_picks)
+                annot['fix_log'] += out['fix_log']
+                annot['bad_epochs_idx'] = np.union1d(
+                    annot['bad_epochs_idx'], out['bad_epochs_idx'])
+                annot['interp_channels'].update(out['interp_channels'])
+                annot['picks_by_type'].extend(out['picks_by_type'])
+            annot['good_epochs_idx'] = np.setdiff1d(
+                np.arange(len(epochs)), annot['bad_epochs_idx'])
+        else:
+            ch_type = _get_ch_type_from_picks(picks=picks, info=epochs.info)
+            (_, _, interp_channels, fix_log, bad_epochs_idx,
+             good_epochs_idx) = self._annotate_epochs(
+                self, self.threshes_, epochs, picks=picks)
+            annot = dict(
+                fix_log=fix_log,
+                interp_channels={ch_type: interp_channels},
+                bad_epochs_idx=bad_epochs_idx,
+                good_epochs_idx=good_epochs_idx,
+                picks_by_type=[(ch_type, picks)]
+            )
+        return annot
 
     def fit(self, epochs):
         """Compute the thresholds.
@@ -550,28 +602,23 @@ class LocalAutoReject(BaseAutoReject):
         self : instance of LocalAutoReject
             The instance.
         """
-        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
-        _check_data(epochs, picks=self.picks, verbose=self.verbose,
+        self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
+        _check_data(epochs, picks=self.picks_, verbose=self.verbose,
                     ch_constraint='single_channel_type')
+        ch_type = _get_ch_type_from_picks(picks=self.picks_, info=epochs.info)
+        self.n_interpolate_[ch_type] = self.n_interpolate
+        self.consensus_[ch_type] = self.consensus
         self.threshes_ = self.thresh_func(
-            epochs.copy(), picks=self.picks, verbose=self.verbose)
+            epochs.copy(), picks=self.picks_, verbose=self.verbose)
 
-        (drop_log, bad_sensor_counts, interp_channels, fix_log,
-         bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
-             threshes=self.threshes_, epochs=epochs)
-
-        self.drop_log_ = drop_log
-        self.fix_log_ = fix_log
-        self.bad_sensor_counts_ = bad_sensor_counts
-        self.interp_channels_ = interp_channels
-        self.bad_epochs_idx_ = bad_epochs_idx
-        self.good_epochs_idx_ = good_epochs_idx
+        annot = self.annotate_epochs(epochs=epochs, picks=self.picks_)
 
         epochs_copy = epochs.copy()
         self._interpolate_bad_epochs(
-            epochs_copy, interp_channels=interp_channels, verbose=self.verbose)
+            epochs_copy, interp_channels=annot['interp_channels'],
+            verbose=self.verbose)
         self.mean_ = _slicemean(epochs_copy.get_data(),
-                                good_epochs_idx, axis=0)
+                                annot['good_epochs_idx'], axis=0)
         del epochs_copy  # I can't wait for garbage collection.
         return self
 
@@ -582,7 +629,7 @@ class LocalAutoReject(BaseAutoReject):
            LocalAutoReject partially supports multiple channels.
            While fitting, at this point requires selection of channel types,
            the transform can handle multiple channel types, if `.threshes_`
-           parameter contains all necessary channels and `.consensus_perc`
+           parameter contains all necessary channels and `.consensus`
            and `n_interpolate` have meaningful channel type specific
            settings. These are commonly obtained from
            :func:`autoreject.LocalAutoRejectCV`.
@@ -594,46 +641,23 @@ class LocalAutoReject(BaseAutoReject):
         """
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
                     ch_constraint='data_channels')
-        if not all(epochs.ch_names[pp] in self.threshes_ for pp in self.picks):
+        if not all(epochs.ch_names[pp]
+                   in self.threshes_ for pp in self.picks_):
             raise ValueError('You are passing channels which were not present '
                              'at fit-time. Please fit it again, this time '
                              'correctly.')
         epochs_out = epochs.copy()
-        sub_picks = _check_sub_picks(picks=self.picks, info=epochs_out.info)
-        if sub_picks is not False:
-            bad_epochs_idx = list()
-            interp_channels_list = list()
-            old_picks = self.picks
-            for ii, (ch_type, this_picks) in enumerate(sub_picks):
-                self.picks = this_picks
-                out = self._annotate_epochs(self.threshes_, epochs)
-                interp_channels_list.append(out[2])
-                bad_epochs_idx_ = out[4]
-                bad_epochs_idx = np.union1d(bad_epochs_idx, bad_epochs_idx_)
-            good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
-                                           bad_epochs_idx)
-            if len(good_epochs_idx) == 0:
-                raise ValueError('All epochs are bad. Sorry.')
+        annot = self.annotate_epochs(epochs_out, picks=None)
+        if len(annot['good_epochs_idx']) == 0:
+            raise ValueError('All epochs are bad. Sorry.')
 
-            for ii, (ch_type, this_picks) in enumerate(sub_picks):
-                self.picks = this_picks
-                self._interpolate_bad_epochs(
-                    epochs_out, interp_channels=interp_channels_list[ii],
-                    verbose=self.verbose)
-            self.picks = old_picks
-
-        else:
-            (_, _, interp_channels, _,
-             bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
-                 threshes=self.threshes_, epochs=epochs)
-            if len(good_epochs_idx) == 0:
-                raise ValueError('All epochs are bad. Sorry.')
-
+        for ch_type, this_picks in annot['picks_by_type']:
             self._interpolate_bad_epochs(
-                epochs_out, interp_channels=interp_channels,
-                verbose=self.verbose)
-        if np.any(bad_epochs_idx):
-            epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
+                epochs_out, interp_channels=annot['interp_channels'][ch_type],
+                picks=this_picks, verbose=self.verbose)
+
+        if np.any(annot['bad_epochs_idx']):
+            epochs_out.drop(annot['bad_epochs_idx'], reason='AUTOREJECT')
         else:
             warnings.warn(
                 "No bad epochs were found for your data. Returning "
@@ -642,7 +666,7 @@ class LocalAutoReject(BaseAutoReject):
         return epochs_out
 
     def _interpolate_bad_epochs(
-            self, epochs, interp_channels, verbose='progressbar'):
+            self, epochs, interp_channels, picks, verbose='progressbar'):
         """Actually do the interpolation."""
         pos = 4 if hasattr(self, '_leave') else 2
         for epoch_idx, interp_chs in _pbar(
@@ -651,7 +675,7 @@ class LocalAutoReject(BaseAutoReject):
                 position=pos, leave=True, verbose=verbose):
             epoch = epochs[epoch_idx]
             epoch.info['bads'] = interp_chs
-            interpolate_bads(epoch, picks=self.picks, reset_bads=True)
+            interpolate_bads(epoch, picks=picks, reset_bads=True)
             epochs._data[epoch_idx] = epoch._data
 
 
@@ -666,7 +690,7 @@ class LocalAutoRejectCV(object):
 
     Parameters
     ----------
-    consensus_percs : array | None
+    consensus : array | None
         The values to try for percentage of channels that must agree as a
         fraction of the total number of channels. This sets :math:`\\kappa/Q`.
         If None, defaults to `np.linspace(0, 1.0, 11)`
@@ -692,52 +716,31 @@ class LocalAutoRejectCV(object):
 
     Attributes
     -----------
-    bad_segments : array, shape (n_epochs, n_channels)
-        A boolean matrix where 1 denotes a bad data segment
-        according to the sensor thresholds.
-    fix_log : array, shape (n_epochs, n_channels)
-        Similar to bad_segments, but with entries 0, 1, and 2.
-            0 : good data segment
-            1 : bad data segment not interpolated
-            2 : bad data segment interpolated
-    bad_epochs_idx : array
-        The indices of bad epochs.
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
-    loss : array, shape (len(n_interpolates), len(consensus_percs))
-        The cross validation error for different parameter values.
-    consensus_perc_ : float
-        The estimated consensus_perc.
-    n_interpolate_ : int
-        The estimated n_interpolated.
+    consensus_ : dict of float
+        The estimated consensus by channel type.
+    n_interpolate_ : dict of int
+        The estimated n_interpolated by channel type.
+    loss_ : dict of array, shape (len(n_interpolates), len(consensus))
+        The cross validation error for different parameter values by
+        channel type.
     """
 
-    def __init__(self, n_interpolates=None, consensus_percs=None,
+    def __init__(self, n_interpolates=None, consensus=None,
                  thresh_func=None, cv=None, picks=None,
                  verbose='progressbar'):
         """Init it."""
         self.n_interpolates = n_interpolates
-        self.consensus_percs = consensus_percs
+        self.consensus = consensus
         self.thresh_func = thresh_func
         self.cv = cv
         self.verbose = verbose
         self.picks = picks
         self.loss_ = dict()
-        self.consensus_perc_ = dict()
+        self.consensus_ = dict()
         self.n_interpolate_ = dict()
-
-    @property
-    def bad_segments(self):
-        return self.local_reject_.drop_log_
-
-    @property
-    def fix_log(self):
-        return self.local_reject_.fix_log_
-
-    @property
-    def bad_epochs_idx(self):
-        return self.local_reject_.bad_epochs_idx_
 
     def fit(self, epochs):
         """Fit the epochs on the LocalAutoReject object.
@@ -752,93 +755,81 @@ class LocalAutoRejectCV(object):
         self : instance of LocalAutoRejectCV
             The instance.
         """
-        self.picks = _handle_picks(info=epochs.info, picks=self.picks)
-        _check_data(epochs, picks=self.picks, verbose=self.verbose)
+        self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
+        _check_data(epochs, picks=self.picks_, verbose=self.verbose)
         if self.cv is None:
             self.cv = 10
         if isinstance(self.cv, int):
             self.cv = KFold(len(epochs), n_folds=self.cv)
-        if self.consensus_percs is None:
-            self.consensus_percs = np.linspace(0, 1.0, 11)
+        if self.consensus is None:
+            self.consensus = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
-            if len(self.picks) < 4:
+            if len(self.picks_) < 4:
                 raise ValueError('Too few channels. autoreject is unlikely'
                                  ' to be effective')
             # XXX: dont interpolate all channels
-            max_interp = min(len(self.picks) - 1, 32)
+            max_interp = min(len(self.picks_) - 1, 32)
             self.n_interpolates = np.array([1, 4, max_interp])
 
         # Start recursion here if multiple channel types are present.
-        sub_picks = _check_sub_picks(info=epochs.info, picks=self.picks)
+        sub_picks = _check_sub_picks(picks=self.picks_, info=epochs.info)
         if sub_picks is not False:
             # store accumulation stuff here
             threshes = dict()  # update
-            bad_segments = 0.0  # numpy broadcast + sum
             fix_log = 0.0  # ...
             bad_epochs_idx = list()
-            consensus_perc = dict()
+            consensus = dict()
             n_interpolate = dict()
             for ch_type, this_picks in sub_picks:
                 sub_ar = LocalAutoRejectCV(
                     n_interpolates=self.n_interpolates,
-                    consensus_percs=self.consensus_percs,
+                    consensus=self.consensus,
                     thresh_func=self.thresh_func, cv=self.cv,
                     verbose=self.verbose)
                 sub_ar.picks = this_picks
                 sub_ar.fit(epochs)
                 threshes.update(sub_ar.threshes_)
-                bad_segments += sub_ar.bad_segments
-                fix_log += sub_ar.fix_log
-                bad_epochs_idx = np.union1d(
-                    sub_ar.local_reject_.bad_epochs_idx_,
-                    bad_epochs_idx).astype(int)
-
-                consensus_perc[ch_type] = sub_ar.consensus_perc_[ch_type]
+                consensus[ch_type] = sub_ar.consensus_[ch_type]
                 n_interpolate[ch_type] = sub_ar.n_interpolate_[ch_type]
-
-            good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
-                                           bad_epochs_idx).astype(int)
             # assemble stuff, update and return self
             self.threshes_ = threshes
+            # threshes
             self.local_reject_ = sub_ar.local_reject_
             self.local_reject_.threshes_ = threshes
-            self.local_reject_.fix_log_ = fix_log
-            self.local_reject_.drop_log_ = bad_segments
-            self.local_reject_.bad_epochs_idx_ = bad_epochs_idx
-            self.local_reject_.good_epochs_idx_ = good_epochs_idx
-
+            # kappa
+            self.consensus_ = consensus
+            self.local_reject_.consensus_ = consensus
+            # rho
             self.n_interpolate_ = n_interpolate
             self.local_reject_.n_interpolate = n_interpolate
-            self.consensus_perc_ = consensus_perc
-            self.local_reject_.consensus_perc = consensus_perc
             return self
 
         # Continue here if only one channel type is present.
         n_folds = len(self.cv)
-        loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
+        loss = np.zeros((len(self.consensus), len(self.n_interpolates),
                          n_folds))
 
         local_reject = LocalAutoReject(thresh_func=self.thresh_func,
                                        verbose=self.verbose,
-                                       picks=self.picks)
+                                       picks=self.picks_)
         ch_type = _get_ch_type_from_picks(
-            picks=self.picks, info=epochs.info)[0]
+            picks=self.picks_, info=epochs.info)[0]
 
         # The thresholds must be learnt from the entire data
         local_reject.fit(epochs)
         self.threshes_ = local_reject.threshes_
 
-        drop_log, bad_sensor_counts = local_reject._vote_bad_epochs(epochs)
+        drop_log, bad_sensor_counts = local_reject._vote_bad_epochs(
+            epochs, picks=self.picks_)
         desc = 'n_interp'
 
         for jdx, n_interp in enumerate(_pbar(self.n_interpolates, desc=desc,
                                        position=1, verbose=self.verbose)):
             # we can interpolate before doing cross-valida(tion
             # because interpolation is independent across trials.
-            local_reject.n_interpolate[ch_type] = n_interp
+            local_reject.n_interpolate_[ch_type] = n_interp
             interp_channels, fix_log = local_reject._get_epochs_interpolation(
-                epochs, drop_log=drop_log, ch_type=ch_type)
-            local_reject.interp_channels_ = interp_channels
+                epochs, drop_log=drop_log, ch_type=ch_type, picks=self.picks_)
 
             epochs_interp = epochs.copy()
             local_reject._interpolate_bad_epochs(
@@ -848,14 +839,14 @@ class LocalAutoRejectCV(object):
             for fold, (train, test) in enumerate(_pbar(self.cv, desc='Fold',
                                                  position=3,
                                                  verbose=self.verbose)):
-                for idx, consensus_perc in enumerate(self.consensus_percs):
+                for idx, consensus in enumerate(self.consensus):
                     # \kappa must be greater than \rho
-                    n_channels = len(self.picks)
-                    if consensus_perc * n_channels <= n_interp:
+                    n_channels = len(self.picks_)
+                    if consensus * n_channels <= n_interp:
                         loss[idx, jdx, fold] = np.inf
                         continue
 
-                    local_reject.consensus_perc[ch_type] = consensus_perc
+                    local_reject.consensus_[ch_type] = consensus
                     local_reject.bad_sensor_counts = bad_sensor_counts[train]
 
                     bad_epochs_idx, _, _ = local_reject._get_bad_epochs(
@@ -865,31 +856,64 @@ class LocalAutoRejectCV(object):
                     good_epochs_idx = np.setdiff1d(np.arange(n_train),
                                                    bad_epochs_idx)
                     local_reject.mean_ = _slicemean(
-                        epochs_interp[train].get_data()[:, self.picks],
+                        epochs_interp[train].get_data()[:, self.picks_],
                         good_epochs_idx, axis=0)
-                    X = epochs[test].get_data()[:, self.picks]
+                    X = epochs[test].get_data()[:, self.picks_]
                     loss[idx, jdx, fold] = -local_reject.score(X)
 
         self.loss_[ch_type] = loss
         best_idx, best_jdx = np.unravel_index(loss.mean(axis=-1).argmin(),
                                               loss.shape[:2])
-        consensus_perc = self.consensus_percs[best_idx]
+        consensus = self.consensus[best_idx]
         n_interpolate = self.n_interpolates[best_jdx]
+        self.consensus_[ch_type] = consensus
         self.n_interpolate_[ch_type] = n_interpolate
-        self.consensus_perc_[ch_type] = consensus_perc
         if self.verbose is not False:
-            print('Estimated consensus_perc=%0.2f and n_interpolate=%d'
-                  % (consensus_perc, n_interpolate))
-        local_reject.consensus_perc[ch_type] = consensus_perc
-        local_reject.n_interpolate[ch_type] = n_interpolate
+            print('Estimated consensus=%0.2f and n_interpolate=%d'
+                  % (consensus, n_interpolate))
+        local_reject.consensus_[ch_type] = consensus
+        local_reject.n_interpolate_[ch_type] = n_interpolate
         local_reject._leave = False
-        out = local_reject._annotate_epochs(
-            threshes=local_reject.threshes_, epochs=epochs)
-        local_reject.fix_log_ = out[3]
-        local_reject.bad_epochs_idx_ = out[4]
-        local_reject.good_epochs_idx_ = out[5]
         self.local_reject_ = local_reject
         return self
+
+    def annotate_epochs(self, epochs, picks=None):
+        """Annotate epochs.
+
+        .. note::
+           If multiple channel types are present, annot['bad_epochs_idx']
+           reflects the union of bad trials across channel types.
+
+        Parameters
+        ----------
+        epochs : instance of mne.Epochs
+            The epoched data to be annotated.
+        picks : np.ndarray, shape(n_channels, ) | list | None
+            The channel indices to be used. If None, the .picks attribute
+            will be used.
+
+        Returns
+        -------
+        annot : dict
+            fix_log : array, shape (n_epochs, n_channels)
+                Similar to bad_segments, but with entries 0, 1, and 2.
+                    0 : good data segment
+                    1 : bad data segment not interpolated
+                    2 : bad data segment interpolated
+            bad_epochs_idx : array
+                The indices of bad epochs.
+            good_epochs_idx : array
+                The indices of good epochs.
+            interp_channels : dict of list of list of str
+                The names of the channels to be interpolated
+                for each trial by channel type.
+            picks_by_type : list of tuple
+                The channel type an picks in the order they were fitted.
+                This can be useful to iterate over the 'fix_log' and the
+                'interp_channels'.
+        """
+        return self.local_reject_.annotate_epochs(
+            epochs=epochs, picks=picks)
 
     def transform(self, epochs):
         """Remove bad epochs, repairs sensors and returns clean epochs.
@@ -907,13 +931,13 @@ class LocalAutoRejectCV(object):
         if len(self.n_interpolate_) == 0:
             raise ValueError('Please run autoreject.fit() method first')
 
-        _check_data(epochs, picks=self.picks, verbose=self.verbose)
-        old_picks = self.local_reject_.picks
-        self.local_reject_.picks = self.picks
+        _check_data(epochs, picks=self.picks_, verbose=self.verbose)
+        old_picks = self.local_reject_.picks_
+        self.local_reject_.picks_ = self.picks_
 
         epochs_clean = self.local_reject_.transform(epochs)
 
-        self.local_reject_.picks = old_picks
+        self.local_reject_.picks_ = old_picks
         return epochs_clean
 
     def fit_transform(self, epochs):
