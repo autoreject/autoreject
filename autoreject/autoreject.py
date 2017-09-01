@@ -610,6 +610,7 @@ class LocalAutoReject(BaseAutoReject):
                 interp_channels_list.append(out[2])
                 bad_epochs_idx_ = out[4]
                 bad_epochs_idx = np.union1d(bad_epochs_idx, bad_epochs_idx_)
+                bad_epochs_idx = bad_epochs_idx.astype(np.int)
             good_epochs_idx = np.setdiff1d(np.arange(len(epochs)),
                                            bad_epochs_idx)
             if len(good_epochs_idx) == 0:
