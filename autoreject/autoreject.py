@@ -138,13 +138,15 @@ class GlobalAutoReject(BaseAutoReject):
         return self
 
 
-def get_rejection_threshold(epochs):
+def get_rejection_threshold(epochs, decim=1):
     """Compute global rejection thresholds.
 
     Parameters
     ----------
     epochs : mne.Epochs object
         The epochs from which to estimate the epochs dictionary
+    decim : int
+        The decimation factor.
 
     Returns
     -------
@@ -158,6 +160,8 @@ def get_rejection_threshold(epochs):
     rejection dictionary.
     """
     reject = dict()
+    epochs = epochs.copy()
+    epochs.decimate(decim=decim)
     X = epochs.get_data()
     picks = channel_indices_by_type(epochs.info)
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
