@@ -9,18 +9,16 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 import mne
-from mne.io.pick import channel_indices_by_type
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.cross_validation import KFold, StratifiedShuffleSplit
-
+from sklearn.cross_validation import cross_val_score
 from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
                     _handle_picks, _check_data, _get_ch_type_from_picks,
                     _check_sub_picks)
-
 from .bayesopt import expected_improvement, bayes_opt
 
 mem = Memory(cachedir='cachedir')
@@ -163,7 +161,6 @@ def get_rejection_threshold(epochs, decim=1):
     epochs = epochs.copy()
     epochs.decimate(decim=decim)
     X = epochs.get_data()
-    picks = channel_indices_by_type(epochs.info)
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
         if ch_type not in epochs:
             continue
@@ -172,13 +169,6 @@ def get_rejection_threshold(epochs, decim=1):
         if ch_type == 'eog' and not \
                 ('mag' in epochs or 'grad' in epochs or 'eeg' in epochs):
             continue
-
-        this_picks = [p for p in picks[ch_type] if epochs.info['ch_names'][p]
-                      not in epochs.info['bads']]
-        deltas = np.array([np.ptp(d, axis=1) for d in X[:, this_picks, :]])
-        param_range = deltas.max(axis=1)
-        print('Estimating rejection dictionary for %s with %d candidate'
-              ' thresholds' % (ch_type, param_range.shape[0]))
 
         if ch_type == 'mag' or ch_type == 'ecg':
             this_epoch = epochs.copy().pick_types(meg='mag', eeg=False)
@@ -195,12 +185,39 @@ def get_rejection_threshold(epochs, decim=1):
         elif ch_type == 'grad':
             this_epoch = epochs.copy().pick_types(meg='grad', eeg=False)
 
-        _, test_scores = validation_curve(
-            GlobalAutoReject(), this_epoch, y=None,
-            param_name="thresh", param_range=param_range, cv=5)
+        X = this_epoch.get_data()
+        deltas = np.array([np.ptp(d, axis=1) for d in X])
+        all_threshes = np.sort(deltas.max(axis=1))
+        n_epochs, n_channels, n_times = X.shape
 
-        test_scores = -test_scores.mean(axis=1)
-        reject[ch_type] = param_range[np.argmin(test_scores)]
+        print('Estimating rejection dictionary for %s' % ch_type)
+        cache = dict()
+        est = GlobalAutoReject()
+        est.n_channels = n_channels
+        est.n_times = n_times
+
+        def func(thresh):
+            idx = np.where(thresh - all_threshes >= 0)[0][-1]
+            thresh = all_threshes[idx]
+            if thresh not in cache:
+                est.set_params(thresh=thresh)
+                obj = -np.mean(cross_val_score(est, X, cv=5))
+                cache.update({thresh: obj})
+            return cache[thresh]
+
+        n_epochs = all_threshes.shape[0]
+        idx = np.concatenate((
+            np.linspace(0, n_epochs, 5, endpoint=False, dtype=int),
+            [n_epochs - 1]))  # ensure last point is in init
+        idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 40
+        initial_x = all_threshes[idx]
+        best_thresh, _ = bayes_opt(func, initial_x,
+                                   all_threshes,
+                                   expected_improvement,
+                                   max_iter=10, debug=False,
+                                   random_state=42)
+        reject[ch_type] = best_thresh
+
     return reject
 
 

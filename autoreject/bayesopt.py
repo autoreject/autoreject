@@ -40,8 +40,12 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
     acquisition is the acquisiton function we want to use to find
     query points."""
 
-    X = list(initial_x)
-    y = [f(x) for x in initial_x]
+    X, y = list(), list()
+    for x in initial_x:
+        if not np.isinf(f(x)):
+            y.append(f(x))
+            X.append(x)
+
     best_x = initial_x[np.argmin(y)]
     best_f = y[np.argmin(y)]
     gp = gaussian_process.GaussianProcessRegressor(random_state=random_state)
@@ -53,8 +57,9 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
         gp.fit(np.array(X)[:, None], np.array(y))
         new_x = all_x[acquisition(gp, best_f, all_x).argmin()]
         new_f = f(new_x)
-        X.append(new_x)
-        y.append(new_f)
+        if not np.isinf(new_f):
+            X.append(new_x)
+            y.append(new_f)
 
         if new_f < best_f:
             best_f = new_f
