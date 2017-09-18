@@ -46,7 +46,7 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
             y.append(f(x))
             X.append(x)
 
-    best_x = initial_x[np.argmin(y)]
+    best_x = X[np.argmin(y)]
     best_f = y[np.argmin(y)]
     gp = gaussian_process.GaussianProcessRegressor(random_state=random_state)
 
@@ -60,11 +60,19 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
         if not np.isinf(new_f):
             X.append(new_x)
             y.append(new_f)
-
-        if new_f < best_f:
-            best_f = new_f
-            best_x = new_x
+            if new_f < best_f:
+                best_f = new_f
+                best_x = new_x
 
         if debug:
             print("iter", i, "best_x", best_x, best_f)
+    if debug:
+        import matplotlib.pyplot as plt
+        scale = 1e6
+        sort_idx = np.argsort(X)
+        plt.plot(np.array(X)[sort_idx] * scale,
+                 np.array(y)[sort_idx] * scale, 'bo-')
+        plt.axvline(best_x * scale, linestyle='--')
+        plt.show()
+
     return best_x, best_f
