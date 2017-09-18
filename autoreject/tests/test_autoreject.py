@@ -33,7 +33,7 @@ def test_autoreject():
 
     event_id = None
     tmin, tmax = -0.2, 0.5
-    events = mne.find_events(raw)[:20]
+    events = mne.find_events(raw)
 
     ##########################################################################
     # picking epochs
@@ -44,11 +44,22 @@ def test_autoreject():
     # raise error if preload is false
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=10,
-                        reject=None, preload=False)[:10]
+                        reject=None, preload=False)
 
     ar = LocalAutoReject()
     assert_raises(ValueError, ar.fit, epochs)
     epochs.load_data()
+
+    # Test get_rejection_thresholds. It needs more epochs for this
+    # test to pass
+    reject1 = get_rejection_threshold(epochs, decim=1, random_state=42)
+    reject2 = get_rejection_threshold(epochs, decim=2, random_state=42)
+    assert_true(reject1, isinstance(reject1, dict))
+    for key, value in list(reject1.items()):
+        assert_true(abs(reject1[key] - reject2[key]) < 1e-6)
+
+    # Now back to fewer epochs
+    epochs = epochs[:10]
 
     ar.fit(epochs)
     assert_true(len(ar.picks) == len(picks) - 1)
@@ -82,10 +93,6 @@ def test_autoreject():
     ar_global = GlobalAutoReject(
         n_channels=n_channels, n_times=n_times, thresh=40e-6)
     ar_global.fit(X)
-
-    reject = get_rejection_threshold(epochs, decim=1)
-    reject = get_rejection_threshold(epochs, decim=2)
-    assert_true(reject, isinstance(reject, dict))
 
     param_name = 'thresh'
     param_range = np.linspace(40e-6, 200e-6, 10)

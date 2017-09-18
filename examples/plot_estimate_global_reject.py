@@ -39,7 +39,7 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 # Now we get the rejection dictionary
 
 from autoreject import get_rejection_threshold  # noqa
-reject = get_rejection_threshold(epochs)
+reject = get_rejection_threshold(epochs, decim=1)
 
 ###############################################################################
 # and print it
