@@ -158,8 +158,9 @@ def get_rejection_threshold(epochs, decim=1):
     rejection dictionary.
     """
     reject = dict()
-    epochs = epochs.copy()
-    epochs.decimate(decim=decim)
+    if decim > 1:
+        epochs = epochs.copy()
+        epochs.decimate(decim=decim)
     X = epochs.get_data()
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
         if ch_type not in epochs:
@@ -192,9 +193,7 @@ def get_rejection_threshold(epochs, decim=1):
 
         print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
-        est = GlobalAutoReject()
-        est.n_channels = n_channels
-        est.n_times = n_times
+        est = GlobalAutoReject(n_channels=n_channels, n_times=n_times)
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
@@ -209,7 +208,7 @@ def get_rejection_threshold(epochs, decim=1):
         idx = np.concatenate((
             np.linspace(0, n_epochs, 5, endpoint=False, dtype=int),
             [n_epochs - 1]))  # ensure last point is in init
-        idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 40
+        idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 5
         initial_x = all_threshes[idx]
         best_thresh, _ = bayes_opt(func, initial_x,
                                    all_threshes,
