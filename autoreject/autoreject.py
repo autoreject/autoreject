@@ -163,7 +163,6 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
     if decim > 1:
         epochs = epochs.copy()
         epochs.decimate(decim=decim)
-    X = epochs.get_data()
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
         if ch_type not in epochs:
             continue

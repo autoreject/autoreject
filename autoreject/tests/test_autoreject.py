@@ -83,7 +83,8 @@ def test_autoreject():
         n_channels=n_channels, n_times=n_times, thresh=40e-6)
     ar_global.fit(X)
 
-    reject = get_rejection_threshold(epochs)
+    reject = get_rejection_threshold(epochs, decim=1)
+    reject = get_rejection_threshold(epochs, decim=2)
     assert_true(reject, isinstance(reject, dict))
 
     param_name = 'thresh'
