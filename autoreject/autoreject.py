@@ -136,7 +136,7 @@ class GlobalAutoReject(BaseAutoReject):
         return self
 
 
-def get_rejection_threshold(epochs, decim=1):
+def get_rejection_threshold(epochs, decim=1, random_state=None):
     """Compute global rejection thresholds.
 
     Parameters
@@ -145,6 +145,8 @@ def get_rejection_threshold(epochs, decim=1):
         The epochs from which to estimate the epochs dictionary
     decim : int
         The decimation factor.
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use.
 
     Returns
     -------
@@ -194,13 +196,14 @@ def get_rejection_threshold(epochs, decim=1):
         print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
         est = GlobalAutoReject(n_channels=n_channels, n_times=n_times)
+        cv = KFold(n_epochs, n_folds=5, random_state=random_state)
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
             thresh = all_threshes[idx]
             if thresh not in cache:
                 est.set_params(thresh=thresh)
-                obj = -np.mean(cross_val_score(est, X, cv=5))
+                obj = -np.mean(cross_val_score(est, X, cv=cv))
                 cache.update({thresh: obj})
             return cache[thresh]
 
@@ -214,7 +217,7 @@ def get_rejection_threshold(epochs, decim=1):
                                    all_threshes,
                                    expected_improvement,
                                    max_iter=10, debug=False,
-                                   random_state=42)
+                                   random_state=random_state)
         reject[ch_type] = best_thresh
 
     return reject
