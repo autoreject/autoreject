@@ -28,8 +28,33 @@ raw.crop(0, 60)
 raw.info['projs'] = list()
 
 
+def test_global_autoreject():
+    """Test global autoreject."""
+
+    event_id = None
+    tmin, tmax = -0.2, 0.5
+    events = mne.find_events(raw)
+
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
+                           eog=True, exclude=[])
+    # raise error if preload is false
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0),
+                        reject=None, preload=False)
+
+    # Test get_rejection_thresholds.
+    reject1 = get_rejection_threshold(epochs, decim=1, random_state=42)
+    reject2 = get_rejection_threshold(epochs, decim=1, random_state=42)
+    reject3 = get_rejection_threshold(epochs, decim=2, random_state=42)
+    tols = dict(eeg=5e-6, eog=5e-6, grad=10e-12, mag=5e-15)
+    assert_true(reject1, isinstance(reject1, dict))
+    for key, value in list(reject1.items()):
+        assert_equal(reject1[key], reject2[key])
+        assert_true(abs(reject1[key] - reject3[key]) < tols[key])
+
+
 def test_autoreject():
-    """Test basic essential autoreject functionality."""
+    """Test basic LocalAutoReject functionality."""
 
     event_id = None
     tmin, tmax = -0.2, 0.5
@@ -40,26 +65,13 @@ def test_autoreject():
     include = [u'EEG %03d' % i for i in range(1, 45, 3)]
     picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
                            eog=True, include=include, exclude=[])
-
-    # raise error if preload is false
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0), decim=10,
-                        reject=None, preload=False)
+                        reject=None, preload=False)[:10]
 
     ar = LocalAutoReject()
     assert_raises(ValueError, ar.fit, epochs)
     epochs.load_data()
-
-    # Test get_rejection_thresholds. It needs more epochs for this
-    # test to pass
-    reject1 = get_rejection_threshold(epochs, decim=1, random_state=42)
-    reject2 = get_rejection_threshold(epochs, decim=2, random_state=42)
-    assert_true(reject1, isinstance(reject1, dict))
-    for key, value in list(reject1.items()):
-        assert_true(abs(reject1[key] - reject2[key]) < 1e-6)
-
-    # Now back to fewer epochs
-    epochs = epochs[:10]
 
     ar.fit(epochs)
     assert_true(len(ar.picks) == len(picks) - 1)
