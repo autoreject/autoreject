@@ -9,6 +9,7 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 import mne
+from mne import pick_types
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -173,24 +174,31 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
             continue
 
         if ch_type == 'mag' or ch_type == 'ecg':
-            this_epoch = epochs.copy().pick_types(meg='mag', eeg=False)
+            data_picks = pick_types(epochs.info, meg='mag', eeg=False)
         elif ch_type == 'eeg':
-            this_epoch = epochs.copy().pick_types(meg=False, eeg=True)
+            data_picks = pick_types(epochs.info, meg=False, eeg=True)
         elif ch_type == 'eog':
             # Cannot mix channel types in cv score
             if 'eeg' in epochs:
-                this_epoch = epochs.copy().pick_types(meg=False, eeg=True)
+                data_picks = pick_types(epochs.info, meg=False, eeg=True)
             elif 'grad' in epochs:
-                this_epoch = epochs.copy().pick_types(meg='grad', eeg=False)
+                data_picks = pick_types(epochs.info, meg='grad', eeg=False)
             elif 'mag' in epochs:
-                this_epoch = epochs.copy().pick_types(meg='mag', eeg=False)
+                data_picks = pick_types(epochs.info, meg='mag', eeg=False)
         elif ch_type == 'grad':
-            this_epoch = epochs.copy().pick_types(meg='grad', eeg=False)
+            data_picks = pick_types(epochs.info, meg='grad', eeg=False)
 
-        X = this_epoch.get_data()
-        deltas = np.array([np.ptp(d, axis=1) for d in X])
-        all_threshes = np.sort(deltas.max(axis=1))
+        X = epochs.get_data()[:, data_picks, :]
         n_epochs, n_channels, n_times = X.shape
+        if ch_type == 'ecg':
+            thresh_picks = pick_types(epochs.info, meg=False, ecg=True)
+        elif ch_type == 'eog':
+            thresh_picks = pick_types(epochs.info, meg=False, eog=True)
+        else:
+            thresh_picks = data_picks
+        X_thresh = epochs.get_data()[:, thresh_picks, :]
+        deltas = np.array([np.ptp(d, axis=1) for d in X_thresh])
+        all_threshes = np.sort(deltas.max(axis=1))
 
         print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
