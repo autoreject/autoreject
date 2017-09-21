@@ -167,37 +167,21 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
     for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
         if ch_type not in epochs:
             continue
-        if ch_type == 'ecg' and 'mag' not in epochs:
-            continue
-        if ch_type == 'eog' and not \
-                ('mag' in epochs or 'grad' in epochs or 'eeg' in epochs):
-            continue
 
-        if ch_type == 'mag' or ch_type == 'ecg':
-            data_picks = pick_types(epochs.info, meg='mag', eeg=False)
+        if ch_type == 'mag':
+            picks = pick_types(epochs.info, meg='mag', eeg=False)
         elif ch_type == 'eeg':
-            data_picks = pick_types(epochs.info, meg=False, eeg=True)
+            picks = pick_types(epochs.info, meg=False, eeg=True)
         elif ch_type == 'eog':
-            # Cannot mix channel types in cv score
-            if 'eeg' in epochs:
-                data_picks = pick_types(epochs.info, meg=False, eeg=True)
-            elif 'grad' in epochs:
-                data_picks = pick_types(epochs.info, meg='grad', eeg=False)
-            elif 'mag' in epochs:
-                data_picks = pick_types(epochs.info, meg='mag', eeg=False)
+            picks = pick_types(epochs.info, meg=False, eog=True)
         elif ch_type == 'grad':
-            data_picks = pick_types(epochs.info, meg='grad', eeg=False)
+            picks = pick_types(epochs.info, meg='grad', eeg=False)
+        elif ch_type == 'ecg':
+            picks = pick_types(epochs.info, meg=False, ecg=True)
 
-        X = epochs.get_data()[:, data_picks, :]
+        X = epochs.get_data()[:, picks, :]
         n_epochs, n_channels, n_times = X.shape
-        if ch_type == 'ecg':
-            thresh_picks = pick_types(epochs.info, meg=False, ecg=True)
-        elif ch_type == 'eog':
-            thresh_picks = pick_types(epochs.info, meg=False, eog=True)
-        else:
-            thresh_picks = data_picks
-        X_thresh = epochs.get_data()[:, thresh_picks, :]
-        deltas = np.array([np.ptp(d, axis=1) for d in X_thresh])
+        deltas = np.array([np.ptp(d, axis=1) for d in X])
         all_threshes = np.sort(deltas.max(axis=1))
 
         print('Estimating rejection dictionary for %s' % ch_type)
