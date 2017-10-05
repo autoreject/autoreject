@@ -164,7 +164,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
     if decim > 1:
         epochs = epochs.copy()
         epochs.decimate(decim=decim)
-    for ch_type in ['mag', 'grad', 'eeg', 'eog', 'ecg']:
+    for ch_type in ['mag', 'grad', 'eeg', 'eog']:
         if ch_type not in epochs:
             continue
 
@@ -176,8 +176,6 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
             picks = pick_types(epochs.info, meg=False, eog=True)
         elif ch_type == 'grad':
             picks = pick_types(epochs.info, meg='grad', eeg=False)
-        elif ch_type == 'ecg':
-            picks = pick_types(epochs.info, meg=False, ecg=True)
 
         X = epochs.get_data()[:, picks, :]
         n_epochs, n_channels, n_times = X.shape
