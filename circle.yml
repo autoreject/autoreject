@@ -6,7 +6,10 @@ dependencies:
   override:
     - pip install --upgrade pip
     - pip install sphinx matplotlib coverage Pillow
-    - pip install sphinx-gallery sphinx_bootstrap_theme
+    - git clone https://github.com/sphinx-gallery/sphinx-gallery.git
+    - cd sphinx-gallery && git fetch --tags && git fetch --tags && git checkout v0.1.11
+    - cd sphinx-gallery && pip install -r requirements.txt && git checkout && python setup.py develop
+    - pip install sphinx_bootstrap_theme
     - pip install cython scipy
     - pip install --upgrade mne
     - pip install scikit-learn==0.18
