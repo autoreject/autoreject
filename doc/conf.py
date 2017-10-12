@@ -314,6 +314,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/', None),
 sphinx_gallery_conf = {
     'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
+    'backreferences_dir': 'generated',
     'reference_url': {
         'mne': 'http://mne-tools.github.io/stable/',
         'autoreject': 'http://autoreject.github.io/',
