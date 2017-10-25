@@ -321,8 +321,8 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
 
 def compute_thresholds(epochs, method='bayesian_optimization',
-                       random_state=None, picks=None, verbose='progressbar',
-                       n_jobs=1):
+                       random_state=None, picks=None, augment=True,
+                       verbose='progressbar', n_jobs=1):
     """Compute thresholds for each channel.
 
     Parameters
@@ -336,6 +336,9 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     picks : ndarray, shape(n_channels,) | None
         The channels to be considered for autoreject. If None, defaults
         to data channels {'meg', 'eeg'}.
+    augment : boolean
+        Whether to augment the data or not. By default it is True, but
+        set it to False, if the channel locations are not available.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -362,17 +365,22 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         for ch_type, this_picks in sub_picks:
             threshes.update(compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
-                picks=this_picks, verbose=verbose, n_jobs=n_jobs))
+                picks=this_picks, augment=augment, verbose=verbose,
+                n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
-        epochs_interp = clean_by_interp(epochs, picks=picks, verbose=verbose)
-        data = np.concatenate((epochs.get_data(), epochs_interp.get_data()),
-                              axis=0)  # non-data channels will be duplicate
-        y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
+        data, y = epochs.get_data(), np.ones((n_epochs, ))
+        if augment:
+            epochs_interp = clean_by_interp(epochs, picks=picks,
+                                            verbose=verbose)
+            # non-data channels will be duplicate
+            data = np.concatenate((epochs.get_data(),
+                                   epochs_interp.get_data()), axis=0)
+            y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
         cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
                                     random_state=random_state)
 
-        ch_names = epochs_interp.ch_names
+        ch_names = epochs.ch_names
 
         my_thresh = delayed(_compute_thresh)
         verbose = 51 if verbose is not False else 0  # send output to stdout
