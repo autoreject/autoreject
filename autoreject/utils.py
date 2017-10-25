@@ -208,8 +208,8 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels."""
     import mne
     from mne.channels.interpolation import _interpolate_bads_eeg
-
-    mne.set_log_level('WARNING')  # to prevent cobyla printf error
+    # to prevent cobyla printf error
+    verbose = mne.set_log_level('WARNING', return_old_level=True)
 
     # this needs picks, assume our instance is complete and intact
     _interpolate_bads_eeg(inst)
@@ -217,6 +217,8 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
 
     if reset_bads is True:
         inst.info['bads'] = []
+
+    mne.set_log_level(verbose)
 
     return inst
 
