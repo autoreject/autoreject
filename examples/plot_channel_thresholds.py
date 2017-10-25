@@ -51,7 +51,8 @@ import numpy as np  # noqa
 from autoreject import compute_thresholds  # noqa
 
 threshes = compute_thresholds(epochs, picks=picks, method='random_search',
-                              random_state=42, verbose='progressbar')
+                              random_state=42, augment=False,
+                              verbose='progressbar')
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify

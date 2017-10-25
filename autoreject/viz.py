@@ -1231,7 +1231,7 @@ def _plot_histogram(params):
     params['histogram'].subplots_adjust(hspace=0.6)
     try:
         params['histogram'].show(warn=False)
-    except:
+    except Exception:
         pass
     if params['fig_proj'] is not None:
         params['fig_proj'].canvas.draw()
