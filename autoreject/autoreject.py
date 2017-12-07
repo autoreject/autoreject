@@ -530,7 +530,7 @@ class LocalAutoReject(BaseAutoReject):
         n_consensus = self.consensus_perc[ch_type] * n_channels
         if np.max(bad_sensor_counts) >= n_consensus:
             n_epochs_drop = np.sum(bad_sensor_counts >=
-                                   n_consensus) + 1
+                                   n_consensus)
             bad_epochs_idx = sorted_epoch_idx[:n_epochs_drop]
         else:
             n_epochs_drop = 0
