@@ -149,7 +149,7 @@ im = plt.imshow(ar.bad_segments[:, picks], cmap='Reds',
                 interpolation='nearest')
 
 ch_names = [epochs.ch_names[pp] for pp in picks][7::10]
-ax = im.get_axes()
+ax = plt.gca()
 ax.grid(False)
 ax.set_xlabel('Sensors')
 ax.set_ylabel('Trials')
