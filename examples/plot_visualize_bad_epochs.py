@@ -113,6 +113,7 @@ ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 ar.fit(this_epoch)
 epochs_ar = ar.transform(this_epoch)
 
+annots = ar.annotate_epochs(this_epoch)
 ###############################################################################
 # We can visualize the cross validation curve over two variables
 
@@ -125,7 +126,7 @@ set_matplotlib_defaults(plt, style='seaborn-white')
 loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
 plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
-plt.xticks(range(len(ar.consensus_percs)), ar.consensus_percs)
+plt.xticks(range(len(ar.consensus)), ar.consensus)
 plt.yticks(range(len(ar.n_interpolates)), ar.n_interpolates)
 
 # Draw rectangle at location of best parameters
@@ -147,8 +148,8 @@ plt.show()
 # Bad trials are also in red.
 
 from autoreject import plot_epochs  # noqa
-plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
-            fix_log=ar.fix_log, scalings=dict(eeg=40e-6),
+plot_epochs(this_epoch, bad_epochs_idx=annots['bad_epochs_idx'],
+            fix_log=annots['fix_log'], scalings=dict(eeg=40e-6),
             title='')
 
 ###############################################################################
