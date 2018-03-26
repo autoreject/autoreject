@@ -222,7 +222,7 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
     epochs = params['epochs']
 
     if picks is None:
-        picks = _handle_picks(epochs)
+        picks = _handle_picks_viz(epochs)
     if len(picks) < 1:
         raise RuntimeError('No appropriate channels found. Please'
                            ' check your picks')
@@ -658,7 +658,7 @@ def _plot_update_epochs_proj(params, bools=None):
     params['plot_fun']()
 
 
-def _handle_picks(epochs):
+def _handle_picks_viz(epochs):
     """Aux function to handle picks."""
     if any('ICA' in k for k in epochs.ch_names):
         picks = pick_types(epochs.info, misc=True, ref_meg=False,
