@@ -595,7 +595,7 @@ class LocalAutoReject(BaseAutoReject):
             annot = dict(fix_log=0.0, bad_epochs_idx=list(),
                          interp_channels=dict(), picks_by_type=list())
             for ch_type, this_picks in sub_picks:
-                out = self.annotate_epochs(epochs, picks=sub_picks)
+                out = self.annotate_epochs(epochs, picks=this_picks)
                 annot['fix_log'] += out['fix_log']
                 annot['bad_epochs_idx'] = np.union1d(
                     annot['bad_epochs_idx'], out['bad_epochs_idx'])
@@ -652,7 +652,7 @@ class LocalAutoReject(BaseAutoReject):
         self.mean_ = _slicemean(epochs_copy.get_data(),
                                 annot['good_epochs_idx'],
                                 axis=0)
-        del epochs_copy  # I can't wait for garbage collection.
+        del epochs_copy  # I can't wait for garbage collection.ba
         return self
 
     def transform(self, epochs):
@@ -830,7 +830,6 @@ class LocalAutoRejectCV(object):
                 sub_ar.picks = this_picks
                 sub_ar.fit(epochs)
                 threshes.update(sub_ar.threshes_)
-
                 consensus[ch_type] = sub_ar.consensus_[ch_type]
                 n_interpolate[ch_type] = sub_ar.n_interpolate_[ch_type]
 
@@ -839,13 +838,12 @@ class LocalAutoRejectCV(object):
             # thresholds
             self.local_reject_ = sub_ar.local_reject_
             self.local_reject_.threshes_ = threshes
-
             # kappa
             self.consensus_ = consensus
             self.local_reject_.consensus_ = consensus
             # rho
             self.n_interpolate_ = n_interpolate
-            self.local_reject_.n_interpolate = n_interpolate
+            self.local_reject_.n_interpolate_ = n_interpolate
             return self
 
         # Continue here if only one channel type is present.

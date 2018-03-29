@@ -30,7 +30,6 @@ raw.info['projs'] = list()
 
 def test_global_autoreject():
     """Test global autoreject."""
-
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -89,7 +88,7 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     epochs.pick_channels(pick_ch_names)
-    epochs_fit = epochs[:12]  # make sure to use different size of epochs
+    epochs_fit = epochs[:10]  # make sure to use different size of epochs
     epochs_new = epochs[12:]
 
     X = epochs_fit.get_data()
@@ -156,7 +155,7 @@ def test_autoreject():
     assert_array_equal(
         np.sort(np.r_[annot['bad_epochs_idx'],
                       annot['good_epochs_idx']]),
-        np.arange(len(epochs_fit)))
+        np.arange(len(epochs)))
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
