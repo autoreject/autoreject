@@ -889,7 +889,7 @@ class LocalAutoRejectCV(object):
         self.n_interpolate_ = dict()  # rho
         self.consensus_ = dict()  # kappa
         self.threshes_ = dict()  # update
-        self.loss = dict()
+        self.loss_ = dict()
         self.local_reject_ = dict()
 
         for ch_type, this_picks in sub_picks:
@@ -901,7 +901,7 @@ class LocalAutoRejectCV(object):
             self.consensus_[ch_type] = this_local_reject.consensus_[ch_type]
             self.n_interpolate_[ch_type] = \
                 this_local_reject.n_interpolate_[ch_type]
-            self.loss[ch_type] = this_loss
+            self.loss_[ch_type] = this_loss
 
             best_idx, best_jdx = \
                 np.unravel_index(this_loss.mean(axis=-1).argmin(),
@@ -963,7 +963,8 @@ class LocalAutoRejectCV(object):
             annot['fix_log'][:, this_picks] = this_annot['fix_log'][:, this_picks]
             annot['bad_epochs_idx'] = np.union1d(
                 annot['bad_epochs_idx'], this_annot['bad_epochs_idx'])
-            annot['interp_channels'][ch_type] = this_annot['interp_channels']
+            annot['interp_channels'][ch_type] = \
+                this_annot['interp_channels'][ch_type]
             # XXX : use bool array for good_epochs_idx
             annot['good_epochs_idx'] = np.setdiff1d(
                 np.arange(len(epochs)), annot['bad_epochs_idx'])

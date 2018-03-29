@@ -143,13 +143,6 @@ def test_autoreject():
             ar.n_interpolate_[ch_type] in ar.n_interpolates)
         assert_true(
             ar.consensus_[ch_type] in ar.consensus)
-        # test that local autoreject is synced with AR-CV instance
-        assert_equal(
-            ar.n_interpolate_[ch_type],
-            ar.local_reject_[ch_type].n_interpolate_[ch_type])
-        assert_equal(
-            ar.consensus_[ch_type],
-            ar.local_reject_[ch_type].consensus_[ch_type])
 
     # test complementarity of goods and bads
     assert_array_equal(
