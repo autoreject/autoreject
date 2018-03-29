@@ -88,7 +88,7 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     epochs.pick_channels(pick_ch_names)
-    epochs_fit = epochs[:10]  # make sure to use different size of epochs
+    epochs_fit = epochs[:12]  # make sure to use different size of epochs
     epochs_new = epochs[12:]
 
     X = epochs_fit.get_data()
@@ -136,7 +136,7 @@ def test_autoreject():
     assert_raises(ValueError, ar.transform, epochs)
 
     ar.fit(epochs_fit)
-    annot = ar.annotate_epochs(epochs)
+    annot = ar.annotate_epochs(epochs_fit)
     for ch_type in ch_types:
         # test that kappa & rho are selected
         assert_true(
@@ -155,7 +155,7 @@ def test_autoreject():
     assert_array_equal(
         np.sort(np.r_[annot['bad_epochs_idx'],
                       annot['good_epochs_idx']]),
-        np.arange(len(epochs)))
+        np.arange(len(epochs_fit)))
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
@@ -166,14 +166,14 @@ def test_autoreject():
 
     epochs_new_clean = ar.transform(epochs_new)  # apply to new data
 
-    annot_new = ar.annotate_epochs(epochs_fit)
+    annot_new = ar.annotate_epochs(epochs_new)
     assert_array_equal(
         np.sort(np.r_[annot_new['bad_epochs_idx'],
                       annot_new['good_epochs_idx']]),
         np.arange(len(epochs_new)))
 
     assert_true(
-        len(annot_new['bad_epochs_idx']) != len(annot['bad_epochs_idx']))
+        len(annot_new['good_epochs_idx']) != len(annot['good_epochs_idx']))
 
     # test fix_log and picks /channel types tracking
     ch_types_orig, picks_orig = zip(*annot_new['picks_by_type'])

@@ -460,7 +460,7 @@ class LocalAutoReject(BaseAutoReject):
             The epochs object for which bad epochs must be found.
         """
         n_epochs = len(epochs)
-        picks = _handle_picks(info=epochs.info, picks=self.picks_)
+        picks = _handle_picks(info=epochs.info, picks=picks)
 
         drop_log = np.zeros((n_epochs, len(epochs.ch_names)))
         bad_sensor_counts = np.zeros((len(epochs), ))
@@ -814,7 +814,7 @@ class LocalAutoRejectCV(object):
             self.n_interpolates = np.array([1, 4, max_interp])
 
         # Start recursion here if multiple channel types are present.
-        sub_picks = _check_sub_picks(info=epochs.info, picks=self.picks)
+        sub_picks = _check_sub_picks(info=epochs.info, picks=self.picks_)
         if sub_picks is not False:
             # store accumulation stuff here
             threshes = dict()  # update
