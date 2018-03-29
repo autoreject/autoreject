@@ -38,6 +38,7 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
         mne.io.meas_info.channel_type(picked_info, idx)
         for idx in range(len(picks))}
 
+    # XXX : ch_constraint -> allow_many_types=True | False
     if ch_constraint == 'data_channels':
         if not all(ch in ('mag', 'grad', 'eeg') for ch in ch_types_picked):
             raise ValueError('AutoReject only supports mag, grad, and eeg '
@@ -45,14 +46,14 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
     elif ch_constraint == 'single_channel_type':
         if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg')) > 1:
             raise ValueError('AutoReject only supports mag, grad, and eeg '
-                             'at this point.')
+                             'at this point.')  # XXX: to check
     else:
         raise ValueError('bad value for ch_constraint.')
 
     if n_bads > 0:
         if verbose is not False:
             warnings.warn(
-                '%i channels are marked as bad. These will be ignored.'
+                '%i channels are marked as bad. These will be ignored. '
                 'If you want them to be considered by autoreject please '
                 'remove them from epochs.info["bads"].' % n_bads)
 
@@ -69,7 +70,6 @@ def _handle_picks(info, picks):
 
 def _check_sub_picks(info, picks):
     """Get the picks grouped by channel type."""
-    sub_picks = False
     # do magic here
     sub_picks_ = defaultdict(list)
     keys = list()
@@ -78,8 +78,7 @@ def _check_sub_picks(info, picks):
         sub_picks_[key].append(pp)
         if key not in keys:
             keys.append(key)
-    if len(sub_picks_) > 1:
-        sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
+    sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
     return sub_picks
 
 
