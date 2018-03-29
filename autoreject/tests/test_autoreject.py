@@ -1,4 +1,4 @@
-    # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+# Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
@@ -121,7 +121,7 @@ def test_autoreject():
         include=[], exclude=[])
     ch_types = ['mag', 'eeg']
 
-    ar = LocalAutoReject(picks=picks)
+    ar = LocalAutoReject(picks=picks)  # XXX : why do we need this??
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
 
@@ -146,10 +146,10 @@ def test_autoreject():
         # test that local autoreject is synced with AR-CV instance
         assert_equal(
             ar.n_interpolate_[ch_type],
-            ar.local_reject_.n_interpolate_[ch_type])
+            ar.local_reject_[ch_type].n_interpolate_[ch_type])
         assert_equal(
             ar.consensus_[ch_type],
-            ar.local_reject_.consensus_[ch_type])
+            ar.local_reject_[ch_type].consensus_[ch_type])
 
     # test complementarity of goods and bads
     assert_array_equal(
