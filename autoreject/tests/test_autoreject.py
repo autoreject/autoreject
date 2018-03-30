@@ -136,7 +136,7 @@ def test_autoreject():
     assert_raises(ValueError, ar.transform, epochs)
 
     ar.fit(epochs_fit)
-    annot = ar.annotate_epochs(epochs_fit)
+    annot = ar.get_reject_log(epochs_fit)
     for ch_type in ch_types:
         # test that kappa & rho are selected
         assert_true(
@@ -152,14 +152,14 @@ def test_autoreject():
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
-    annot2 = ar.annotate_epochs(epochs_fit)
+    annot2 = ar.get_reject_log(epochs_fit)
     assert_array_equal(annot['fix_log'], annot2['fix_log'])
     assert_array_equal(annot['bad_epochs_idx'], annot2['bad_epochs_idx'])
     assert_array_equal(annot['good_epochs_idx'], annot2['good_epochs_idx'])
 
     epochs_new_clean = ar.transform(epochs_new)  # apply to new data
 
-    annot_new = ar.annotate_epochs(epochs_new)
+    annot_new = ar.get_reject_log(epochs_new)
     assert_array_equal(
         np.sort(np.r_[annot_new['bad_epochs_idx'],
                       annot_new['good_epochs_idx']]),
@@ -175,16 +175,19 @@ def test_autoreject():
     assert_array_equal(picks, picks_orig)
 
     # test correct entries in fix log
-    assert_true(annot_new['fix_log'][:, picks_orig].sum() > 0)
-    assert_true(annot_new['fix_log'][:, non_picks].sum() > 0)
+    assert_true(
+        np.isnan(annot_new['fix_log'][:, non_picks]).sum() > 0)
+    assert_true(
+        np.isnan(annot_new['fix_log'][:, picks]).sum() == 0)
     assert_equal(annot_new['fix_log'].shape,
-                 (len(epochs), len(picks_orig) + len(non_picks)))
+                 (len(epochs_new), len(epochs_new.ch_names)))
 
     # test correct interpolations by type
     for ch_type, this_picks in annot_new['picks_by_type']:
         interp_counts = np.sum(
             annot_new['fix_log'][:, this_picks] == 2, axis=1)
-        interp_channels = [len(cc) for cc in annot_new['interp_bads'][ch_type]]
+        interp_channels = [len(cc) for cc in
+                           annot_new['interp_channels'][ch_type]]
         assert_array_equal(interp_counts, interp_channels)
 
     is_same = epochs_new_clean.get_data() == epochs_new.get_data()
