@@ -553,7 +553,7 @@ class LocalAutoReject(BaseAutoReject):
 
         return bad_epochs_idx, sorted_epoch_idx, n_epochs_drop
 
-    def _annotate_epochs(self, threshes, epochs, picks):
+    def _get_reject_log(self, threshes, epochs, picks):
         """Get essential annotations for epochs given thresholds."""
         ch_type = _get_ch_type_from_picks(
             picks=picks, info=epochs.info)[0]
@@ -578,7 +578,7 @@ class LocalAutoReject(BaseAutoReject):
         return (drop_log, bad_sensor_counts, interp_channels, fix_log,
                 bad_epochs_idx, good_epochs_idx)
 
-    def annotate_epochs(self, epochs, picks=None):
+    def get_reject_log(self, epochs, picks=None):
         """Annotate epochs.
 
         .. note::
@@ -618,8 +618,9 @@ class LocalAutoReject(BaseAutoReject):
         assert len(sub_picks) == 1
         ch_type, this_picks = sub_picks[0]
         (_, _, interp_channels, fix_log, bad_epochs_idx,
-            good_epochs_idx) = self._annotate_epochs(
-                self.threshes_, epochs, picks=picks)
+            good_epochs_idx) = self._get_reject_log(
+                self.threshes_,  # XXX I think this is wrong for mchan fit
+                epochs, picks=picks)
         annot = dict(
             fix_log=fix_log,
             interp_channels={ch_type: interp_channels},
@@ -654,7 +655,7 @@ class LocalAutoReject(BaseAutoReject):
         self.threshes_ = self.thresh_func(
             epochs.copy(), picks=self.picks_, verbose=self.verbose)
 
-        annot = self.annotate_epochs(epochs=epochs, picks=self.picks_)
+        annot = self.get_reject_log(epochs=epochs, picks=self.picks_)
 
         epochs_copy = epochs.copy()
         self._interpolate_bad_epochs(
@@ -698,7 +699,7 @@ class LocalAutoReject(BaseAutoReject):
                     ch_constraint='data_channels')
 
         # XXX : reject_log = self.get_reject_log(epochs, picks=None)
-        annot = self.annotate_epochs(epochs, picks=None)
+        annot = self.get_reject_log(epochs, picks=None)
         if len(annot['good_epochs_idx']) == 0:
             raise ValueError('All epochs are bad. Sorry.')
 
@@ -929,7 +930,7 @@ class LocalAutoRejectCV(object):
                          self.n_interpolate_[ch_type]))
         return self
 
-    def annotate_epochs(self, epochs, picks=None):
+    def get_reject_log(self, epochs, picks=None):
         """Annotate epochs.
 
         .. note::
@@ -968,16 +969,17 @@ class LocalAutoRejectCV(object):
         fix_log = np.ones((len(epochs), len(epochs.ch_names)))
         fix_log.fill(np.nan)
         annot = dict(fix_log=fix_log, bad_epochs_idx=list(),
-                     interp_channels=dict(), picks_by_type=sub_picks)
+                     interp_channels=dict(),
+                     picks_by_type=sub_picks)
 
         for ch_type, this_picks in sub_picks:
             this_annot = \
-                self.local_reject_[ch_type].annotate_epochs(epochs, this_picks)
+                self.local_reject_[ch_type].get_reject_log(epochs, this_picks)
             annot['fix_log'][:, this_picks] = this_annot['fix_log'][:, this_picks]
             annot['bad_epochs_idx'] = np.union1d(
                 annot['bad_epochs_idx'], this_annot['bad_epochs_idx'])
-            annot['interp_channels'][ch_type] = \
-                this_annot['interp_channels'][ch_type]
+            annot['interp_channels'].update(
+                this_annot['interp_channels'])  # XXX bug
             # XXX : use bool array for good_epochs_idx
             annot['good_epochs_idx'] = np.setdiff1d(
                 np.arange(len(epochs)), annot['bad_epochs_idx'])
@@ -1008,12 +1010,12 @@ class LocalAutoRejectCV(object):
 
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
 
-        annot = self.annotate_epochs(epochs)
+        annot = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
-        for ch_type, local_reject in self.local_reject_.items():
-            _apply_log(local_reject, epochs_clean, annot,
-                       local_reject.threshes_, local_reject.picks_,
-                       self.verbose)
+        local_reject = list(self.local_reject_.values())[0] # XXX hack!?
+        _apply_log(local_reject, epochs_clean, annot,
+                   self.threshes_, self.picks_,
+                   self.verbose)
 
         if return_log:
             return epochs_clean, annot
@@ -1040,3 +1042,16 @@ class LocalAutoRejectCV(object):
             The rejection log. Returned only of return_log is True.
         """
         return self.fit(epochs).transform(epochs, return_log=return_log)
+
+
+
+class RejectLog(dict):
+
+    def __init__(self):
+        pass
+
+    def plot_loss(self):
+        pass
+
+    def plot_epochs(self, epochs):
+        pass
