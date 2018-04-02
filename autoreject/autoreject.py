@@ -393,7 +393,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     return threshes
 
 
-def _apply_log(local_reject, epochs, annot, threshes_, picks_, verbose):
+def _log_apply_interp(local_reject, epochs, annot, threshes_, picks_,
+                      verbose):
     if not all(epochs.ch_names[pp] in threshes_
                for pp in picks_):
         raise ValueError('You are passing channels which were not present '
@@ -404,6 +405,15 @@ def _apply_log(local_reject, epochs, annot, threshes_, picks_, verbose):
         local_reject._interpolate_bad_epochs(
             epochs, interp_channels=annot['interp_channels'][ch_type],
             picks=this_picks, verbose=verbose)
+
+
+def _log_apply_drop(local_reject, epochs, annot, threshes_, picks_,
+                    verbose):
+    if not all(epochs.ch_names[pp] in threshes_
+               for pp in picks_):
+        raise ValueError('You are passing channels which were not present '
+                         'at fit-time. Please fit it again, this time '
+                         'correctly.')
 
     if np.any(annot['bad_epochs_idx']):
         epochs.drop(annot['bad_epochs_idx'], reason='AUTOREJECT')
@@ -554,13 +564,13 @@ class LocalAutoReject(BaseAutoReject):
 
         return bad_epochs_idx, sorted_epoch_idx, n_epochs_drop
 
-    def _get_reject_log(self, threshes, epochs, picks):
+    def _get_reject_log(self, epochs, picks):
         """Get essential annotations for epochs given thresholds."""
         ch_type = _get_ch_type_from_picks(
             picks=picks, info=epochs.info)[0]
 
         drop_log, bad_sensor_counts = self._vote_bad_epochs(
-            epochs, threshes=threshes, picks=picks)
+            epochs, picks=picks)
         interp_channels, fix_log = self._get_epochs_interpolation(
             epochs, drop_log=drop_log, ch_type=ch_type, picks=picks,
             n_interpolate=self.n_interpolate_[ch_type])
@@ -615,12 +625,10 @@ class LocalAutoReject(BaseAutoReject):
         """
         picks = (self.picks_ if picks is None else picks)
         sub_picks = _check_sub_picks(picks=picks, info=epochs.info)
-        threshes_ = self.threshes_ if threshes is None else threshes
         assert len(sub_picks) == 1
         ch_type, this_picks = sub_picks[0]
         (_, _, interp_channels, fix_log, bad_epochs_idx,
             good_epochs_idx) = self._get_reject_log(
-                threshes_,  # XXX I think this is wrong for mchan fit
                 epochs, picks=picks)
         annot = dict(
             fix_log=fix_log,
@@ -705,8 +713,12 @@ class LocalAutoReject(BaseAutoReject):
             raise ValueError('All epochs are bad. Sorry.')
 
         epochs_clean = epochs.copy()
-        _apply_log(self, epochs_clean, annot, self.threshes_, self.picks_,
-                   self.verbose)
+        _log_apply_interp(
+            self, epochs_clean, annot, self.threshes_, self.picks_,
+            self.verbose)
+
+        _log_apply_drop(self, epochs_clean, annot, self.threshes_, self.picks_,
+                        self.verbose)
 
         if return_log:
             return epochs_clean, annot
@@ -717,6 +729,7 @@ class LocalAutoReject(BaseAutoReject):
             self, epochs, interp_channels, picks, verbose='progressbar'):
         """Actually do the interpolation."""
         pos = 4 if hasattr(self, '_leave') else 2
+        assert len(epochs) == len(interp_channels)
         for epoch_idx, interp_chs in _pbar(
                 list(enumerate(interp_channels)),
                 desc='Repairing epochs',
@@ -1002,10 +1015,13 @@ class LocalAutoRejectCV(object):
 
         annot = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
-        local_reject = list(self.local_reject_.values())[0] # XXX hack!?
-        _apply_log(local_reject, epochs_clean, annot,
-                   self.threshes_, self.picks_,
-                   self.verbose)
+        for lr in self.local_reject_.values():
+            _log_apply_interp(lr, epochs_clean, annot,
+                              self.threshes_, self.picks_,
+                              self.verbose)
+
+        _log_apply_drop(lr, epochs_clean, annot,
+                        self.threshes_, self.picks_, self.verbose)
 
         if return_log:
             return epochs_clean, annot
