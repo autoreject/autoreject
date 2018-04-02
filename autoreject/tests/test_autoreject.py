@@ -188,6 +188,7 @@ def test_autoreject():
             annot_new['fix_log'][:, this_picks] == 2, axis=1)
         interp_channels = [len(cc) for cc in
                            annot_new['interp_channels'][ch_type]]
+        # print(annot_new['interp_channels'][ch_type])
         assert_array_equal(interp_counts, interp_channels)
 
     is_same = epochs_new_clean.get_data() == epochs_new.get_data()

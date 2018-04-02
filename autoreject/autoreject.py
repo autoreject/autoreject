@@ -475,7 +475,7 @@ class LocalAutoReject(BaseAutoReject):
         self.picks = picks
         self.verbose = verbose
 
-    def _vote_bad_epochs(self, epochs, picks):
+    def _vote_bad_epochs(self, epochs, picks, threshes):
         """Each channel votes for an epoch as good or bad.
 
         Parameters
@@ -560,8 +560,7 @@ class LocalAutoReject(BaseAutoReject):
             picks=picks, info=epochs.info)[0]
 
         drop_log, bad_sensor_counts = self._vote_bad_epochs(
-            epochs, picks=picks)
-
+            epochs, threshes=threshes, picks=picks)
         interp_channels, fix_log = self._get_epochs_interpolation(
             epochs, drop_log=drop_log, ch_type=ch_type, picks=picks,
             n_interpolate=self.n_interpolate_[ch_type])
@@ -579,7 +578,7 @@ class LocalAutoReject(BaseAutoReject):
         return (drop_log, bad_sensor_counts, interp_channels, fix_log,
                 bad_epochs_idx, good_epochs_idx)
 
-    def get_reject_log(self, epochs, picks=None):
+    def get_reject_log(self, epochs, threshes=None, picks=None):
         """Annotate epochs.
 
         .. note::
@@ -616,11 +615,12 @@ class LocalAutoReject(BaseAutoReject):
         """
         picks = (self.picks_ if picks is None else picks)
         sub_picks = _check_sub_picks(picks=picks, info=epochs.info)
+        threshes_ = self.threshes_ if threshes is None else threshes
         assert len(sub_picks) == 1
         ch_type, this_picks = sub_picks[0]
         (_, _, interp_channels, fix_log, bad_epochs_idx,
             good_epochs_idx) = self._get_reject_log(
-                self.threshes_,  # XXX I think this is wrong for mchan fit
+                threshes_,  # XXX I think this is wrong for mchan fit
                 epochs, picks=picks)
         annot = dict(
             fix_log=fix_log,
@@ -743,7 +743,9 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolates, cv,
     ch_type = next(iter(local_reject.consensus_))
 
     drop_log, bad_sensor_counts = local_reject._vote_bad_epochs(
-        epochs, picks=picks_)
+        epochs,
+        threshes=local_reject.threshes_,
+        picks=picks_)
     desc = 'n_interp'
 
     for jdx, n_interp in enumerate(_pbar(n_interpolates, desc=desc,
@@ -960,9 +962,10 @@ class LocalAutoRejectCV(object):
                      picks_by_type=sub_picks)
 
         for ch_type, this_picks in sub_picks:
-            this_annot = \
-                self.local_reject_[ch_type].get_reject_log(epochs, this_picks)
-            annot['fix_log'][:, this_picks] = this_annot['fix_log'][:, this_picks]
+            this_annot = self.local_reject_[ch_type].get_reject_log(
+                epochs, threshes=self.threshes_, picks=this_picks)
+            annot['fix_log'][:, this_picks] = this_annot[
+                'fix_log'][:, this_picks]
             annot['bad_epochs_idx'] = np.union1d(
                 annot['bad_epochs_idx'], this_annot['bad_epochs_idx'])
             annot['interp_channels'].update(
