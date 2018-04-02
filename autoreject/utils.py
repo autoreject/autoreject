@@ -208,7 +208,9 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     import mne
     from mne.channels.interpolation import _interpolate_bads_eeg
     # to prevent cobyla printf error
-    verbose = mne.set_log_level('WARNING', return_old_level=True)
+    # XXX putting to critical for now unless better solution
+    # emerges
+    verbose = mne.set_log_level('CRITICAL', return_old_level=True)
 
     # this needs picks, assume our instance is complete and intact
     _interpolate_bads_eeg(inst)
