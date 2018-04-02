@@ -113,38 +113,34 @@ ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 ar.fit(this_epoch)
 epochs_ar = ar.transform(this_epoch)
 
-annots = ar.annotate_epochs(this_epoch)
-
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 ###############################################################################
 # We can visualize the cross validation curve over two variables
 
-reject_log.plot_loss(ch_type='eeg')
+import numpy as np  # noqa
+import matplotlib.pyplot as plt  # noqa
+import matplotlib.patches as patches  # noqa
+from autoreject import set_matplotlib_defaults  # noqa
 
-# import numpy as np  # noqa
-# import matplotlib.pyplot as plt  # noqa
-# import matplotlib.patches as patches  # noqa
-# from autoreject import set_matplotlib_defaults  # noqa
+set_matplotlib_defaults(plt, style='seaborn-white')
+loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
-# set_matplotlib_defaults(plt, style='seaborn-white')
-# loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
+plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
+plt.xticks(range(len(ar.consensus)), ar.consensus)
+plt.yticks(range(len(ar.n_interpolates)), ar.n_interpolates)
 
-# plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
-# plt.xticks(range(len(ar.consensus)), ar.consensus)
-# plt.yticks(range(len(ar.n_interpolates)), ar.n_interpolates)
-
-# # Draw rectangle at location of best parameters
-# ax = plt.gca()
-# idx, jdx = np.unravel_index(loss.argmin(), loss.shape)
-# rect = patches.Rectangle((idx - 0.5, jdx - 0.5), 1, 1, linewidth=2,
-#                          edgecolor='r', facecolor='none')
-# ax.add_patch(rect)
-# ax.xaxis.set_ticks_position('bottom')
-# plt.xlabel(r'Consensus percentage $\kappa$')
-# plt.ylabel(r'Max sensors interpolated $\rho$')
-# plt.title('Mean cross validation error (x 1e6)')
-# plt.colorbar()
-# plt.show()
+# Draw rectangle at location of best parameters
+ax = plt.gca()
+idx, jdx = np.unravel_index(loss.argmin(), loss.shape)
+rect = patches.Rectangle((idx - 0.5, jdx - 0.5), 1, 1, linewidth=2,
+                         edgecolor='r', facecolor='none')
+ax.add_patch(rect)
+ax.xaxis.set_ticks_position('bottom')
+plt.xlabel(r'Consensus percentage $\kappa$')
+plt.ylabel(r'Max sensors interpolated $\rho$')
+plt.title('Mean cross validation error (x 1e6)')
+plt.colorbar()
+plt.show()
 
 ###############################################################################
 # ... and visualize the bad epochs and sensors. Bad sensors which have been
@@ -153,10 +149,6 @@ reject_log.plot_loss(ch_type='eeg')
 
 scalings = dict(eeg=40e-6)
 
-# from autoreject import plot_epochs  # noqa
-# plot_epochs(this_epoch, bad_epochs_idx=annots['bad_epochs_idx'],
-#             fix_log=annots['fix_log'], scalings=dict(eeg=40e-6),
-#             title='')
 
 reject_log.plot_epochs(this_epoch, scalings=scalings)
 
