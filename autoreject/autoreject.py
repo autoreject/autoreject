@@ -496,6 +496,7 @@ class LocalAutoReject(BaseAutoReject):
         for epoch_idx in range(len(epochs)):
             n_bads = drop_log[epoch_idx, self.picks].sum()
             if n_bads == 0:
+                interp_channels.append([])
                 continue
             else:
                 if n_bads <= n_interpolate:
@@ -546,7 +547,7 @@ class LocalAutoReject(BaseAutoReject):
 
         interp_channels, fix_log = self._get_epochs_interpolation(
             epochs, drop_log=drop_log, ch_type=ch_type)
-
+        assert len(interp_channels) == len(drop_log) == len(epochs)
         (bad_epochs_idx, sorted_epoch_idx,
          n_epochs_drop) = self._get_bad_epochs(
              bad_sensor_counts, ch_type=ch_type)
