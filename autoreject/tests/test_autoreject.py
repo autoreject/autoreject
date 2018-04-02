@@ -187,7 +187,7 @@ def test_autoreject():
     assert_true(isinstance(ar.threshes_, dict))
     assert_true(len(ar.picks) == len(picks))
     assert_true(len(ar.threshes_.keys()) == len(ar.picks))
-    pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)
+    pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)[0]
     assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
     assert_raises(
         IndexError, ar.transform,
