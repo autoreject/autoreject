@@ -484,7 +484,7 @@ class LocalAutoReject(BaseAutoReject):
         self.picks = picks
         self.verbose = verbose
 
-    def _vote_bad_epochs(self, epochs, picks, threshes):
+    def _vote_bad_epochs(self, epochs, picks):
         """Each channel votes for an epoch as good or bad.
 
         Parameters
@@ -729,6 +729,7 @@ class LocalAutoReject(BaseAutoReject):
         """Actually do the interpolation."""
         pos = 4 if hasattr(self, '_leave') else 2
         assert len(epochs) == len(interp_channels)
+
         for epoch_idx, interp_chs in _pbar(
                 list(enumerate(interp_channels)),
                 desc='Repairing epochs',
@@ -755,9 +756,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolates, cv,
     ch_type = next(iter(local_reject.consensus_))
 
     drop_log, bad_sensor_counts = local_reject._vote_bad_epochs(
-        epochs,
-        threshes=local_reject.threshes_,
-        picks=picks_)
+        epochs, picks=picks_)
     desc = 'n_interp'
 
     for jdx, n_interp in enumerate(_pbar(n_interpolates, desc=desc,
