@@ -683,11 +683,11 @@ class LocalAutoReject(BaseAutoReject):
             raise ValueError('All epochs are bad. Sorry.')
 
         epochs_clean = epochs.copy()
-        this_reject_log._apply_interp(
-            self, epochs_clean, self.threshes_, self.picks_, self.verbose)
+        _apply_interp(this_reject_log, self, epochs_clean, self.threshes_,
+                      self.picks_, self.verbose)
 
-        this_reject_log._apply_drop(
-            self, epochs_clean, self.threshes_, self.picks_, self.verbose)
+        _apply_drop(this_reject_log, self, epochs_clean, self.threshes_,
+                    self.picks_, self.verbose)
 
         if return_log:
             return epochs_clean, this_reject_log
@@ -986,12 +986,11 @@ class LocalAutoRejectCV(object):
         reject_log = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
         for lr in self.local_reject_.values():
-            reject_log._apply_interp(
-                lr, epochs_clean, self.threshes_, self.picks_,
-                self.verbose)
+            _apply_interp(reject_log, lr, epochs_clean, self.threshes_,
+                          self.picks_, self.verbose)
 
-        reject_log._apply_drop(lr, epochs_clean, self.threshes_, self.picks_,
-                               self.verbose)
+        _apply_drop(reject_log, lr, epochs_clean, self.threshes_, self.picks_,
+                    self.verbose)
 
         if return_log:
             return epochs_clean, reject_log
@@ -1020,8 +1019,41 @@ class LocalAutoRejectCV(object):
         return self.fit(epochs).transform(epochs, return_log=return_log)
 
 
+def _apply_interp(reject_log, local_reject, epochs, threshes_, picks_,
+                  verbose):
+    reject_log._check_fit(epochs, threshes_, picks_)
+    for ch_type, this_picks in reject_log.picks_by_type:
+        local_reject._interpolate_bad_epochs(
+            epochs, interp_channels=reject_log.interp_channels[ch_type],
+            picks=this_picks, verbose=verbose)
+
+
+def _apply_drop(reject_log, local_reject, epochs, threshes_, picks_,
+                verbose):
+    reject_log._check_fit(epochs, threshes_, picks_)
+    if np.any(reject_log.bad_epochs_idx):
+        epochs.drop(reject_log.bad_epochs_idx, reason='AUTOREJECT')
+    else:
+        warnings.warn(
+            "No bad epochs were found for your data. Returning "
+            "a copy of the data you wanted to clean. Interpolation "
+            "may have been done.")
+
+
 class RejectLog(object):
-    """The Rejection Log."""
+    """The Rejection Log.
+
+    Parameters
+    ----------
+    bad_epochs : array-like, shape (n_epochs,)
+        The boolean array with entries True for epochs that
+        are marked as bad.
+    labels : array, shape (n_channels, n_epochs)
+        It contains integers that encode if a channel in a given
+        epoch is good (value 0), bad (1), or bad and interpolated (2).
+    ch_names : list of str
+        The list of channels corresponding to the rows of the labels.
+    """
 
     def __init__(self, bad_epochs_idx, good_epochs_idx, fix_log,
                  interp_channels, picks_by_type):
@@ -1039,33 +1071,14 @@ class RejectLog(object):
                     'at fit-time. Please fit it again, this time '
                     'correctly.')
 
-    def _apply_interp(self, local_reject, epochs, threshes_, picks_,
-                      verbose):
-        self._check_fit(epochs, threshes_, picks_)
-        for ch_type, this_picks in self.picks_by_type:
-            local_reject._interpolate_bad_epochs(
-                epochs, interp_channels=self.interp_channels[ch_type],
-                picks=this_picks, verbose=verbose)
-
-    def _apply_drop(self, local_reject, epochs, threshes_, picks_,
-                    verbose):
-        self._check_fit(epochs, threshes_, picks_)
-        if np.any(self.bad_epochs_idx):
-            epochs.drop(self.bad_epochs_idx, reason='AUTOREJECT')
-        else:
-            warnings.warn(
-                "No bad epochs were found for your data. Returning "
-                "a copy of the data you wanted to clean. Interpolation "
-                "may have been done.")
-
-    def plot_fix_log(self, epochs, ch_type):
+    def plot(self, epochs, ch_type):
         import matplotllib.pyplots as plt
-        set_matplotlib_defaults(plt)
+        # set_matplotlib_defaults(plt)  # XXX : don't hard code this!
 
         plt.figure(figsize=(12, 6))
         picks = dict(self.picks_by_type)[ch_type]
-        im = plt.imshow(fix_log[, picks], cmap='Reds',
-                        interpolation='nearest')
+        plt.imshow(self.fix_log[:, picks], cmap='Reds',
+                   interpolation='nearest')
 
         ch_names = [epochs.ch_names[pp] for pp in picks][7::10]
         ax = plt.gca()

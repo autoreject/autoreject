@@ -151,8 +151,8 @@ im = plt.imshow(ar.bad_segments[:, picks], cmap='Reds',
 ch_names = [epochs.ch_names[pp] for pp in picks][7::10]
 ax = plt.gca()
 ax.grid(False)
-ax.set_xlabel('Sensors')
-ax.set_ylabel('Trials')
+ax.set_xlabel('Channels')
+ax.set_ylabel('Epochs')
 plt.setp(ax, xticks=range(7, len(picks), 10),
          xticklabels=ch_names)
 plt.setp(ax.get_yticklabels(), rotation=0)
