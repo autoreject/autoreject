@@ -109,10 +109,14 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=4)
 
 
 ar = LocalAutoRejectCV(
-    thresh_func=thresh_func, verbose='tqdm', picks=picks)
-    # n_interpolate=[4], consensus=[0.2])
+    thresh_func=thresh_func, picks=picks,
+    n_interpolate=[4], consensus=[0.2])
 
-# ar.fit(this_epoch)
+ar.fit(this_epoch[:10])
+
+print('')
+print(ar.loss_['eeg'].mean(-1) * 1e6)
+boom
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
