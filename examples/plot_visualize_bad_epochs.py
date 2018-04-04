@@ -92,7 +92,7 @@ exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
-thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
+thresh_func = partial(compute_thresholds, random_state=42, n_jobs=4)
 
 ###############################################################################
 # Note that :class:`autoreject.LocalAutoRejectCV` by design supports multiple
@@ -110,10 +110,8 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
 
-ar.fit(this_epoch)
-epochs_ar = ar.transform(this_epoch)
-
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
+
 ###############################################################################
 # We can visualize the cross validation curve over two variables
 
@@ -148,15 +146,12 @@ plt.show()
 # Bad trials are also in red.
 
 scalings = dict(eeg=40e-6)
-
-
 reject_log.plot_epochs(this_epoch, scalings=scalings)
 
 ###############################################################################
 # ... and the epochs after cleaning with autoreject
 
 epochs_ar.plot(scalings=scalings)
-
 
 ###############################################################################
 # The epochs dropped by autoreject are also stored in epochs.drop_log
