@@ -68,7 +68,7 @@ def _handle_picks(info, picks):
     return out
 
 
-def _check_sub_picks(info, picks):
+def _get_picks_by_type(info, picks):
     """Get the picks grouped by channel type."""
     # do magic here
     sub_picks_ = defaultdict(list)

@@ -14,6 +14,8 @@ from mne import io
 from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
+from autoreject.utils import _get_picks_by_type
+from autoreject.autoreject import _get_interp_chs
 
 from nose.tools import assert_raises, assert_true, assert_equal
 
@@ -144,51 +146,40 @@ def test_autoreject():
             ar.consensus_[ch_type] in ar.consensus)
 
     # test complementarity of goods and bads
-    assert_array_equal(
-        np.sort(np.r_[reject_log.bad_epochs_idx,
-                      reject_log.good_epochs_idx]),
-        np.arange(len(epochs_fit)))
+    assert_array_equal(len(reject_log.bad_epochs), len(epochs_fit))
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
     reject_log2 = ar.get_reject_log(epochs_fit)
-    assert_array_equal(reject_log.fix_log, reject_log2.fix_log)
-    assert_array_equal(reject_log.bad_epochs_idx, reject_log2.bad_epochs_idx)
-    assert_array_equal(reject_log.good_epochs_idx, reject_log2.good_epochs_idx)
+    assert_array_equal(reject_log.labels, reject_log2.labels)
+    assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
+    assert_array_equal(reject_log.ch_names, reject_log2.ch_names)
 
     epochs_new_clean = ar.transform(epochs_new)  # apply to new data
 
     reject_log_new = ar.get_reject_log(epochs_new)
-    assert_array_equal(
-        np.sort(np.r_[reject_log_new.bad_epochs_idx,
-                      reject_log_new.good_epochs_idx]),
-        np.arange(len(epochs_new)))
+    assert_array_equal(len(reject_log_new.bad_epochs), len(epochs_new))
 
     assert_true(
-        len(reject_log_new.good_epochs_idx) != len(reject_log.good_epochs_idx))
+        len(reject_log_new.bad_epochs) != len(reject_log.bad_epochs))
 
-    # test fix_log and picks /channel types tracking
-    ch_types_orig, picks_orig = zip(*reject_log_new.picks_by_type)
-    picks_orig = np.concatenate(picks_orig)
-    assert_equal(ch_types, list(ch_types_orig))
-    assert_array_equal(picks, picks_orig)
-
+    picks_by_type = _get_picks_by_type(epochs.info, ar.picks)
     # test correct entries in fix log
     assert_true(
-        np.isnan(reject_log_new.fix_log[:, non_picks]).sum() > 0)
+        np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0)
     assert_true(
-        np.isnan(reject_log_new.fix_log[:, picks]).sum() == 0)
-    assert_equal(reject_log_new.fix_log.shape,
+        np.isnan(reject_log_new.labels[:, picks]).sum() == 0)
+    assert_equal(reject_log_new.labels.shape,
                  (len(epochs_new), len(epochs_new.ch_names)))
 
     # test correct interpolations by type
-    for ch_type, this_picks in reject_log_new.picks_by_type:
+    for ch_type, this_picks in picks_by_type:
         interp_counts = np.sum(
-            reject_log_new.fix_log[:, this_picks] == 2, axis=1)
-        interp_channels = [len(cc) for cc in
-                           reject_log_new.interp_channels[ch_type]]
-        # print(reject_log_new['interp_channels'][ch_type])
-        assert_array_equal(interp_counts, interp_channels)
+            reject_log_new.labels[:, this_picks] == 2, axis=1)
+        interp_channels = _get_interp_chs(
+            reject_log_new.labels, reject_log.ch_names, this_picks)
+        assert_array_equal(
+            interp_counts, [len(cc) for cc in interp_channels])
 
     is_same = epochs_new_clean.get_data() == epochs_new.get_data()
     if not np.isscalar(is_same):
