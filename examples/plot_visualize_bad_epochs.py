@@ -108,9 +108,16 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=4)
 # representative subsample of the data.
 
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
+ar = LocalAutoRejectCV(
+    thresh_func=thresh_func, verbose='tqdm', picks=picks,
+    n_interpolate=[4], consensus=[0.2])
 
-epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
+ar.fit(this_epoch[:10])
+
+print('')
+print(ar.loss_['eeg'].mean(-1) * 1e6)
+boom
+# epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
 ###############################################################################
 # We can visualize the cross validation curve over two variables
