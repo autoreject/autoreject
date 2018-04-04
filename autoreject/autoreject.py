@@ -594,7 +594,9 @@ class LocalAutoReject(BaseAutoReject):
         epochs_copy = epochs.copy()
         interp_channels = _get_interp_chs(
             reject_log.labels, reject_log.ch_names, picks_)
-        self._interpolate_bad_epochs(
+
+        # interpolate copy to compute the clean .mean_
+        _interpolate_bad_epochs(
             epochs_copy, interp_channels=interp_channels,
             picks=self.picks_, verbose=self.verbose)
         self.mean_ = _slicemean(
@@ -639,10 +641,10 @@ class LocalAutoReject(BaseAutoReject):
             raise ValueError('All epochs are bad. Sorry.')
 
         epochs_clean = epochs.copy()
-        picks_by_type = _get_picks_by_type(picks=self.picks_, info=epochs.info)
-        for ch_type, this_picks in picks_by_type:
-            _apply_interp(reject_log, self, epochs_clean, self.threshes_,
-                          this_picks, self.verbose)
+        # picks_by_type = _get_picks_by_type(picks=self.picks_, info=epochs.info)
+        # for ch_type, this_picks in picks_by_type:
+        _apply_interp(reject_log, self, epochs_clean, self.threshes_,
+                      self.picks_, self.verbose)
 
         _apply_drop(reject_log, self, epochs_clean, self.threshes_,
                     self.picks_, self.verbose)
@@ -652,20 +654,21 @@ class LocalAutoReject(BaseAutoReject):
         else:
             return epochs_clean
 
-    def _interpolate_bad_epochs(
-            self, epochs, interp_channels, picks, verbose='progressbar'):
-        """Actually do the interpolation."""
-        pos = 4 if hasattr(self, '_leave') else 2
-        assert len(epochs) == len(interp_channels)
 
-        for epoch_idx, interp_chs in _pbar(
-                list(enumerate(interp_channels)),
-                desc='Repairing epochs',
-                position=pos, leave=True, verbose=verbose):
-            epoch = epochs[epoch_idx]
-            epoch.info['bads'] = interp_chs
-            interpolate_bads(epoch, picks=picks, reset_bads=True)
-            epochs._data[epoch_idx] = epoch._data
+def _interpolate_bad_epochs(
+        epochs, interp_channels, picks, verbose='progressbar'):
+    """Actually do the interpolation."""
+    pos = 2
+    assert len(epochs) == len(interp_channels)
+
+    for epoch_idx, interp_chs in _pbar(
+            list(enumerate(interp_channels)),
+            desc='Repairing epochs',
+            position=pos, leave=True, verbose=verbose):
+        epoch = epochs[epoch_idx]
+        epoch.info['bads'] = interp_chs
+        interpolate_bads(epoch, picks=picks, reset_bads=True)
+        epochs._data[epoch_idx] = epoch._data
 
 
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
@@ -697,8 +700,10 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
             n_interpolate=n_interp)
 
         interp_channels = _get_interp_chs(labels, ch_names, picks_)
+        print(interp_channels)
         epochs_interp = epochs.copy()
-        local_reject._interpolate_bad_epochs(
+        # for learning we need to go by channnel type, even for meg
+        _interpolate_bad_epochs(
             epochs_interp, interp_channels=interp_channels,
             picks=picks_, verbose=verbose)
 
@@ -727,6 +732,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                 print(test)
                 print(X.mean())
                 print(local_reject.mean_.mean())
+                print(good_epochs_idx)
                 loss[idx, jdx, fold] = -local_reject.score(X)
 
     return local_reject, loss
@@ -928,14 +934,10 @@ class LocalAutoRejectCV(object):
 
         reject_log = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
-        picks_by_type = dict(
-            _get_picks_by_type(info=epochs.info, picks=self.picks_))
-        for ch_type, lr in self.local_reject_.items():
-            this_picks = picks_by_type[ch_type]
-            _apply_interp(reject_log, lr, epochs_clean, self.threshes_,
-                          this_picks, self.verbose)
+        _apply_interp(reject_log, epochs_clean, self.threshes_,
+                      self.picks_, self.verbose)
 
-        _apply_drop(reject_log, lr, epochs_clean, self.threshes_, self.picks_,
+        _apply_drop(reject_log, epochs_clean, self.threshes_, self.picks_,
                     self.verbose)
 
         if return_log:
@@ -974,17 +976,17 @@ def _check_fit(epochs, threshes_, picks_):
                 'correctly.')
 
 
-def _apply_interp(reject_log, local_reject, epochs, threshes_, picks_,
+def _apply_interp(reject_log, epochs, threshes_, picks_,
                   verbose):
     _check_fit(epochs, threshes_, picks_)
     interp_channels = _get_interp_chs(
         reject_log.labels, reject_log.ch_names, picks_)
-    local_reject._interpolate_bad_epochs(
+    _interpolate_bad_epochs(
         epochs, interp_channels=interp_channels,
         picks=picks_, verbose=verbose)
 
 
-def _apply_drop(reject_log, local_reject, epochs, threshes_, picks_,
+def _apply_drop(reject_log, epochs, threshes_, picks_,
                 verbose):
     _check_fit(epochs, threshes_, picks_)
     if np.any(reject_log.bad_epochs):
