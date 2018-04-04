@@ -145,6 +145,13 @@ def test_autoreject():
         assert_true(
             ar.consensus_[ch_type] in ar.consensus)
 
+        assert_true(
+            ar.n_interpolate_[ch_type] ==
+            ar.local_reject_[ch_type].n_interpolate_[ch_type])
+        assert_true(
+            ar.consensus_[ch_type] ==
+            ar.local_reject_[ch_type].consensus_[ch_type])
+
     # test complementarity of goods and bads
     assert_array_equal(len(reject_log.bad_epochs), len(epochs_fit))
 

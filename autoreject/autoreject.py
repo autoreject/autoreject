@@ -524,7 +524,6 @@ class LocalAutoReject(BaseAutoReject):
                                    n_consensus)
             bad_epochs_idx = sorted_epoch_idx[:n_epochs_drop]
             bad_epochs[bad_epochs_idx] = True
-
         return bad_epochs
 
     def _get_reject_log(self, epochs, picks):
@@ -570,7 +569,7 @@ class LocalAutoReject(BaseAutoReject):
         assert len(picks_by_type) == 1
         ch_type, this_picks = picks_by_type[0]
         (_, _, labels, ch_names, bad_epochs) = self._get_reject_log(
-            epochs, picks=picks)
+            epochs, picks=this_picks)
         reject_log = RejectLog(labels=labels, bad_epochs=bad_epochs,
                                ch_names=ch_names)
         return reject_log
@@ -679,11 +678,11 @@ class LocalAutoReject(BaseAutoReject):
             epochs._data[epoch_idx] = epoch._data
 
 
-def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolates, cv,
+def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                          consensus, verbose):
 
     n_folds = len(cv)
-    loss = np.zeros((len(consensus), len(n_interpolates),
+    loss = np.zeros((len(consensus), len(n_interpolate),
                     n_folds))
 
     # The thresholds must be learnt from the entire data
@@ -698,11 +697,11 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolates, cv,
         epochs, picks=picks_)
     desc = 'n_interp'
 
-    for jdx, n_interp in enumerate(_pbar(n_interpolates, desc=desc,
+    for jdx, n_interp in enumerate(_pbar(n_interpolate, desc=desc,
                                    position=1, verbose=verbose)):
         # we can interpolate before doing cross-valida(tion
         # because interpolation is independent across trials.
-        # local_reject.n_interpolate_[ch_type] = n_interp
+        local_reject.n_interpolate_[ch_type] = n_interp
         labels = local_reject._get_epochs_interpolation(
             epochs, drop_log=drop_log, ch_type=ch_type, picks=picks_,
             n_interpolate=n_interp)
@@ -724,15 +723,17 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolates, cv,
                     continue
 
                 local_reject.consensus_[ch_type] = this_consensus
-
                 bad_epochs = local_reject._get_bad_epochs(
                     bad_sensor_counts, picks=picks_, ch_type=ch_type)
 
                 good_epochs_idx = np.nonzero(
                     np.invert(bad_epochs[train]))[0]
+
                 local_reject.mean_ = _slicemean(
                     epochs_interp[train].get_data()[:, picks_],
                     good_epochs_idx, axis=0)
+
+                # compute loss
                 X = epochs[test].get_data()[:, picks_]
                 loss[idx, jdx, fold] = -local_reject.score(X)
 
@@ -754,7 +755,7 @@ class LocalAutoRejectCV(object):
         The values to try for percentage of channels that must agree as a
         fraction of the total number of channels. This sets :math:`\\kappa/Q`.
         If None, defaults to `np.linspace(0, 1.0, 11)`
-    n_interpolates : array | None
+    n_interpolate : array | None
         The values to try for the number of channels for which to interpolate.
         This is :math:`\\rho`.If None, defaults to
         np.array([1, 4, 32])
@@ -781,7 +782,7 @@ class LocalAutoRejectCV(object):
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
-    loss_ : dict of array, shape (len(n_interpolates), len(consensus))
+    loss_ : dict of array, shape (len(n_interpolate), len(consensus))
         The cross validation error for different parameter values.
     consensus_ : dict
         The estimated consensus per channel type.
@@ -789,11 +790,11 @@ class LocalAutoRejectCV(object):
         The estimated n_interpolate per channel type.
     """
 
-    def __init__(self, n_interpolates=None, consensus=None,
+    def __init__(self, n_interpolate=None, consensus=None,
                  thresh_func=None, cv=10, picks=None,
                  verbose='progressbar'):
         """Init it."""
-        self.n_interpolates = n_interpolates
+        self.n_interpolate = n_interpolate
         self.consensus = consensus
         self.thresh_func = thresh_func
         self.cv = cv
@@ -823,15 +824,13 @@ class LocalAutoRejectCV(object):
             # XXX: don't change cv !
             cv = KFold(len(epochs), n_folds=cv)
 
-        if self.n_interpolates is None:
+        if self.n_interpolate is None:
             if len(self.picks_) < 4:
                 raise ValueError('Too few channels. autoreject is unlikely'
                                  ' to be effective')
             # XXX: dont interpolate all channels
             max_interp = min(len(self.picks_) - 1, 32)
-            # XXX : self.n_interpolates -> self.n_interpolates_
-            # why self.n_interpolates and self.n_interpolate_ ???
-            self.n_interpolates = np.array([1, 4, max_interp])
+            self.n_interpolate = np.array([1, 4, max_interp])
 
         # XXX : maybe use an mne function in pick.py ?
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
@@ -845,20 +844,24 @@ class LocalAutoRejectCV(object):
         for ch_type, this_picks in picks_by_type:
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, self.thresh_func, this_picks,
-                                     self.n_interpolates, cv,
+                                     self.n_interpolate, cv,
                                      self.consensus, self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
-            self.consensus_[ch_type] = this_local_reject.consensus_[ch_type]
-            self.n_interpolate_[ch_type] = \
-                this_local_reject.n_interpolate_[ch_type]
-            self.loss_[ch_type] = this_loss
 
             best_idx, best_jdx = \
                 np.unravel_index(this_loss.mean(axis=-1).argmin(),
                                  this_loss.shape[:2])
-            self.n_interpolate_[ch_type] = self.n_interpolates[best_jdx]
+
             self.consensus_[ch_type] = self.consensus[best_idx]
+            self.n_interpolate_[ch_type] = self.n_interpolate[best_jdx]
+            self.loss_[ch_type] = this_loss
+
+            # update local reject with best and store it
+            this_local_reject.consensus_[ch_type] = self.consensus_[ch_type]
+            this_local_reject.n_interpolate_[ch_type] = \
+                self.n_interpolate_[ch_type]
             self.local_reject_[ch_type] = this_local_reject
+
             if self.verbose is not False:
                 print('Estimated consensus=%0.2f and n_interpolate=%d'
                       % (self.consensus_[ch_type],
@@ -903,6 +906,7 @@ class LocalAutoRejectCV(object):
                 this_reject_log.labels[:, this_picks]
             reject_log.bad_epochs = np.logical_xor(
                 reject_log.bad_epochs, this_reject_log.bad_epochs)
+            reject_log.ch_names = this_reject_log.ch_names
         return reject_log
 
     def transform(self, epochs, return_log=False):
