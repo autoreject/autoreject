@@ -641,8 +641,7 @@ class LocalAutoReject(BaseAutoReject):
             raise ValueError('All epochs are bad. Sorry.')
 
         epochs_clean = epochs.copy()
-        # picks_by_type = _get_picks_by_type(picks=self.picks_, info=epochs.info)
-        # for ch_type, this_picks in picks_by_type:
+        # this one knows how to handle picks.
         _apply_interp(reject_log, self, epochs_clean, self.threshes_,
                       self.picks_, self.verbose)
 
@@ -658,7 +657,7 @@ class LocalAutoReject(BaseAutoReject):
 def _interpolate_bad_epochs(
         epochs, interp_channels, picks, verbose='progressbar'):
     """Actually do the interpolation."""
-    pos = 2
+    pos = 2.  # XXX removed ._leave starte. Perhaps find better heuristic.
     assert len(epochs) == len(interp_channels)
 
     for epoch_idx, interp_chs in _pbar(
@@ -719,9 +718,9 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
 
                 local_reject.consensus_[ch_type] = this_consensus
                 bad_epochs = local_reject._get_bad_epochs(
-                    bad_sensor_counts, picks=picks_, ch_type=ch_type)
+                    bad_sensor_counts[train], picks=picks_, ch_type=ch_type)
 
-                good_epochs_idx = np.nonzero(np.invert(bad_epochs)[train])[0]
+                good_epochs_idx = np.nonzero(np.invert(bad_epochs))[0]
 
                 local_reject.mean_ = _slicemean(
                     epochs_interp[train].get_data()[:, picks_],
@@ -858,6 +857,8 @@ class LocalAutoRejectCV(object):
             this_local_reject.consensus_[ch_type] = self.consensus_[ch_type]
             this_local_reject.n_interpolate_[ch_type] = \
                 self.n_interpolate_[ch_type]
+
+            # needed for generating reject logs by channel
             self.local_reject_[ch_type] = this_local_reject
 
             if self.verbose is not False:
