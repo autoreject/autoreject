@@ -724,9 +724,9 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
 
                 # compute loss
                 X = epochs[test].get_data()[:, picks_]
-                print(X.mean())
                 print(test)
-                print(picks_)
+                print(X.mean())
+                print(local_reject.mean_.mean())
                 loss[idx, jdx, fold] = -local_reject.score(X)
 
     return local_reject, loss
