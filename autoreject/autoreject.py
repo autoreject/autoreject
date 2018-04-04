@@ -607,10 +607,10 @@ class LocalAutoReject(BaseAutoReject):
         self._interpolate_bad_epochs(
             epochs_copy, interp_channels=interp_channels,
             picks=self.picks_, verbose=self.verbose)
-        self.mean_ = _slicemean(epochs_copy.get_data(),
-                                np.nonzero(np.invert(reject_log.bad_epochs)),
-                                axis=0)
-        del epochs_copy  # I can't wait for garbage collection.ba
+        self.mean_ = _slicemean(
+            epochs_copy.get_data(),
+            np.nonzero(np.invert(reject_log.bad_epochs))[0], axis=0)
+        del epochs_copy  # I can't wait for garbage collection.
         return self
 
     def transform(self, epochs, return_log=False):
@@ -726,8 +726,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                 bad_epochs = local_reject._get_bad_epochs(
                     bad_sensor_counts, picks=picks_, ch_type=ch_type)
 
-                good_epochs_idx = np.nonzero(
-                    np.invert(bad_epochs[train]))[0]
+                good_epochs_idx = np.nonzero(np.invert(bad_epochs)[train])[0]
 
                 local_reject.mean_ = _slicemean(
                     epochs_interp[train].get_data()[:, picks_],
