@@ -95,16 +95,6 @@ class BaseAutoReject(BaseEstimator):
         else:
             return -np.sqrt(np.mean((np.median(X, axis=0) - self.mean_) ** 2))
 
-    # def fit_transform(self, epochs):
-    #     """Estimate rejection params and find bad epochs.
-
-    #     Parameters
-    #     ----------
-    #     epochs : instance of mne.Epochs
-    #         The epochs object which must be cleaned.
-    #     """
-    #     return self.fit(epochs).transform(epochs)
-
 
 # XXX : make it private !
 class GlobalAutoReject(BaseAutoReject):
