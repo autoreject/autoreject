@@ -1043,22 +1043,21 @@ class RejectLog(object):
         self.labels = labels
         self.ch_names = ch_names
 
-    def plot(self, epochs, ch_type):
+    def plot(self, ch_type):
         import matplotllib.pyplots as plt
         # set_matplotlib_defaults(plt)  # XXX : don't hard code this!
 
         plt.figure(figsize=(12, 6))
-        picks = dict(self.picks_by_type)[ch_type]
-        plt.imshow(self.labels[:, picks], cmap='Reds',
+        plt.imshow(self.labels, cmap='Reds',
                    interpolation='nearest')
-
-        ch_names = [epochs.ch_names[pp] for pp in picks][7::10]
+        # XXX to be fixed
+        ch_names_ = self.ch_names[7::10]
         ax = plt.gca()
         ax.grid(False)
-        ax.set_xlabel('Sensors')
-        ax.set_ylabel('Trials')
+        ax.set_xlabel('Channels')
+        ax.set_ylabel('Epochs')
         plt.setp(ax, xticks=range(7, len(picks), 10),
-                 xticklabels=ch_names)
+                 xticklabels=ch_names_)
         plt.setp(ax.get_yticklabels(), rotation=0)
         plt.setp(ax.get_xticklabels(), rotation=90)
         ax.tick_params(axis=u'both', which=u'both', length=0)
@@ -1068,6 +1067,7 @@ class RejectLog(object):
     def plot_epochs(self, epochs, scalings, title=''):
         """Plot interpolated and dropped epochs."""
         return plot_epochs(
-            epochs, bad_epochs_idx=np.where(self.bad_epochs)[0],
-            labels=self.labels, scalings=scalings,
+            epochs=epochs,
+            bad_epochs_idx=np.where(self.bad_epochs)[0],
+            log_labels=self.labels, scalings=scalings,
             title='')
