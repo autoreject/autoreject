@@ -88,9 +88,15 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=True)[::16],
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
+    bad_ch_names = [epochs.ch_names[ix] for ix in range(len(epochs.ch_names))
+		    if ix not in pre_picks]
+    epochs_wbads = epochs.copy()
+    epochs_wbads.info['bads'] = bad_ch_names
     epochs.pick_channels(pick_ch_names)
+
     epochs_fit = epochs[:12]  # make sure to use different size of epochs
     epochs_new = epochs[12:]
+    epochs_wbads_fit = epochs_wbads[:10]
 
     X = epochs_fit.get_data()
     n_epochs, n_channels, n_times = X.shape
@@ -195,6 +201,20 @@ def test_autoreject():
     if not np.isscalar(is_same):
         is_same = np.isscalar(is_same)
     assert_true(not is_same)
+
+    # test that transform ignores bad channels
+    picks = mne.pick_types(
+        epochs_wbads.info, meg='mag', eeg=True, stim=False, eog=False,
+        include=[], exclude=[])
+    ch_types = ['mag', 'eeg']
+    ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
+                           n_interpolates=[1, 2],
+                           consensus_percs=[0.5, 1])
+    ar.fit(epochs_wbads_fit)
+    epochs_wbads_clean = ar.transform(epochs_wbads_fit)
+    epochs_wbads_clean.pick_channels(pick_channel_names)
+    assert_array_equal(epochs_clean.get_data(), epochs_wbads_clean.get_data())
+
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
 
     assert_true(isinstance(ar.threshes_, dict))
@@ -217,3 +237,4 @@ def test_autoreject():
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
     assert_equal(set(threshes_b.keys()), set(ch_names))
+
