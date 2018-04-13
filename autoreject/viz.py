@@ -119,7 +119,7 @@ def _epochs_axes_onclick(event, params):
 
 def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
                 n_channels=20, title=None, show=True, block=False,
-                bad_epochs_idx=None, fix_log=None):
+                bad_epochs_idx=None, log_labels=None):
     """ Visualize epochs
 
     Bad epochs can be marked with a left click on top of the epoch. Bad
@@ -160,7 +160,7 @@ def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
         Defaults to False.
     bad_epochs_idx : array-like | None
         Indices of bad epochs to show. No bad epochs to visualize if None.
-    fix_log : array, shape (n_channels, n_epochs) | None
+    log_labels : array, shape (n_channels, n_epochs) | None
         The bad segments to show in red and the interpolated segments
         to show in gray.
 
@@ -195,7 +195,7 @@ def plot_epochs(epochs, picks=None, scalings=None, n_epochs=20,
               't_start': 0,
               'histogram': None,
               'bads': bads,
-              'fix_log': fix_log}
+              'log_labels': log_labels}
     params['label_click_fun'] = partial(_pick_bad_channels, params=params)
     _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
                                title, picks)
@@ -222,7 +222,7 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
     epochs = params['epochs']
 
     if picks is None:
-        picks = _handle_picks(epochs)
+        picks = _handle_picks_viz(epochs)
     if len(picks) < 1:
         raise RuntimeError('No appropriate channels found. Please'
                            ' check your picks')
@@ -255,8 +255,8 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
         raise RuntimeError('Some channels not classified. Please'
                            ' check your picks')
     ch_names = [params['info']['ch_names'][x] for x in inds]
-    if params['fix_log'] is not None:
-        params['fix_log'] = params['fix_log'][:, inds]
+    if params['log_labels'] is not None:
+        params['log_labels'] = params['log_labels'][:, inds]
 
     # set up plotting
     size = get_config('MNE_BROWSE_RAW_SIZE')
@@ -451,18 +451,18 @@ def _prepare_mne_browse_epochs(params, projs, n_channels, n_epochs, scalings,
             params['colors'][ch_idx][epoch_idx] = (1., 0., 0., 1.)
 
     # Plot bad segments
-    if params['fix_log'] is not None:
-        if not params['fix_log'].shape[0] == len(epochs.events):
+    if params['log_labels'] is not None:
+        if not params['log_labels'].shape[0] == len(epochs.events):
             raise ValueError('The number of epochs should match the number of'
                              'epochs *before* autoreject. Please provide'
                              'the epochs object before running autoreject')
-        if not params['fix_log'].shape[1] == len(params['ch_names']):
+        if not params['log_labels'].shape[1] == len(params['ch_names']):
             raise ValueError('The number of channels should match the number'
                              ' of channels before running autoreject.')
 
         for ch_idx in range(len(params['ch_names'])):
             for epoch_idx in range(len(epochs.events)):
-                this_log = params['fix_log'][epoch_idx, ch_idx]
+                this_log = params['log_labels'][epoch_idx, ch_idx]
                 if epoch_idx in params['bads']:
                     pass
                 else:
@@ -658,7 +658,7 @@ def _plot_update_epochs_proj(params, bools=None):
     params['plot_fun']()
 
 
-def _handle_picks(epochs):
+def _handle_picks_viz(epochs):
     """Aux function to handle picks."""
     if any('ICA' in k for k in epochs.ch_names):
         picks = pick_types(epochs.info, misc=True, ref_meg=False,

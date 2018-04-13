@@ -92,7 +92,7 @@ exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
-thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
+thresh_func = partial(compute_thresholds, random_state=42, n_jobs=4)
 
 ###############################################################################
 # Note that :class:`autoreject.LocalAutoRejectCV` by design supports multiple
@@ -108,10 +108,17 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 # representative subsample of the data.
 
 
-ar = LocalAutoRejectCV(thresh_func=thresh_func, verbose='tqdm', picks=picks)
+ar = LocalAutoRejectCV(
+    thresh_func=thresh_func, picks=picks,
+    n_interpolate=[4], consensus=[0.2])
 
-ar.fit(this_epoch)
-epochs_ar = ar.transform(this_epoch)
+ar.fit(this_epoch[:10])
+
+print('')
+print(ar.loss_['eeg'].mean(-1) * 1e6)
+boom
+
+epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
 ###############################################################################
 # We can visualize the cross validation curve over two variables
@@ -125,8 +132,8 @@ set_matplotlib_defaults(plt, style='seaborn-white')
 loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
 plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
-plt.xticks(range(len(ar.consensus_percs)), ar.consensus_percs)
-plt.yticks(range(len(ar.n_interpolates)), ar.n_interpolates)
+plt.xticks(range(len(ar.consensus)), ar.consensus)
+plt.yticks(range(len(ar.n_interpolate)), ar.n_interpolate)
 
 # Draw rectangle at location of best parameters
 ax = plt.gca()
@@ -146,16 +153,13 @@ plt.show()
 # interpolated are in blue. Bad sensors which are not interpolated are in red.
 # Bad trials are also in red.
 
-from autoreject import plot_epochs  # noqa
-plot_epochs(this_epoch, bad_epochs_idx=ar.bad_epochs_idx,
-            fix_log=ar.fix_log, scalings=dict(eeg=40e-6),
-            title='')
+scalings = dict(eeg=40e-6)
+reject_log.plot_epochs(this_epoch, scalings=scalings)
 
 ###############################################################################
 # ... and the epochs after cleaning with autoreject
 
-epochs_ar.plot(scalings=dict(eeg=40e-6))
-
+epochs_ar.plot(scalings=scalings)
 
 ###############################################################################
 # The epochs dropped by autoreject are also stored in epochs.drop_log

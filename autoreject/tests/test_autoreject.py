@@ -14,6 +14,8 @@ from mne import io
 from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
+from autoreject.utils import _get_picks_by_type
+from autoreject.autoreject import _get_interp_chs
 
 from nose.tools import assert_raises, assert_true, assert_equal
 
@@ -30,7 +32,6 @@ raw.info['projs'] = list()
 
 def test_global_autoreject():
     """Test global autoreject."""
-
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -55,7 +56,6 @@ def test_global_autoreject():
 
 def test_autoreject():
     """Test basic LocalAutoReject functionality."""
-
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -74,7 +74,7 @@ def test_autoreject():
     epochs.load_data()
 
     ar.fit(epochs)
-    assert_true(len(ar.picks) == len(picks) - 1)
+    assert_true(len(ar.picks_) == len(picks) - 1)
 
     # epochs with no picks.
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
@@ -89,8 +89,8 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     epochs.pick_channels(pick_ch_names)
-    epochs_fit = epochs[:10]
-    epochs_new = epochs[10:]
+    epochs_fit = epochs[:12]  # make sure to use different size of epochs
+    epochs_new = epochs[12:]
 
     X = epochs_fit.get_data()
     n_epochs, n_channels, n_times = X.shape
@@ -113,12 +113,16 @@ def test_autoreject():
 
     ##########################################################################
     # picking AutoReject
+
     picks = mne.pick_types(
         epochs.info, meg='mag', eeg=True, stim=False, eog=False,
         include=[], exclude=[])
+    non_picks = mne.pick_types(
+        epochs.info, meg='grad', eeg=False, stim=False, eog=False,
+        include=[], exclude=[])
     ch_types = ['mag', 'eeg']
 
-    ar = LocalAutoReject(picks=picks)
+    ar = LocalAutoReject(picks=picks)  # XXX : why do we need this??
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
 
@@ -127,62 +131,68 @@ def test_autoreject():
                           random_state=42)
     ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
                            n_interpolates=[1, 2],
-                           consensus_percs=[0.5, 1])
+                           consensus=[0.5, 1])
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
 
     ar.fit(epochs_fit)
-    fix_log = ar.fix_log
-    bad_epochs_idx = ar.local_reject_.bad_epochs_idx_
-    good_epochs_idx = ar.local_reject_.good_epochs_idx_
+    reject_log = ar.get_reject_log(epochs_fit)
     for ch_type in ch_types:
         # test that kappa & rho are selected
         assert_true(
             ar.n_interpolate_[ch_type] in ar.n_interpolates)
         assert_true(
-            ar.consensus_perc_[ch_type] in ar.consensus_percs)
-        # test that local autoreject is synced with AR-CV instance
-        assert_equal(
-            ar.n_interpolate_[ch_type],
-            ar.local_reject_.n_interpolate[ch_type])
-        assert_equal(
-            ar.consensus_perc_[ch_type],
-            ar.local_reject_.consensus_perc[ch_type])
+            ar.consensus_[ch_type] in ar.consensus)
+
+        assert_true(
+            ar.n_interpolate_[ch_type] ==
+            ar.local_reject_[ch_type].n_interpolate_[ch_type])
+        assert_true(
+            ar.consensus_[ch_type] ==
+            ar.local_reject_[ch_type].consensus_[ch_type])
 
     # test complementarity of goods and bads
-    assert_array_equal(
-        np.sort(np.r_[bad_epochs_idx, good_epochs_idx]),
-        np.arange(len(epochs_fit)))
+    assert_array_equal(len(reject_log.bad_epochs), len(epochs_fit))
 
     # test that transform does not change state of ar
-    epochs_fit.fit_ = True
     epochs_clean = ar.transform(epochs_fit)  # apply same data
-    assert_array_equal(fix_log, ar.fix_log)
-    assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-    assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+    reject_log2 = ar.get_reject_log(epochs_fit)
+    assert_array_equal(reject_log.labels, reject_log2.labels)
+    assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
+    assert_array_equal(reject_log.ch_names, reject_log2.ch_names)
 
     epochs_new_clean = ar.transform(epochs_new)  # apply to new data
-    assert_array_equal(fix_log, ar.fix_log)
-    assert_array_equal(bad_epochs_idx, ar.local_reject_.bad_epochs_idx_)
-    assert_array_equal(good_epochs_idx, ar.local_reject_.good_epochs_idx_)
+
+    reject_log_new = ar.get_reject_log(epochs_new)
+    assert_array_equal(len(reject_log_new.bad_epochs), len(epochs_new))
+
+    assert_true(
+        len(reject_log_new.bad_epochs) != len(reject_log.bad_epochs))
+
+    picks_by_type = _get_picks_by_type(epochs.info, ar.picks)
+    # test correct entries in fix log
+    assert_true(
+        np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0)
+    assert_true(
+        np.isnan(reject_log_new.labels[:, picks]).sum() == 0)
+    assert_equal(reject_log_new.labels.shape,
+                 (len(epochs_new), len(epochs_new.ch_names)))
+
+    # test correct interpolations by type
+    for ch_type, this_picks in picks_by_type:
+        interp_counts = np.sum(
+            reject_log_new.labels[:, this_picks] == 2, axis=1)
+        interp_channels = _get_interp_chs(
+            reject_log_new.labels, reject_log.ch_names, this_picks)
+        assert_array_equal(
+            interp_counts, [len(cc) for cc in interp_channels])
 
     is_same = epochs_new_clean.get_data() == epochs_new.get_data()
     if not np.isscalar(is_same):
         is_same = np.isscalar(is_same)
     assert_true(not is_same)
-
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
-    # Now we test that the .bad_segments has the shape
-    # of n_trials, n_sensors, such that n_sensors is the
-    # the full number sensors, before picking. We, hence,
-    # expect nothing to be rejected outside of our picks
-    # but rejections can occur inside our picks.
-    assert_equal(ar.bad_segments.shape[1], len(epochs_fit.ch_names))
-    assert_true(np.any(ar.bad_segments[:, picks]))
-    non_picks = np.ones(len(epochs_fit.ch_names), dtype=bool)
-    non_picks[picks] = False
-    assert_true(not np.any(ar.bad_segments[:, non_picks]))
 
     assert_true(isinstance(ar.threshes_, dict))
     assert_true(len(ar.picks) == len(picks))

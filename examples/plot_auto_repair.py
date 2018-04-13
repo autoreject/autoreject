@@ -142,21 +142,5 @@ plt.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
-set_matplotlib_defaults(plt)
 
-plt.figure(figsize=(12, 6))
-im = plt.imshow(ar.bad_segments[:, picks], cmap='Reds',
-                interpolation='nearest')
-
-ch_names = [epochs.ch_names[pp] for pp in picks][7::10]
-ax = plt.gca()
-ax.grid(False)
-ax.set_xlabel('Sensors')
-ax.set_ylabel('Trials')
-plt.setp(ax, xticks=range(7, len(picks), 10),
-         xticklabels=ch_names)
-plt.setp(ax.get_yticklabels(), rotation=0)
-plt.setp(ax.get_xticklabels(), rotation=90)
-ax.tick_params(axis=u'both', which=u'both', length=0)
-plt.tight_layout(rect=[None, None, None, 1.1])
-plt.show()
+ar.get_reject_log(epochs['Auditory/Left']).plot()
