@@ -657,7 +657,7 @@ class LocalAutoReject(BaseAutoReject):
 def _interpolate_bad_epochs(
         epochs, interp_channels, picks, verbose='progressbar'):
     """Actually do the interpolation."""
-    pos = 2.  # XXX removed ._leave starte. Perhaps find better heuristic.
+    pos = 2  # XXX removed ._leave starte. Perhaps find better heuristic.
     assert len(epochs) == len(interp_channels)
 
     for epoch_idx, interp_chs in _pbar(
@@ -682,6 +682,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                                    verbose=verbose,
                                    picks=picks_)
     local_reject.fit(epochs)
+
     assert len(local_reject.consensus_) == 1  # works with one ch_type
     ch_type = next(iter(local_reject.consensus_))
 
@@ -903,7 +904,7 @@ class LocalAutoRejectCV(object):
                 epochs, threshes=self.threshes_, picks=this_picks)
             reject_log.labels[:, this_picks] = \
                 this_reject_log.labels[:, this_picks]
-            reject_log.bad_epochs = np.logical_xor(
+            reject_log.bad_epochs = np.logical_or(
                 reject_log.bad_epochs, this_reject_log.bad_epochs)
             reject_log.ch_names = this_reject_log.ch_names
         return reject_log
