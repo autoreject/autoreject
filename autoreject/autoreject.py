@@ -884,10 +884,11 @@ class LocalAutoRejectCV(object):
 
                     bad_epochs_idx, _, _ = local_reject._get_bad_epochs(
                         bad_sensor_counts, ch_type=ch_type)
+                    bad_epochs_mask = np.zeros(len(epochs), dtype=np.bool)
+                    bad_epochs_mask[bad_epochs_idx] = True
                     local_reject.bad_epochs_idx_ = np.sort(bad_epochs_idx)
-                    n_train = len(epochs[train])
-                    good_epochs_idx = np.setdiff1d(np.arange(n_train),
-                                                   bad_epochs_idx)
+                    good_epochs_mask = np.invert(bad_epochs_mask)
+                    good_epochs_idx = np.where(good_epochs_mask[train])[0]
                     local_reject.mean_ = _slicemean(
                         epochs_interp[train].get_data()[:, self.picks],
                         good_epochs_idx, axis=0)
