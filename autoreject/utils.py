@@ -96,7 +96,6 @@ def set_matplotlib_defaults(plt, style='ggplot'):
 
     fontsize = 17
     params = {'axes.labelsize': fontsize + 2,
-              'text.fontsize': fontsize,
               'legend.fontsize': fontsize,
               'xtick.labelsize': fontsize,
               'ytick.labelsize': fontsize,
