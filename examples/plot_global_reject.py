@@ -74,7 +74,7 @@ plt.figure(figsize=(8, 5))
 plt.tick_params(axis='x', which='both', bottom='off', top='off')
 plt.tick_params(axis='y', which='both', left='off', right='off')
 
-colors = plt.rcParams['axes.color_cycle']
+colors = ['#E24A33', '#348ABD', '#988ED5']
 
 plt.plot(scaling * param_range, scaling * test_scores,
          'o-', markerfacecolor='w',
