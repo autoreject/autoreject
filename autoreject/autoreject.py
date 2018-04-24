@@ -85,7 +85,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
 class BaseAutoReject(BaseEstimator):
     """Base class for rejection."""
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Score it."""
         if hasattr(self, 'n_channels'):
             X = X.reshape(-1, self.n_channels, self.n_times)
@@ -255,7 +255,7 @@ def _pick_exclusive_channels(info, ch_type):
 
 
 def _compute_thresh(this_data, method='bayesian_optimization',
-                    cv=10, random_state=None):
+                    cv=10, y=None, random_state=None):
     """Compute the rejection threshold for one channel.
 
     Parameters
@@ -290,7 +290,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
                                 param_distributions=param_dist,
                                 n_iter=20, cv=cv,
                                 random_state=random_state)
-        rs.fit(this_data)
+        rs.fit(this_data, y)
         best_thresh = rs.best_estimator_.thresh
     elif method == 'bayesian_optimization':
         cache = dict()
@@ -300,7 +300,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
             thresh = all_threshes[idx]
             if thresh not in cache:
                 est.set_params(thresh=thresh)
-                obj = -np.mean(cross_val_score(est, this_data, cv=cv))
+                obj = -np.mean(cross_val_score(est, this_data, y=y, cv=cv))
                 cache.update({thresh: obj})
             return cache[thresh]
 
@@ -384,7 +384,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         my_thresh = delayed(_compute_thresh)
         verbose = 51 if verbose is not False else 0  # send output to stdout
         threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
-            my_thresh(data[:, pick], cv=cv, method=method,
+            my_thresh(data[:, pick], cv=cv, method=method, y=y,
                       random_state=random_state) for pick in picks)
         threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
     return threshes
@@ -837,7 +837,7 @@ class LocalAutoRejectCV(object):
             return self
 
         # Continue here if only one channel type is present.
-        n_folds = len(self.cv)
+        n_folds = self.cv.get_n_splits()
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_folds))
 
@@ -869,7 +869,23 @@ class LocalAutoRejectCV(object):
                 verbose=self.verbose)
 
             X = epochs.get_data()[:, self.picks]
-            pbar = _pbar(self.cv.split(X), desc='Fold',
+
+            # Hack to allow len(self.cv.split(X)) as ProgressBar
+            # assumes an iterable whereas self.cv.split(X) is a
+            # generator
+            class CVSplits(object):
+                def __init__(self, gen, length):
+                    self.gen = gen
+                    self.length = length
+
+                def __len__(self):
+                    return self.length
+
+                def __iter__(self):
+                    return self.gen
+
+            cv_splits = CVSplits(self.cv.split(X), n_folds)
+            pbar = _pbar(cv_splits, desc='Fold',
                          position=3, verbose=self.verbose)
             for fold, (train, test) in enumerate(pbar):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
