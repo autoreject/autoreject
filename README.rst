@@ -24,8 +24,8 @@ These are the dependencies to use autoreject:
 * numpy (>=1.8)
 * matplotlib (>=1.3)
 * scipy (>=0.16)
-* mne-python
-* scikit-learn (0.18)
+* mne-python (>=0.14)
+* scikit-learn (>=0.18)
 
 Cite
 ----

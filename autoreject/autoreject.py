@@ -13,8 +13,8 @@ from mne import pick_types
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.cross_validation import KFold, StratifiedShuffleSplit
-from sklearn.cross_validation import cross_val_score
+from sklearn.model_selection import KFold, StratifiedShuffleSplit
+from sklearn.model_selection import cross_val_score
 from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
@@ -85,7 +85,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
 class BaseAutoReject(BaseEstimator):
     """Base class for rejection."""
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Score it."""
         if hasattr(self, 'n_channels'):
             X = X.reshape(-1, self.n_channels, self.n_times)
@@ -185,7 +185,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
         print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
         est = GlobalAutoReject(n_channels=n_channels, n_times=n_times)
-        cv = KFold(n_epochs, n_folds=5, random_state=random_state)
+        cv = KFold(n_splits=5, random_state=random_state)
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
@@ -255,7 +255,7 @@ def _pick_exclusive_channels(info, ch_type):
 
 
 def _compute_thresh(this_data, method='bayesian_optimization',
-                    cv=10, random_state=None):
+                    cv=10, y=None, random_state=None):
     """Compute the rejection threshold for one channel.
 
     Parameters
@@ -290,10 +290,9 @@ def _compute_thresh(this_data, method='bayesian_optimization',
                                 param_distributions=param_dist,
                                 n_iter=20, cv=cv,
                                 random_state=random_state)
-        rs.fit(this_data)
+        rs.fit(this_data, y)
         best_thresh = rs.best_estimator_.thresh
     elif method == 'bayesian_optimization':
-        from sklearn.cross_validation import cross_val_score
         cache = dict()
 
         def func(thresh):
@@ -301,7 +300,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
             thresh = all_threshes[idx]
             if thresh not in cache:
                 est.set_params(thresh=thresh)
-                obj = -np.mean(cross_val_score(est, this_data, cv=cv))
+                obj = -np.mean(cross_val_score(est, this_data, y=y, cv=cv))
                 cache.update({thresh: obj})
             return cache[thresh]
 
@@ -377,7 +376,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
             data = np.concatenate((epochs.get_data(),
                                    epochs_interp.get_data()), axis=0)
             y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
-        cv = StratifiedShuffleSplit(y, n_iter=10, test_size=0.2,
+        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2,
                                     random_state=random_state)
 
         ch_names = epochs.ch_names
@@ -385,7 +384,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         my_thresh = delayed(_compute_thresh)
         verbose = 51 if verbose is not False else 0  # send output to stdout
         threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
-            my_thresh(data[:, pick], cv=cv, method=method,
+            my_thresh(data[:, pick], cv=cv, method=method, y=y,
                       random_state=random_state) for pick in picks)
         threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
     return threshes
@@ -781,7 +780,7 @@ class LocalAutoRejectCV(object):
         if self.cv is None:
             self.cv = 10
         if isinstance(self.cv, int):
-            self.cv = KFold(len(epochs), n_folds=self.cv)
+            self.cv = KFold(n_splits=self.cv)
         if self.consensus_percs is None:
             self.consensus_percs = np.linspace(0, 1.0, 11)
         if self.n_interpolates is None:
@@ -838,7 +837,7 @@ class LocalAutoRejectCV(object):
             return self
 
         # Continue here if only one channel type is present.
-        n_folds = len(self.cv)
+        n_folds = self.cv.get_n_splits()
         loss = np.zeros((len(self.consensus_percs), len(self.n_interpolates),
                          n_folds))
 
@@ -869,9 +868,26 @@ class LocalAutoRejectCV(object):
                 epochs_interp, interp_channels=interp_channels,
                 verbose=self.verbose)
 
-            for fold, (train, test) in enumerate(_pbar(self.cv, desc='Fold',
-                                                 position=3,
-                                                 verbose=self.verbose)):
+            X = epochs.get_data()[:, self.picks]
+
+            # Hack to allow len(self.cv.split(X)) as ProgressBar
+            # assumes an iterable whereas self.cv.split(X) is a
+            # generator
+            class CVSplits(object):
+                def __init__(self, gen, length):
+                    self.gen = gen
+                    self.length = length
+
+                def __len__(self):
+                    return self.length
+
+                def __iter__(self):
+                    return self.gen
+
+            cv_splits = CVSplits(self.cv.split(X), n_folds)
+            pbar = _pbar(cv_splits, desc='Fold',
+                         position=3, verbose=self.verbose)
+            for fold, (train, test) in enumerate(pbar):
                 for idx, consensus_perc in enumerate(self.consensus_percs):
                     # \kappa must be greater than \rho
                     n_channels = len(self.picks)
@@ -892,8 +908,7 @@ class LocalAutoRejectCV(object):
                     local_reject.mean_ = _slicemean(
                         epochs_interp[train].get_data()[:, self.picks],
                         good_epochs_idx, axis=0)
-                    X = epochs[test].get_data()[:, self.picks]
-                    loss[idx, jdx, fold] = -local_reject.score(X)
+                    loss[idx, jdx, fold] = -local_reject.score(X[test])
 
         self.loss_[ch_type] = loss
         best_idx, best_jdx = np.unravel_index(loss.mean(axis=-1).argmin(),
