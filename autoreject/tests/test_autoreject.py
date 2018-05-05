@@ -130,7 +130,7 @@ def test_autoreject():
                           method='bayesian_optimization',
                           random_state=42)
     ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
-                           n_interpolates=[1, 2],
+                           n_interpolate=[1, 2],
                            consensus=[0.5, 1])
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
@@ -141,7 +141,7 @@ def test_autoreject():
     for ch_type in ch_types:
         # test that kappa & rho are selected
         assert_true(
-            ar.n_interpolate_[ch_type] in ar.n_interpolates)
+            ar.n_interpolate_[ch_type] in ar.n_interpolate)
         assert_true(
             ar.consensus_[ch_type] in ar.consensus)
 

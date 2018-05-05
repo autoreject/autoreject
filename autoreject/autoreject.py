@@ -672,7 +672,7 @@ def _interpolate_bad_epochs(
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                          consensus, verbose):
     n_folds = cv.get_n_splits()
-    loss = np.zeros((len(consensus), len(n_interpolates),
+    loss = np.zeros((len(consensus), len(n_interpolate),
                     n_folds))
 
     # The thresholds must be learnt from the entire data
@@ -848,7 +848,7 @@ class LocalAutoRejectCV(object):
         for ch_type, this_picks in picks_by_type:
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, self.thresh_func, this_picks,
-                                     self.n_interpolates, self.cv,
+                                     self.n_interpolate, self.cv,
                                      self.consensus, self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
 
