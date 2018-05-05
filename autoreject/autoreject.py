@@ -516,7 +516,7 @@ class LocalAutoReject(BaseAutoReject):
         return bad_epochs
 
     def _get_reject_log(self, epochs, picks):
-        """Get essential annotations for epochs given thresholds."""
+        """Get rejection logs for epochs given thresholds."""
         ch_type = _get_picks_by_type(
             picks=picks, info=epochs.info)[0][0]
 
@@ -534,7 +534,7 @@ class LocalAutoReject(BaseAutoReject):
         return (drop_log, bad_sensor_counts, labels, ch_names, bad_epochs)
 
     def get_reject_log(self, epochs, threshes=None, picks=None):
-        """Annotate epochs.
+        """Get rejection logs from epochs.
 
         .. note::
            If multiple channel types are present, reject_log.bad_epochs
@@ -543,7 +543,7 @@ class LocalAutoReject(BaseAutoReject):
         Parameters
         ----------
         epochs : instance of mne.Epochs
-            The epoched data to be annotated.
+            The epochs from which to get the drop logs.
         picks : np.ndarray, shape(n_channels, ) | list | None
             The channel indices to be used. If None, the .picks attribute
             will be used.
@@ -875,16 +875,16 @@ class LocalAutoRejectCV(object):
         return self
 
     def get_reject_log(self, epochs, picks=None):
-        """Annotate epochs.
+        """Get rejection logs of epochs.
 
         .. note::
-           If multiple channel types are present, annot['bad_epochs_idx']
+           If multiple channel types are present, reject_log['bad_epochs_idx']
            reflects the union of bad trials across channel types.
 
         Parameters
         ----------
         epochs : instance of mne.Epochs
-            The epoched data to be annotated.
+            The epoched data for which the reject log is computed.
         picks : np.ndarray, shape(n_channels, ) | list | None
             The channel indices to be used. If None, the .picks attribute
             will be used.
