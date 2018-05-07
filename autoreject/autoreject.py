@@ -580,7 +580,7 @@ class LocalAutoReject(BaseAutoReject):
         self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks_, verbose=self.verbose,
                     ch_constraint='single_channel_type')
-        ch_type, picks_ = _get_picks_by_type(
+        ch_type, picks_by_type_ = _get_picks_by_type(
             picks=self.picks_, info=epochs.info)[0]
         self.n_interpolate_[ch_type] = self.n_interpolate
         self.consensus_[ch_type] = self.consensus
@@ -592,7 +592,7 @@ class LocalAutoReject(BaseAutoReject):
 
         epochs_copy = epochs.copy()
         interp_channels = _get_interp_chs(
-            reject_log.labels, reject_log.ch_names, picks_)
+            reject_log.labels, reject_log.ch_names, picks_by_type_)
 
         # interpolate copy to compute the clean .mean_
         _interpolate_bad_epochs(
@@ -811,7 +811,7 @@ class LocalAutoRejectCV(object):
             self.consensus = np.linspace(0, 1.0, 11)
 
     def fit(self, epochs):
-        """Fit the epochs on the LocalAutoReject object.
+        """Fit the epochs on the LocalAutoRejectCV object.
 
         Parameters
         ----------
