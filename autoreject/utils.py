@@ -5,9 +5,13 @@
 
 from collections import defaultdict
 import warnings
+import numpy as np
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
+from mne import pick_types, pick_channels, pick_info
+from mne.channels.interpolation import _do_interp_dots
+
 from sklearn.externals.joblib import Memory
 
 mem = Memory(cachedir='cachedir')
@@ -213,7 +217,10 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
 
     # this needs picks, assume our instance is complete and intact
     _interpolate_bads_eeg(inst)
-    _interpolate_bads_meg_fast(inst, picks=picks, mode=mode)
+    meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
+    meg_picks_interp = [p for p in picks if p in meg_picks]
+    if len(meg_picks_interp) > 0:
+        _interpolate_bads_meg_fast(inst, picks=meg_picks_interp, mode=mode)
 
     if reset_bads is True:
         inst.info['bads'] = []
@@ -225,8 +232,6 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     """Interpolate bad channels from data in good channels."""
-    from mne import pick_types, pick_channels, pick_info
-    from mne.channels.interpolation import _do_interp_dots
     # We can have pre-picked instances or not.
     # And we need to handle it.
 

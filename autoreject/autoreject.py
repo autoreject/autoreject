@@ -438,8 +438,6 @@ class LocalAutoReject(BaseAutoReject):
                              'You gave me %s.' % consensus)
         self.consensus = consensus
         self.n_interpolate = n_interpolate
-        self.consensus_ = dict()
-        self.n_interpolate_ = dict()  # XXX : this will break ...
         self.thresh_func = thresh_func
         self.picks = picks
         self.verbose = verbose
@@ -451,23 +449,24 @@ class LocalAutoReject(BaseAutoReject):
         ----------
         epochs : instance of mne.Epochs
             The epochs object for which bad epochs must be found.
+        picks : array-like
+            The indices of the channels to consider.
         """
-        n_epochs = len(epochs)
-        picks = _handle_picks(info=epochs.info, picks=picks)
-
-        ch_names = [cc for cc in epochs.ch_names]
-        drop_log = np.zeros((n_epochs, len(ch_names)))
-        bad_sensor_counts = np.zeros((len(epochs), ))
+        ch_names = list(epochs.ch_names)
+        labels = np.zeros((len(epochs), len(ch_names)))
+        labels.fill(np.nan)
+        bad_sensor_counts = np.zeros((len(epochs),))
 
         this_ch_names = [epochs.ch_names[p] for p in picks]
         deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
         threshes = [self.threshes_[ch_name] for ch_name in this_ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
-            # TODO: combine for different ch types
-            bad_sensor_counts[bad_epochs_idx] += 1
-            drop_log[bad_epochs_idx, picks[ch_idx]] = 1
-        return drop_log, bad_sensor_counts, ch_names
+            labels[:, picks[ch_idx]] = 0
+            labels[bad_epochs_idx, picks[ch_idx]] = 1
+
+        bad_sensor_counts = np.sum(labels == 1, axis=1)
+        return labels, bad_sensor_counts, ch_names
 
     def _get_epochs_interpolation(self, epochs, drop_log,
                                   ch_type, picks, n_interpolate,
@@ -580,8 +579,13 @@ class LocalAutoReject(BaseAutoReject):
         self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks_, verbose=self.verbose,
                     ch_constraint='single_channel_type')
-        ch_type, picks_by_type_ = _get_picks_by_type(
-            picks=self.picks_, info=epochs.info)[0]
+
+        picks_by_type = _get_picks_by_type(picks=self.picks_, info=epochs.info)
+        assert len(picks_by_type) == 1
+        ch_type, this_picks = picks_by_type[0]
+
+        self.consensus_ = dict()
+        self.n_interpolate_ = dict()
         self.n_interpolate_[ch_type] = self.n_interpolate
         self.consensus_[ch_type] = self.consensus
 
@@ -592,7 +596,7 @@ class LocalAutoReject(BaseAutoReject):
 
         epochs_copy = epochs.copy()
         interp_channels = _get_interp_chs(
-            reject_log.labels, reject_log.ch_names, picks_by_type_)
+            reject_log.labels, reject_log.ch_names, this_picks)
 
         # interpolate copy to compute the clean .mean_
         _interpolate_bad_epochs(
@@ -794,6 +798,9 @@ class LocalAutoRejectCV(object):
         The estimated consensus per channel type.
     n_interpolate_ : dict
         The estimated n_interpolate per channel type.
+    picks_ : array-like, shape (n_data_channels,)
+        The data channels considered by autoreject. By default
+        only data channels, not already marked as bads are considered.
     """
 
     def __init__(self, n_interpolate=None, consensus=None,
@@ -1007,13 +1014,21 @@ def _apply_drop(reject_log, epochs, threshes_, picks_,
 
 
 def _get_interp_chs(labels, ch_names, picks):
-    """Convert labels to channel names."""
+    """Convert labels to channel names.
+    It returns a list of length n_epochs. Each entry contains
+    the names of the channels to interpolate.
+
+    labels is of shape n_epochs x n_channels
+    and picks is the sublist of channels to consider.
+    """
     interp_channels = list()
+    assert labels.shape[1] == len(ch_names)
+    assert labels.shape[1] > np.max(picks)
+    idx_nan_in_row = np.where(np.any(~np.isnan(labels), axis=0))[0]
+    np.testing.assert_array_equal(picks, idx_nan_in_row)
     for this_labels in labels:
-        interp = (this_labels == 2)
-        interp_channels.append(
-            [ch_names[ii] for ii in np.nonzero(interp)[0]
-             if ii in picks])
+        interp_idx = np.where(this_labels == 2)[0]
+        interp_channels.append([ch_names[ii] for ii in interp_idx])
     return interp_channels
 
 
@@ -1050,7 +1065,7 @@ class RejectLog(object):
         ax.grid(False)
         ax.set_xlabel('Channels')
         ax.set_ylabel('Epochs')
-        plt.setp(ax, xticks=range(7, len(picks), 10),
+        plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
                  xticklabels=ch_names_)
         plt.setp(ax.get_yticklabels(), rotation=0)
         plt.setp(ax.get_xticklabels(), rotation=90)
