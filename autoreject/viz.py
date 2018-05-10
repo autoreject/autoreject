@@ -36,6 +36,7 @@ def _draw_epochs_axes(epoch_idx, good_ch_idx, bad_ch_idx, data, times, axes,
             for l, d in zip(bad_lines, data_[bad_ch_idx]):
                 l.set_data(times, d)
         if title_str is not None:
+            # XXX : don't hack mpl default sizes
             ax.set_title(title_str % ii, fontsize=12)
         ax.set_ylim(data.min(), data.max())
         ax.set_yticks(list())

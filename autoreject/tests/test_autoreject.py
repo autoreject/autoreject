@@ -157,60 +157,63 @@ def test_autoreject():
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
-    # reject_log2 = ar.get_reject_log(epochs_fit)
-    # assert_array_equal(reject_log.labels, reject_log2.labels)
-    # assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
-    # assert_array_equal(reject_log.ch_names, reject_log2.ch_names)
+    reject_log2 = ar.get_reject_log(epochs_fit)
+    assert_array_equal(reject_log.labels, reject_log2.labels)
+    assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
+    assert_array_equal(reject_log.ch_names, reject_log2.ch_names)
 
-    # epochs_new_clean = ar.transform(epochs_new)  # apply to new data
+    epochs_new_clean = ar.transform(epochs_new)  # apply to new data
 
-    # reject_log_new = ar.get_reject_log(epochs_new)
-    # assert_array_equal(len(reject_log_new.bad_epochs), len(epochs_new))
+    reject_log_new = ar.get_reject_log(epochs_new)
+    assert_array_equal(len(reject_log_new.bad_epochs), len(epochs_new))
 
-    # assert_true(
-    #     len(reject_log_new.bad_epochs) != len(reject_log.bad_epochs))
+    assert_true(
+        len(reject_log_new.bad_epochs) != len(reject_log.bad_epochs))
 
-    # picks_by_type = _get_picks_by_type(epochs.info, ar.picks)
-    # # test correct entries in fix log
-    # assert_true(
-    #     np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0)
-    # assert_true(
-    #     np.isnan(reject_log_new.labels[:, picks]).sum() == 0)
-    # assert_equal(reject_log_new.labels.shape,
-    #              (len(epochs_new), len(epochs_new.ch_names)))
+    picks_by_type = _get_picks_by_type(epochs.info, ar.picks)
+    # test correct entries in fix log
+    assert_true(
+        np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0)
+    assert_true(
+        np.isnan(reject_log_new.labels[:, picks]).sum() == 0)
+    assert_equal(reject_log_new.labels.shape,
+                 (len(epochs_new), len(epochs_new.ch_names)))
 
-    # # test correct interpolations by type
-    # for ch_type, this_picks in picks_by_type:
-    #     interp_counts = np.sum(
-    #         reject_log_new.labels[:, this_picks] == 2, axis=1)
-    #     interp_channels = _get_interp_chs(
-    #         reject_log_new.labels, reject_log.ch_names, this_picks)
-    #     assert_array_equal(
-    #         interp_counts, [len(cc) for cc in interp_channels])
+    # test correct interpolations by type
+    for ch_type, this_picks in picks_by_type:
+        interp_counts = np.sum(
+            reject_log_new.labels[:, this_picks] == 2, axis=1)
+        labels = reject_log_new.labels.copy()
+        not_this_picks = np.setdiff1d(np.arange(labels.shape[1]), this_picks)
+        labels[:, not_this_picks] = np.nan
+        interp_channels = _get_interp_chs(
+            labels, reject_log.ch_names, this_picks)
+        assert_array_equal(
+            interp_counts, [len(cc) for cc in interp_channels])
 
-    # is_same = epochs_new_clean.get_data() == epochs_new.get_data()
-    # if not np.isscalar(is_same):
-    #     is_same = np.isscalar(is_same)
-    # assert_true(not is_same)
-    # assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
+    is_same = epochs_new_clean.get_data() == epochs_new.get_data()
+    if not np.isscalar(is_same):
+        is_same = np.isscalar(is_same)
+    assert_true(not is_same)
+    assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
 
-    # assert_true(isinstance(ar.threshes_, dict))
-    # assert_true(len(ar.picks) == len(picks))
-    # assert_true(len(ar.threshes_.keys()) == len(ar.picks))
-    # pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)[0]
-    # assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
-    # assert_raises(
-    #     IndexError, ar.transform,
-    #     epochs.copy().pick_channels(
-    #         [epochs.ch_names[pp] for pp in picks[:3]]))
+    assert_true(isinstance(ar.threshes_, dict))
+    assert_true(len(ar.picks) == len(picks))
+    assert_true(len(ar.threshes_.keys()) == len(ar.picks))
+    pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)[0]
+    assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
+    assert_raises(
+        IndexError, ar.transform,
+        epochs.copy().pick_channels(
+            [epochs.ch_names[pp] for pp in picks[:3]]))
 
-    # epochs.load_data()
-    # assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
-    # index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
-    #                       for ii, pp in enumerate(picks)])
-    # threshes_a = compute_thresholds(
-    #     epochs_fit, picks=picks, method='random_search')
-    # assert_equal(set(threshes_a.keys()), set(ch_names))
-    # threshes_b = compute_thresholds(
-    #     epochs_fit, picks=picks, method='bayesian_optimization')
-    # assert_equal(set(threshes_b.keys()), set(ch_names))
+    epochs.load_data()
+    assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
+    index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
+                          for ii, pp in enumerate(picks)])
+    threshes_a = compute_thresholds(
+        epochs_fit, picks=picks, method='random_search')
+    assert_equal(set(threshes_a.keys()), set(ch_names))
+    threshes_b = compute_thresholds(
+        epochs_fit, picks=picks, method='bayesian_optimization')
+    assert_equal(set(threshes_b.keys()), set(ch_names))

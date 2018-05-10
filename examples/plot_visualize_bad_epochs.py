@@ -114,10 +114,6 @@ ar = LocalAutoRejectCV(
 
 ar.fit(this_epoch[:10])
 
-print('')
-print(ar.loss_['eeg'].mean(-1) * 1e6)
-boom
-
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
 ###############################################################################

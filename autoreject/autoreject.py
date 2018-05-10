@@ -468,10 +468,12 @@ class LocalAutoReject(BaseAutoReject):
         return labels, bad_sensor_counts
 
     def _get_epochs_interpolation(self, epochs, labels,
-                                  ch_type, picks, n_interpolate,
+                                  picks, n_interpolate,
                                   verbose='progressbar'):
         """Interpolate the bad epochs."""
         # 1: bad segment, # 2: interpolated
+        assert labels.shape[0] == len(epochs)
+        assert labels.shape[1] == len(epochs.ch_names)
         labels = labels.copy()
         non_picks = np.setdiff1d(range(epochs.info['nchan']), picks)
         for epoch_idx in range(len(epochs)):
@@ -544,7 +546,7 @@ class LocalAutoReject(BaseAutoReject):
             epochs, picks=this_picks)
 
         labels = self._get_epochs_interpolation(
-            epochs, labels=labels, ch_type=ch_type, picks=this_picks,
+            epochs, labels=labels, picks=this_picks,
             n_interpolate=self.n_interpolate_[ch_type])
 
         assert len(labels) == len(epochs)
@@ -692,8 +694,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
         # because interpolation is independent across trials.
         local_reject.n_interpolate_[ch_type] = n_interp
         labels = local_reject._get_epochs_interpolation(
-            epochs, labels=labels, ch_type=ch_type, picks=picks_,
-            n_interpolate=n_interp)
+            epochs, labels=labels, picks=picks_, n_interpolate=n_interp)
 
         interp_channels = _get_interp_chs(labels, epochs.ch_names, picks_)
         print(interp_channels)
@@ -1048,9 +1049,9 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, ch_type):
-        import matplotllib.pyplots as plt
-        # set_matplotlib_defaults(plt)  # XXX : don't hard code this!
+    def plot(self):
+        """Plot."""
+        import matplotlib.pyplot as plt
 
         plt.figure(figsize=(12, 6))
         plt.imshow(self.labels, cmap='Reds',
@@ -1072,7 +1073,23 @@ class RejectLog(object):
     def plot_epochs(self, epochs, scalings=None, title=''):
         """Plot interpolated and dropped epochs.
 
-        XXX add docstrings
+        Parameters
+        ----------
+        epochs : instance of Epochs
+            The epochs.
+        scalings : dict | None
+            Scaling factors for the traces. If None, defaults to::
+
+                dict(mag=1e-12, grad=4e-11, eeg=20e-6, eog=150e-6, ecg=5e-4,
+                     emg=1e-3, ref_meg=1e-12, misc=1e-3, stim=1,
+                     resp=1, chpi=1e-4, whitened=1e2)
+        title : str
+            The title to display.
+
+        Returns
+        -------
+        fig : Instance of matplotlib.figure.Figure
+            Epochs traces.
         """
         return plot_epochs(
             epochs=epochs,

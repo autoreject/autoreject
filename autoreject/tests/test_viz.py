@@ -40,6 +40,5 @@ def test_viz():
     labels = np.zeros((n_epochs, n_channels))
     reject_log = autoreject.RejectLog(bad_epochs, labels, epochs.ch_names)
     reject_log.plot_epochs(epochs)
-    plot_epochs(epochs, reject_log=reject_log)
-    assert_raises(ValueError, plot_epochs, epochs[:2], reject_log=reject_log)
+    assert_raises(ValueError, reject_log.plot_epochs, epochs[:2])
     plt.close('all')
