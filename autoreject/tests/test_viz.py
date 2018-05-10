@@ -8,7 +8,6 @@ from mne.datasets import sample
 from mne import io
 
 import autoreject
-from autoreject.viz import plot_epochs
 
 from nose.tools import assert_raises
 

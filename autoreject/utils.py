@@ -5,7 +5,6 @@
 
 from collections import defaultdict
 import warnings
-import numpy as np
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
