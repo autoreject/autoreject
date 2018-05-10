@@ -7,6 +7,7 @@ import mne
 from mne.datasets import sample
 from mne import io
 
+import autoreject
 from autoreject.viz import plot_epochs
 
 from nose.tools import assert_raises
@@ -33,12 +34,12 @@ def test_viz():
                         event_id={'1': 1, '2': 2, '3': 3, '4': 4})
     bad_epochs_idx = [0, 1, 3]
     n_epochs, n_channels, _ = epochs.get_data().shape
-    fix_log = np.zeros((n_epochs, n_channels))
+    bad_epochs = np.zeros(n_epochs, dtype=bool)
+    bad_epochs[bad_epochs_idx] = True
 
-    print(bad_epochs_idx)
-    plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx, fix_log=fix_log)
-    plot_epochs(epochs, bad_epochs_idx=bad_epochs_idx)
-    plot_epochs(epochs, fix_log=fix_log)
-    assert_raises(ValueError, plot_epochs, epochs[:2],
-                  bad_epochs_idx=bad_epochs_idx, fix_log=fix_log)
+    labels = np.zeros((n_epochs, n_channels))
+    reject_log = autoreject.RejectLog(bad_epochs, labels, epochs.ch_names)
+    reject_log.plot_epochs(epochs)
+    plot_epochs(epochs, reject_log=reject_log)
+    assert_raises(ValueError, plot_epochs, epochs[:2], reject_log=reject_log)
     plt.close('all')
