@@ -92,7 +92,7 @@ exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
-thresh_func = partial(compute_thresholds, random_state=42, n_jobs=4)
+thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ###############################################################################
 # Note that :class:`autoreject.LocalAutoRejectCV` by design supports multiple

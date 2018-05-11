@@ -81,8 +81,8 @@ def _get_picks_by_type(info, picks):
         sub_picks_[key].append(pp)
         if key not in keys:
             keys.append(key)
-    sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
-    return sub_picks
+    picks_by_type = [(kk, sub_picks_[kk]) for kk in keys]
+    return picks_by_type
 
 
 def set_matplotlib_defaults(plt, style='ggplot'):
