@@ -697,7 +697,6 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
             epochs, labels=labels, picks=picks_, n_interpolate=n_interp)
 
         interp_channels = _get_interp_chs(labels, epochs.ch_names, picks_)
-        print(interp_channels)
         epochs_interp = epochs.copy()
         # for learning we need to go by channnel type, even for meg
         _interpolate_bad_epochs(
@@ -933,7 +932,7 @@ class LocalAutoRejectCV(object):
             The cleaned epochs
 
         reject_log : instance of autoreject.RejectLog
-            The rejection log. Returned only of return_log is True.
+            The rejection log. Returned only if return_log is True.
         """
         # XXX : should be a check_fitted method
         if not hasattr(self, 'n_interpolate_'):
