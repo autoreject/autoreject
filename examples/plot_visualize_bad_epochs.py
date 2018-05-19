@@ -108,8 +108,7 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 # representative subsample of the data.
 
 
-ar = LocalAutoRejectCV(
-    thresh_func=thresh_func, picks=picks)
+ar = LocalAutoRejectCV(thresh_func=thresh_func, picks=picks)
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
