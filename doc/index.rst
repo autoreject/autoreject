@@ -50,7 +50,7 @@ rejection dictionary, simply do:
 .. code:: python
 
 	>>> from autoreject import get_rejection_threshold
-	>>> reject = get_rejection_threshold(epochs)
+	>>> reject = get_rejection_threshold(epochs)  # doctest: +SKIP
 
 We also implement RANSAC from the PREP pipeline.
 The API is the same:

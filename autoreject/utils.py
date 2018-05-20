@@ -8,6 +8,9 @@ import warnings
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
+from mne import pick_types, pick_channels, pick_info
+from mne.channels.interpolation import _do_interp_dots
+
 from sklearn.externals.joblib import Memory
 
 mem = Memory(cachedir='cachedir')
@@ -38,6 +41,7 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
         mne.io.meas_info.channel_type(picked_info, idx)
         for idx in range(len(picks))}
 
+    # XXX : ch_constraint -> allow_many_types=True | False
     if ch_constraint == 'data_channels':
         if not all(ch in ('mag', 'grad', 'eeg') for ch in ch_types_picked):
             raise ValueError('AutoReject only supports mag, grad, and eeg '
@@ -45,14 +49,14 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
     elif ch_constraint == 'single_channel_type':
         if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg')) > 1:
             raise ValueError('AutoReject only supports mag, grad, and eeg '
-                             'at this point.')
+                             'at this point.')  # XXX: to check
     else:
         raise ValueError('bad value for ch_constraint.')
 
     if n_bads > 0:
         if verbose is not False:
             warnings.warn(
-                '%i channels are marked as bad. These will be ignored.'
+                '%i channels are marked as bad. These will be ignored. '
                 'If you want them to be considered by autoreject please '
                 'remove them from epochs.info["bads"].' % n_bads)
 
@@ -67,9 +71,8 @@ def _handle_picks(info, picks):
     return out
 
 
-def _check_sub_picks(info, picks):
+def _get_picks_by_type(info, picks):
     """Get the picks grouped by channel type."""
-    sub_picks = False
     # do magic here
     sub_picks_ = defaultdict(list)
     keys = list()
@@ -78,9 +81,8 @@ def _check_sub_picks(info, picks):
         sub_picks_[key].append(pp)
         if key not in keys:
             keys.append(key)
-    if len(sub_picks_) > 1:
-        sub_picks = [(kk, sub_picks_[kk]) for kk in keys]
-    return sub_picks
+    picks_by_type = [(kk, sub_picks_[kk]) for kk in keys]
+    return picks_by_type
 
 
 def set_matplotlib_defaults(plt, style='ggplot'):
@@ -208,11 +210,16 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     import mne
     from mne.channels.interpolation import _interpolate_bads_eeg
     # to prevent cobyla printf error
-    verbose = mne.set_log_level('WARNING', return_old_level=True)
+    # XXX putting to critical for now unless better solution
+    # emerges
+    verbose = mne.set_log_level('CRITICAL', return_old_level=True)
 
     # this needs picks, assume our instance is complete and intact
     _interpolate_bads_eeg(inst)
-    _interpolate_bads_meg_fast(inst, picks=picks, mode=mode)
+    meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
+    meg_picks_interp = [p for p in picks if p in meg_picks]
+    if len(meg_picks_interp) > 0:
+        _interpolate_bads_meg_fast(inst, picks=meg_picks_interp, mode=mode)
 
     if reset_bads is True:
         inst.info['bads'] = []
@@ -224,8 +231,6 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     """Interpolate bad channels from data in good channels."""
-    from mne import pick_types, pick_channels, pick_info
-    from mne.channels.interpolation import _do_interp_dots
     # We can have pre-picked instances or not.
     # And we need to handle it.
 
