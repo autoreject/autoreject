@@ -90,13 +90,13 @@ def test_autoreject():
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     bad_ch_names = [epochs.ch_names[ix] for ix in range(len(epochs.ch_names))
 		    if ix not in pre_picks]
-    epochs_wbads = epochs.copy()
-    epochs_wbads.info['bads'] = bad_ch_names
+    epochs_with_bads = epochs.copy()
+    epochs_with_bads.info['bads'] = bad_ch_names
     epochs.pick_channels(pick_ch_names)
 
     epochs_fit = epochs[:12]  # make sure to use different size of epochs
     epochs_new = epochs[12:]
-    epochs_wbads_fit = epochs_wbads[:10]
+    epochs_with_bads_fit = epochs_with_bads[:12]
 
     X = epochs_fit.get_data()
     n_epochs, n_channels, n_times = X.shape
@@ -204,16 +204,16 @@ def test_autoreject():
 
     # test that transform ignores bad channels
     picks = mne.pick_types(
-        epochs_wbads.info, meg='mag', eeg=True, stim=False, eog=False,
+        epochs_with_bads.info, meg='mag', eeg=True, stim=False, eog=False,
         include=[], exclude=[])
     ch_types = ['mag', 'eeg']
     ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
-                           n_interpolates=[1, 2],
-                           consensus_percs=[0.5, 1])
-    ar.fit(epochs_wbads_fit)
-    epochs_wbads_clean = ar.transform(epochs_wbads_fit)
-    epochs_wbads_clean.pick_channels(pick_channel_names)
-    assert_array_equal(epochs_clean.get_data(), epochs_wbads_clean.get_data())
+                           n_interpolate=[1, 2],
+                           consensus=[0.5, 1])
+    ar.fit(epochs_with_bads_fit)
+    epochs_with_bads_clean = ar.transform(epochs_with_bads_fit)
+    epochs_with_bads_clean.pick_channels(pick_channel_names)
+    assert_array_equal(epochs_clean.get_data(), epochs_with_bads_clean.get_data())
 
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
 

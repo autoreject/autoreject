@@ -664,7 +664,7 @@ def _interpolate_bad_epochs(
             desc='Repairing epochs',
             position=pos, leave=True, verbose=verbose):
         epoch = epochs[epoch_idx]
-        epoch.info['bads'] = interp_chs
+        epoch.info['bads'] += interp_chs
         interpolate_bads(epoch, picks=picks, reset_bads=True)
         epochs._data[epoch_idx] = epoch._data
 
@@ -742,36 +742,6 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                 loss[idx, jdx, fold] = -local_reject.score(X[test])
 
     return local_reject, loss
-            (_, _, interp_channels, _,
-             bad_epochs_idx, good_epochs_idx) = self._annotate_epochs(
-                 threshes=self.threshes_, epochs=epochs)
-            if len(good_epochs_idx) == 0:
-                raise ValueError('All epochs are bad. Sorry.')
-
-            self._interpolate_bad_epochs(
-                epochs_out, interp_channels=interp_channels,
-                verbose=self.verbose)
-        if np.any(bad_epochs_idx):
-            epochs_out.drop(bad_epochs_idx, reason='AUTOREJECT')
-        else:
-            warnings.warn(
-                "No bad epochs were found for your data. Returning "
-                "a copy of the data you wanted to clean. Interpolation "
-                "may have been done.")
-        return epochs_out
-
-    def _interpolate_bad_epochs(
-            self, epochs, interp_channels, verbose='progressbar'):
-        """Actually do the interpolation."""
-        pos = 4 if hasattr(self, '_leave') else 2
-        for epoch_idx, interp_chs in _pbar(
-                list(enumerate(interp_channels)),
-                desc='Repairing epochs',
-                position=pos, leave=True, verbose=verbose):
-            epoch = epochs[epoch_idx]
-            epoch.info['bads'] += interp_chs
-            interpolate_bads(epoch, picks=self.picks, reset_bads=True)
-            epochs._data[epoch_idx] = epoch._data
 
 
 class LocalAutoRejectCV(object):
