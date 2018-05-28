@@ -39,4 +39,19 @@ to set a standard montage::
 
      # code for setting montage
 
+Does autoreject also interpolate user-marked bad channels?
+----------------------------------------------------------
 
+No, autoreject ignores the bad channels in `epochs.info['bads']` by default.
+However, it is possible to explicitly ask autoreject to work on all the channels
+(including those marked as bad by the user) by using the `picks` argument.
+
+Is it possible to get only bad sensor annotations and not interpolate?
+----------------------------------------------------------------------
+
+Yes! Simply do::
+
+	>>> ar.fit(epochs)
+	>>> ar.get_reject_log()
+
+No need to run `ar.transform()` in this case.
