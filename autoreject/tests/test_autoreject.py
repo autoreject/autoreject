@@ -203,16 +203,18 @@ def test_autoreject():
     assert_true(not is_same)
 
     # test that transform ignores bad channels
-    picks = mne.pick_types(
+    picks_without_bads = mne.pick_types(
         epochs_with_bads.info, meg='mag', eeg=True, stim=False, eog=False,
-        include=[], exclude=[])
+        include=[], exclude='bads')
     ch_types = ['mag', 'eeg']
-    ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
+    ar = LocalAutoRejectCV(cv=3, picks=picks_without_bads, 
+                           thresh_func=thresh_func,
                            n_interpolate=[1, 2],
                            consensus=[0.5, 1])
     ar.fit(epochs_with_bads_fit)
     epochs_with_bads_clean = ar.transform(epochs_with_bads_fit)
-    epochs_with_bads_clean.pick_channels(pick_channel_names)
+
+    epochs_with_bads_clean.pick_types(meg=True, eeg=True, eog=True, exclude='bads')
     assert_array_equal(epochs_clean.get_data(), epochs_with_bads_clean.get_data())
 
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)

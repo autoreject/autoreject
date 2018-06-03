@@ -214,8 +214,14 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     # emerges
     verbose = mne.set_log_level('CRITICAL', return_old_level=True)
 
-    # this needs picks, assume our instance is complete and intact
-    _interpolate_bads_eeg(inst)
+    eeg_picks = set(pick_types(inst.info, meg=False, eeg=True, exclude=[]))
+    eeg_picks_interp = [p for p in picks if p in eeg_picks]
+    if len(eeg_picks_interp) > 0:
+        keep_chs = [inst.ch_names[i] for i in eeg_picks_interp]
+        inst_interp = inst.copy().pick_channels(keep_chs)
+        _interpolate_bads_eeg(inst_interp)
+        inst._data[:, eeg_picks_interp, :] = inst_interp._data
+
     meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
     meg_picks_interp = [p for p in picks if p in meg_picks]
     if len(meg_picks_interp) > 0:

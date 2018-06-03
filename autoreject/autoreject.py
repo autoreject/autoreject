@@ -664,7 +664,7 @@ def _interpolate_bad_epochs(
             desc='Repairing epochs',
             position=pos, leave=True, verbose=verbose):
         epoch = epochs[epoch_idx]
-        epoch.info['bads'] += interp_chs
+        epoch.info['bads'] = interp_chs
         interpolate_bads(epoch, picks=picks, reset_bads=True)
         epochs._data[epoch_idx] = epoch._data
 
