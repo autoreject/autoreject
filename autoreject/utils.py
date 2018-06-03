@@ -220,7 +220,11 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
         keep_chs = [inst.ch_names[i] for i in eeg_picks_interp]
         inst_interp = inst.copy().pick_channels(keep_chs)
         _interpolate_bads_eeg(inst_interp)
-        inst._data[:, eeg_picks_interp, :] = inst_interp._data
+        if len(inst._data.shape) == 3:
+            inst._data[:, eeg_picks_interp, :] = inst_interp._data
+        elif len(inst._data.shape) == 2:
+            inst._data[eeg_picks_interp, :] = inst_interp._data
+
 
     meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
     meg_picks_interp = [p for p in picks if p in meg_picks]
