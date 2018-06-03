@@ -89,7 +89,7 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
     bad_ch_names = [epochs.ch_names[ix] for ix in range(len(epochs.ch_names))
-		    if ix not in pre_picks]
+                    if ix not in pre_picks]
     epochs_with_bads = epochs.copy()
     epochs_with_bads.info['bads'] = bad_ch_names
     epochs.pick_channels(pick_ch_names)
@@ -207,15 +207,17 @@ def test_autoreject():
         epochs_with_bads.info, meg='mag', eeg=True, stim=False, eog=False,
         include=[], exclude='bads')
     ch_types = ['mag', 'eeg']
-    ar = LocalAutoRejectCV(cv=3, picks=picks_without_bads, 
+    ar = LocalAutoRejectCV(cv=3, picks=picks_without_bads,
                            thresh_func=thresh_func,
                            n_interpolate=[1, 2],
                            consensus=[0.5, 1])
     ar.fit(epochs_with_bads_fit)
     epochs_with_bads_clean = ar.transform(epochs_with_bads_fit)
 
-    epochs_with_bads_clean.pick_types(meg=True, eeg=True, eog=True, exclude='bads')
-    assert_array_equal(epochs_clean.get_data(), epochs_with_bads_clean.get_data())
+    epochs_with_bads_clean.pick_types(meg=True, eeg=True, eog=True,
+                                      exclude='bads')
+    assert_array_equal(epochs_clean.get_data(),
+                       epochs_with_bads_clean.get_data())
 
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
 
@@ -239,4 +241,3 @@ def test_autoreject():
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
     assert_equal(set(threshes_b.keys()), set(ch_names))
-
