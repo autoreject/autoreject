@@ -208,7 +208,6 @@ def fetch_file(url, file_name, resume=True, timeout=10.):
 def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels."""
     import mne
-    from mne.channels.interpolation import _interpolate_bads_eeg
     # to prevent cobyla printf error
     # XXX putting to critical for now unless better solution
     # emerges
@@ -217,13 +216,7 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     eeg_picks = set(pick_types(inst.info, meg=False, eeg=True, exclude=[]))
     eeg_picks_interp = [p for p in picks if p in eeg_picks]
     if len(eeg_picks_interp) > 0:
-        keep_chs = [inst.ch_names[i] for i in eeg_picks_interp]
-        inst_interp = inst.copy().pick_channels(keep_chs)
-        _interpolate_bads_eeg(inst_interp)
-        if len(inst._data.shape) == 3:
-            inst._data[:, eeg_picks_interp, :] = inst_interp._data
-        elif len(inst._data.shape) == 2:
-            inst._data[eeg_picks_interp, :] = inst_interp._data
+        _interpolate_bads_eeg(inst, picks=eeg_picks_interp)
 
     meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
     meg_picks_interp = [p for p in picks if p in meg_picks]
@@ -236,6 +229,61 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     mne.set_log_level(verbose)
 
     return inst
+
+
+def _interpolate_bads_eeg(inst, picks, verbose=None):
+    """ Interpolate bad EEG channels.
+
+    Operates in place.
+
+    Parameters
+    ----------
+    inst : mne.io.Raw, mne.Epochs or mne.Evoked
+        The data to interpolate. Must be preloaded.
+    picks: np.ndarray, shape(n_channels, ) | list | None
+        The channel indices to be used for interpolation.
+    """
+    from mne.bem import _fit_sphere
+    from mne.utils import logger, warn
+    from mne.channels.interpolation import _do_interp_dots
+    from mne.channels.interpolation import _make_interpolation_matrix
+    import numpy as np
+
+    bads_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
+    goods_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
+
+    inst.info._check_consistency()
+    bads_idx[picks] = [inst.ch_names[ch] in inst.info['bads'] for ch in picks]
+
+    if len(picks) == 0 or bads_idx.sum() == 0:
+        return
+
+    goods_idx[picks] = True
+    goods_idx[bads_idx] = False
+
+    pos = inst._get_channel_positions(picks)
+
+    # Make sure only good EEG are used
+    bads_idx_pos = bads_idx[picks]
+    goods_idx_pos = goods_idx[picks]
+    pos_good = pos[goods_idx_pos]
+    pos_bad = pos[bads_idx_pos]
+
+    # test spherical fit
+    radius, center = _fit_sphere(pos_good)
+    distance = np.sqrt(np.sum((pos_good - center) ** 2, 1))
+    distance = np.mean(distance / radius)
+    if np.abs(1. - distance) > 0.1:
+        warn('Your spherical fit is poor, interpolation results are '
+             'likely to be inaccurate.')
+
+    logger.info('Computing interpolation matrix from {0} sensor '
+                'positions'.format(len(pos_good)))
+
+    interpolation = _make_interpolation_matrix(pos_good, pos_bad)
+
+    logger.info('Interpolating {0} sensors'.format(len(pos_bad)))
+    _do_interp_dots(inst, interpolation, goods_idx, bads_idx)
 
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):

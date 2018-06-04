@@ -206,18 +206,24 @@ def test_autoreject():
     picks_without_bads = mne.pick_types(
         epochs_with_bads.info, meg='mag', eeg=True, stim=False, eog=False,
         include=[], exclude='bads')
-    ch_types = ['mag', 'eeg']
-    ar = LocalAutoRejectCV(cv=3, picks=picks_without_bads,
-                           thresh_func=thresh_func,
-                           n_interpolate=[1, 2],
-                           consensus=[0.5, 1])
-    ar.fit(epochs_with_bads_fit)
-    epochs_with_bads_clean = ar.transform(epochs_with_bads_fit)
+    ar_bads = LocalAutoRejectCV(cv=3, picks=picks_without_bads,
+                                thresh_func=thresh_func,
+                                n_interpolate=[1, 2],
+                                consensus=[0.5, 1])
+    ar_bads.fit(epochs_with_bads_fit)
+    epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
 
-    epochs_with_bads_clean.pick_types(meg=True, eeg=True, eog=True,
-                                      exclude='bads')
-    assert_array_equal(epochs_clean.get_data(),
-                       epochs_with_bads_clean.get_data())
+    good_ix = mne.pick_types(epochs_with_bads_clean.info,
+                             meg=True, eeg=True, eog=True,
+                             exclude='bads')
+    assert_array_equal(epochs_with_bads_clean.get_data()[:, good_ix, :],
+                       epochs_clean.get_data())
+
+    bad_ix = [epochs_with_bads_clean.ch_names.index(ch)
+              for ch in epochs_with_bads_clean.info['bads']]
+    epo_ix = ~ar_bads.get_reject_log(epochs_with_bads_fit).bad_epochs
+    assert_array_equal(epochs_with_bads_clean._data[:, bad_ix, :],
+                       epochs_with_bads_fit._data[epo_ix, :, :][:, bad_ix, :])
 
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
 
