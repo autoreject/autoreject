@@ -11,7 +11,7 @@ import mne
 from mne.datasets import sample
 from mne import io
 
-from autoreject import (_GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
+from autoreject import (_GlobalAutoReject, _LocalAutoReject, LocalAutoRejectCV,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
 from autoreject.utils import _get_picks_by_type
@@ -55,7 +55,7 @@ def test_global_autoreject():
 
 
 def test_autoreject():
-    """Test basic LocalAutoReject functionality."""
+    """Test basic _LocalAutoReject functionality."""
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -69,7 +69,7 @@ def test_autoreject():
                         picks=picks, baseline=(None, 0), decim=10,
                         reject=None, preload=False)[:10]
 
-    ar = LocalAutoReject()
+    ar = _LocalAutoReject()
     assert_raises(ValueError, ar.fit, epochs)
     epochs.load_data()
 
@@ -128,7 +128,7 @@ def test_autoreject():
         include=[], exclude=[])
     ch_types = ['mag', 'eeg']
 
-    ar = LocalAutoReject(picks=picks)  # XXX : why do we need this??
+    ar = _LocalAutoReject(picks=picks)  # XXX : why do we need this??
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
 

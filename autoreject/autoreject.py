@@ -382,7 +382,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     return threshes
 
 
-class LocalAutoReject(BaseAutoReject):
+class _LocalAutoReject(BaseAutoReject):
     r"""Automatically reject bad epochs and repair bad trials.
 
     Parameters
@@ -675,9 +675,9 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                     n_folds))
 
     # The thresholds must be learnt from the entire data
-    local_reject = LocalAutoReject(thresh_func=thresh_func,
-                                   verbose=verbose,
-                                   picks=picks_)
+    local_reject = _LocalAutoReject(thresh_func=thresh_func,
+                                    verbose=verbose,
+                                    picks=picks_)
     local_reject.fit(epochs)
 
     assert len(local_reject.consensus_) == 1  # works with one ch_type
@@ -744,7 +744,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
 
 
 class LocalAutoRejectCV(object):
-    r"""Efficiently find n_interp and n_consensus.
+    r"""Efficiently find n_interpolate and consensus.
 
     .. note::
        LocalAutoRejectCV by design supports multiple channels.
