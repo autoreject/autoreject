@@ -15,6 +15,7 @@ Classes
    :toctree: generated/
 
    LocalAutoRejectCV
+   RejectLog
    Ransac
 
 Functions
