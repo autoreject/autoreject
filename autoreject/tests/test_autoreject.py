@@ -11,7 +11,7 @@ import mne
 from mne.datasets import sample
 from mne import io
 
-from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
+from autoreject import (_GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
 from autoreject.utils import _get_picks_by_type
@@ -102,13 +102,13 @@ def test_autoreject():
     n_epochs, n_channels, n_times = X.shape
     X = X.reshape(n_epochs, -1)
 
-    ar = GlobalAutoReject()
+    ar = _GlobalAutoReject()
     assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_channels=n_channels)
+    ar = _GlobalAutoReject(n_channels=n_channels)
     assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_times=n_times)
+    ar = _GlobalAutoReject(n_times=n_times)
     assert_raises(ValueError, ar.fit, X)
-    ar_global = GlobalAutoReject(
+    ar_global = _GlobalAutoReject(
         n_channels=n_channels, n_times=n_times, thresh=40e-6)
     ar_global.fit(X)
 

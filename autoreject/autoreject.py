@@ -60,7 +60,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
         The scores in the test set
     """
     from sklearn.model_selection import validation_curve
-    if not isinstance(estimator, GlobalAutoReject):
+    if not isinstance(estimator, _GlobalAutoReject):
         msg = 'No guarantee that it will work on this estimator.'
         raise NotImplementedError(msg)
 
@@ -96,8 +96,7 @@ class BaseAutoReject(BaseEstimator):
             return -np.sqrt(np.mean((np.median(X, axis=0) - self.mean_) ** 2))
 
 
-# XXX : make it private !
-class GlobalAutoReject(BaseAutoReject):
+class _GlobalAutoReject(BaseAutoReject):
     """Class to compute global rejection thresholds.
 
     Parameters
@@ -176,7 +175,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
 
         print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
-        est = GlobalAutoReject(n_channels=n_channels, n_times=n_times)
+        est = _GlobalAutoReject(n_channels=n_channels, n_times=n_times)
         cv = KFold(n_splits=5, random_state=random_state)
 
         def func(thresh):
