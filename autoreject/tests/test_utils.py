@@ -8,6 +8,8 @@ from mne.datasets import sample
 from mne import io
 
 from autoreject.utils import clean_by_interp, interpolate_bads
+from autoreject.utils import _interpolate_bads_eeg
+import mne.channels.interpolation
 
 from nose.tools import assert_raises
 
@@ -54,3 +56,10 @@ def test_utils():
                            evoked_autoreject.data[picks_bad])
         assert_raises(AssertionError, assert_array_equal,
                       evoked_orig.data[picks_bad], evoked.data[picks_bad])
+
+    # test that autoreject EEG interpolation code behaves the same as MNE
+    evoked_ar = evoked_orig.copy()
+    evoked_mne = evoked_orig.copy()
+    _interpolate_bads_eeg(evoked_ar, picks=None)
+    mne.channels.interpolation._interpolate_bads_eeg(evoked_mne)
+    assert_array_equal(evoked_ar.data, evoked_mne.data)

@@ -88,9 +88,15 @@ def test_autoreject():
         mne.pick_types(epochs.info, meg=False, eeg=True)[::16],
         mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)]
     pick_ch_names = [epochs.ch_names[pp] for pp in pre_picks]
+    bad_ch_names = [epochs.ch_names[ix] for ix in range(len(epochs.ch_names))
+                    if ix not in pre_picks]
+    epochs_with_bads = epochs.copy()
+    epochs_with_bads.info['bads'] = bad_ch_names
     epochs.pick_channels(pick_ch_names)
+
     epochs_fit = epochs[:12]  # make sure to use different size of epochs
     epochs_new = epochs[12:]
+    epochs_with_bads_fit = epochs_with_bads[:12]
 
     X = epochs_fit.get_data()
     n_epochs, n_channels, n_times = X.shape
@@ -195,6 +201,31 @@ def test_autoreject():
     if not np.isscalar(is_same):
         is_same = np.isscalar(is_same)
     assert_true(not is_same)
+
+    # test that transform ignores bad channels
+    epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
+    ar_bads = LocalAutoRejectCV(cv=3, thresh_func=thresh_func,
+                                n_interpolate=[1, 2],
+                                consensus=[0.5, 1])
+    ar_bads.fit(epochs_with_bads_fit)
+    epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
+
+    good_w_bads_ix = mne.pick_types(epochs_with_bads_clean.info,
+                                    meg='mag', eeg=True, eog=True,
+                                    exclude='bads')
+    good_wo_bads_ix = mne.pick_types(epochs_clean.info,
+                                     meg='mag', eeg=True, eog=True,
+                                     exclude='bads')
+    assert_array_equal(epochs_with_bads_clean.get_data()[:, good_w_bads_ix, :],
+                       epochs_clean.get_data()[:, good_wo_bads_ix, :])
+
+    bad_ix = [epochs_with_bads_clean.ch_names.index(ch)
+              for ch in epochs_with_bads_clean.info['bads']]
+    epo_ix = ~ar_bads.get_reject_log(epochs_with_bads_fit).bad_epochs
+    assert_array_equal(
+        epochs_with_bads_clean.get_data()[:, bad_ix, :],
+        epochs_with_bads_fit.get_data()[epo_ix, :, :][:, bad_ix, :])
+
     assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
 
     assert_true(isinstance(ar.threshes_, dict))
