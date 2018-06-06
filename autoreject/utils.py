@@ -231,7 +231,7 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     return inst
 
 
-def _interpolate_bads_eeg(inst, picks, verbose=None):
+def _interpolate_bads_eeg(inst, picks=None, verbose=None):
     """ Interpolate bad EEG channels.
 
     Operates in place.
@@ -248,6 +248,9 @@ def _interpolate_bads_eeg(inst, picks, verbose=None):
     from mne.channels.interpolation import _do_interp_dots
     from mne.channels.interpolation import _make_interpolation_matrix
     import numpy as np
+
+    if picks is None:
+        picks = pick_types(inst.info, meg=False, eeg=True, exclude=[])
 
     bads_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
     goods_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
