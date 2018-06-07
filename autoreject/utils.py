@@ -10,6 +10,9 @@ import mne
 from mne.utils import check_version as version_is_greater_equal
 from mne import pick_types, pick_channels, pick_info
 from mne.channels.interpolation import _do_interp_dots
+from mne.externals import six
+
+import numpy as np
 
 from sklearn.externals.joblib import Memory
 
@@ -103,6 +106,53 @@ def set_matplotlib_defaults(plt, style='ggplot'):
               'ytick.labelsize': fontsize,
               'axes.titlesize': fontsize + 2}
     plt.rcParams.update(params)
+
+
+def _pprint(params, offset=0, printer=repr):
+    """Pretty print the dictionary 'params' (copied from sklearn)
+
+    Parameters
+    ----------
+    params : dict
+        The dictionary to pretty print
+    offset : int
+        The offset in characters to add at the begin of each line.
+    printer : callable
+        The function to convert entries to strings, typically
+        the builtin str or repr
+    """
+    # Do a multi-line justified repr:
+    options = np.get_printoptions()
+    np.set_printoptions(precision=5, threshold=64, edgeitems=2)
+    params_list = list()
+    this_line_length = offset
+    line_sep = ',\n' + (1 + offset // 2) * ' '
+    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+        if type(v) is float:
+            # use str for representing floating point numbers
+            # this way we get consistent representation across
+            # architectures and versions.
+            this_repr = '%s=%s' % (k, str(v))
+        else:
+            # use repr of the rest
+            this_repr = '%s=%s' % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + '...' + this_repr[-100:]
+        if i > 0:
+            if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
+                params_list.append(line_sep)
+                this_line_length = len(line_sep)
+            else:
+                params_list.append(', ')
+                this_line_length += 2
+        params_list.append(this_repr)
+        this_line_length += len(this_repr)
+
+    np.set_printoptions(**options)
+    lines = ''.join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = '\n'.join(l.rstrip(' ') for l in lines.split('\n'))
+    return lines
 
 
 def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):

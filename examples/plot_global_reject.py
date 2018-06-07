@@ -50,11 +50,10 @@ param_range = np.linspace(40e-6, 200e-6, 30)
 # (RMSE) values at the candidate thresholds, we will use the function
 # :func:`autoreject.validation_curve`.
 
-from autoreject import _GlobalAutoReject, validation_curve  # noqa
+from autoreject import validation_curve  # noqa
 
 _, test_scores = validation_curve(
-    _GlobalAutoReject(), epochs, y=None,
-    param_name="thresh", param_range=param_range, cv=5)
+    epochs, y=None, param_name="thresh", param_range=param_range, cv=5)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]

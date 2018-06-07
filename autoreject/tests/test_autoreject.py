@@ -114,7 +114,7 @@ def test_autoreject():
 
     param_name = 'thresh'
     param_range = np.linspace(40e-6, 200e-6, 10)
-    assert_raises(ValueError, validation_curve, ar_global, X, None,
+    assert_raises(ValueError, validation_curve, X, None,
                   param_name, param_range)
 
     ##########################################################################
@@ -129,8 +129,6 @@ def test_autoreject():
     ch_types = ['mag', 'eeg']
 
     ar = _AutoReject(picks=picks)  # XXX : why do we need this??
-    assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
-                  param_name, param_range)
 
     thresh_func = partial(compute_thresholds,
                           method='bayesian_optimization',

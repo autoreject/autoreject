@@ -19,7 +19,7 @@ from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
                     _handle_picks, _check_data,
-                    _get_picks_by_type)
+                    _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 from .viz import plot_epochs
 
@@ -34,13 +34,11 @@ def _slicemean(obj, this_slice, axis):
     return mean
 
 
-def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
-    """Validation curve on epochs.
+def validation_curve(epochs, y, param_name, param_range, cv=None):
+    """Validation curve on epochs for global autoreject.
 
     Parameters
     ----------
-    estimator : object that implements "fit" and "predict" method.
-        the estimator whose Validation curve must be found
     epochs : instance of mne.Epochs.
         The epochs.
     y : array
@@ -60,9 +58,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
         The scores in the test set
     """
     from sklearn.model_selection import validation_curve
-    if not isinstance(estimator, _GlobalAutoReject):
-        msg = 'No guarantee that it will work on this estimator.'
-        raise NotImplementedError(msg)
+    estimator = _GlobalAutoReject()
 
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
@@ -807,6 +803,15 @@ class AutoRejectCV(object):
 
         if self.consensus is None:
             self.consensus = np.linspace(0, 1.0, 11)
+
+    def __repr__(self):
+        """repr."""
+        class_name = self.__class__.__name__
+        params = dict(n_interpolate=self.n_interpolate,
+                      consensus=self.consensus,
+                      cv=self.cv, verbose=self.verbose, picks=self.picks)
+        return '%s(%s)' % (class_name, _pprint(params,
+                           offset=len(class_name),),)
 
     def fit(self, epochs):
         """Fit the epochs on the AutoRejectCV object.
