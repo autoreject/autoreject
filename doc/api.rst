@@ -14,7 +14,7 @@ Classes
 .. autosummary::
    :toctree: generated/
 
-   LocalAutoRejectCV
+   AutoReject
    RejectLog
    Ransac
 

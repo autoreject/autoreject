@@ -40,10 +40,10 @@ from mne.datasets import sample  # noqa
 ###############################################################################
 # Now, we can import the class required for rejecting and repairing bad
 # epochs. :func:`autoreject.compute_thresholds` is a callable which must be
-# provided to the :class:`autoreject.AutoRejectCV` class for computing
+# provided to the :class:`autoreject.AutoReject` class for computing
 # the channel-level thresholds.
 
-from autoreject import (AutoRejectCV, compute_thresholds,
+from autoreject import (AutoReject, compute_thresholds,
                         set_matplotlib_defaults)  # noqa
 
 ###############################################################################
@@ -90,19 +90,19 @@ thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
                       random_state=42)
 
 ###############################################################################
-# :class:`autoreject.AutoRejectCV` internally does cross-validation to
+# :class:`autoreject.AutoReject` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
 ###############################################################################
-# Note that:class:`autoreject.AutoRejectCV` by design supports
+# Note that:class:`autoreject.AutoReject` by design supports
 # multiple channels.
 # If no picks are passed separate solutions will be computed for each channel
 # type and internally combines. This then readily supports cleaning
 # unseen epochs from the different channel types used during fit.
 # Here we only use a subset of channels to save time.
 
-ar = AutoRejectCV(n_interpolates, consensus_percs, picks=picks,
-                  thresh_func=thresh_func)
+ar = AutoReject(n_interpolates, consensus_percs, picks=picks,
+                thresh_func=thresh_func)
 
 # Not that fitting and transforming can be done on different compatible
 # portions of data if needed.

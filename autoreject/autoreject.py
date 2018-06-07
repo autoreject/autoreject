@@ -444,6 +444,15 @@ class _AutoReject(BaseAutoReject):
         self.picks = picks
         self.verbose = verbose
 
+    def __repr__(self):
+        """repr."""
+        class_name = self.__class__.__name__
+        params = dict(n_interpolate=self.n_interpolate,
+                      consensus=self.consensus,
+                      verbose=self.verbose, picks=self.picks)
+        return '%s(%s)' % (class_name, _pprint(params,
+                           offset=len(class_name),),)
+
     def _vote_bad_epochs(self, epochs, picks):
         """Each channel votes for an epoch as good or bad.
 
@@ -736,11 +745,11 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
     return local_reject, loss
 
 
-class AutoRejectCV(object):
+class AutoReject(object):
     r"""Efficiently find n_interpolate and consensus.
 
     .. note::
-       AutoRejectCV by design supports multiple channels.
+       AutoReject by design supports multiple channels.
        If no picks are passed separate solutions will be computed for each
        channel type and internally combined. This then readily supports
        cleaning unseen epochs from the different channel types used during fit.
@@ -814,7 +823,7 @@ class AutoRejectCV(object):
                            offset=len(class_name),),)
 
     def fit(self, epochs):
-        """Fit the epochs on the AutoRejectCV object.
+        """Fit the epochs on the AutoReject object.
 
         Parameters
         ----------
@@ -823,7 +832,7 @@ class AutoRejectCV(object):
 
         Returns
         -------
-        self : instance of AutoRejectCV
+        self : instance of AutoReject
             The instance.
         """
         self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)

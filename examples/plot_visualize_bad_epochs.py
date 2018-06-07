@@ -84,7 +84,7 @@ epochs = mne.epochs.concatenate_epochs(epochs)
 ###############################################################################
 # Now, we apply autoreject
 
-from autoreject import AutoRejectCV, compute_thresholds  # noqa
+from autoreject import AutoReject, compute_thresholds  # noqa
 from functools import partial  # noqa
 
 this_epoch = epochs['famous']
@@ -95,7 +95,7 @@ picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
 thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ###############################################################################
-# Note that :class:`autoreject.AutoRejectCV` by design supports multiple
+# Note that :class:`autoreject.AutoReject` by design supports multiple
 # channels. If no picks are passed separate solutions will be computed for each
 # channel type and internally combines. This then readily supports cleaning
 # unseen epochs from the different channel types used during fit.
@@ -104,11 +104,11 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 ###############################################################################
 # Also note that once the parameters are learned, any data can be repaired
 # that contains channels that were used during fit. This also means that time
-# may be saved by fitting :class:`autoreject.AutoRejectCV` on a
+# may be saved by fitting :class:`autoreject.AutoReject` on a
 # representative subsample of the data.
 
 
-ar = AutoRejectCV(thresh_func=thresh_func, picks=picks, verbose='tqdm')
+ar = AutoReject(thresh_func=thresh_func, picks=picks, verbose='tqdm')
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 

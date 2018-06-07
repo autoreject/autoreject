@@ -11,7 +11,7 @@ import mne
 from mne.datasets import sample
 from mne import io
 
-from autoreject import (_GlobalAutoReject, _AutoReject, AutoRejectCV,
+from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
 from autoreject.utils import _get_picks_by_type
@@ -133,8 +133,8 @@ def test_autoreject():
     thresh_func = partial(compute_thresholds,
                           method='bayesian_optimization',
                           random_state=42)
-    ar = AutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
-                      n_interpolate=[1, 2], consensus=[0.5, 1])
+    ar = AutoReject(cv=3, picks=picks, thresh_func=thresh_func,
+                    n_interpolate=[1, 2], consensus=[0.5, 1])
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
@@ -160,6 +160,8 @@ def test_autoreject():
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
+    assert_true(repr(ar))
+    assert_true(repr(ar.local_reject_))
     reject_log2 = ar.get_reject_log(epochs_fit)
     assert_array_equal(reject_log.labels, reject_log2.labels)
     assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
@@ -201,8 +203,8 @@ def test_autoreject():
 
     # test that transform ignores bad channels
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
-    ar_bads = AutoRejectCV(cv=3, thresh_func=thresh_func,
-                           n_interpolate=[1, 2], consensus=[0.5, 1])
+    ar_bads = AutoReject(cv=3, thresh_func=thresh_func,
+                         n_interpolate=[1, 2], consensus=[0.5, 1])
     ar_bads.fit(epochs_with_bads_fit)
     epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
 
