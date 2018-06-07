@@ -354,6 +354,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     if picks_by_type is not None:
         threshes = dict()
         for ch_type, this_picks in picks_by_type:
+            if verbose is not False:
+                print('Computing thresholds ...')
             threshes.update(compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
                 picks=this_picks, augment=augment, verbose=verbose,
@@ -375,6 +377,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
 
         my_thresh = delayed(_compute_thresh)
         verbose = 51 if verbose is not False else 0  # send output to stdout
+        if verbose is not False:
+            print('Computing thresholds ...')
         threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
             my_thresh(data[:, pick], cv=cv, method=method, y=y,
                       random_state=random_state) for pick in picks)
@@ -655,8 +659,8 @@ class _LocalAutoReject(BaseAutoReject):
 def _interpolate_bad_epochs(
         epochs, interp_channels, picks, verbose='progressbar'):
     """Actually do the interpolation."""
-    pos = 2  # XXX removed ._leave starte. Perhaps find better heuristic.
     assert len(epochs) == len(interp_channels)
+    pos = 2
 
     for epoch_idx, interp_chs in _pbar(
             list(enumerate(interp_channels)),
@@ -847,6 +851,8 @@ class LocalAutoRejectCV(object):
         self.local_reject_ = dict()
 
         for ch_type, this_picks in picks_by_type:
+            if self.verbose is not False:
+                print('Running autoreject on ch_type=%s' % ch_type)
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, self.thresh_func, this_picks,
                                      self.n_interpolate, self.cv,
@@ -870,7 +876,7 @@ class LocalAutoRejectCV(object):
             self.local_reject_[ch_type] = this_local_reject
 
             if self.verbose is not False:
-                print('Estimated consensus=%0.2f and n_interpolate=%d'
+                print('\n\n\n\nEstimated consensus=%0.2f and n_interpolate=%d'
                       % (self.consensus_[ch_type],
                          self.n_interpolate_[ch_type]))
         return self
