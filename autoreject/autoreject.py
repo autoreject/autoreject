@@ -770,7 +770,8 @@ class LocalAutoRejectCV(object):
     picks : ndarray, shape(n_channels) | None
         The channels to be considered for autoreject. If None, defaults
         to data channels {'meg', 'eeg'}, which will lead fitting and combining
-        autoreject solutions across these channel types.
+        autoreject solutions across these channel types. Note that, if picks is
+        None, autoreject ignores channels marked bad in epochs.info['bads'].
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
