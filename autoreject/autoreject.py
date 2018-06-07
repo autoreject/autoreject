@@ -706,8 +706,8 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
             epochs_interp, interp_channels=interp_channels,
             picks=picks_, verbose=verbose)
 
-        # Hack to allow len(self.cv.split(X)) as ProgressBar
-        # assumes an iterable whereas self.cv.split(X) is a
+        # Hack to allow len(self.cv_.split(X)) as ProgressBar
+        # assumes an iterable whereas self.cv_.split(X) is a
         # generator
         class CVSplits(object):
             def __init__(self, gen, length):
@@ -830,9 +830,9 @@ class LocalAutoRejectCV(object):
         """
         self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
-        # XXX: don't change cv !
-        if isinstance(self.cv, int):
-            self.cv = KFold(n_splits=self.cv)
+        self.cv_ = self.cv
+        if isinstance(self.cv_, int):
+            self.cv_ = KFold(n_splits=self.cv_)
 
         if self.n_interpolate is None:
             if len(self.picks_) < 4:
@@ -855,7 +855,7 @@ class LocalAutoRejectCV(object):
                 print('Running autoreject on ch_type=%s' % ch_type)
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, self.thresh_func, this_picks,
-                                     self.n_interpolate, self.cv,
+                                     self.n_interpolate, self.cv_,
                                      self.consensus, self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
 
