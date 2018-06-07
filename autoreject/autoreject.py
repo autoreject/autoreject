@@ -389,7 +389,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     return threshes
 
 
-class _LocalAutoReject(BaseAutoReject):
+class _AutoReject(BaseAutoReject):
     r"""Automatically reject bad epochs and repair bad trials.
 
     Parameters
@@ -575,7 +575,7 @@ class _LocalAutoReject(BaseAutoReject):
 
         Returns
         -------
-        self : instance of LocalAutoReject
+        self : instance of _AutoReject
             The instance.
         """
         self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
@@ -612,15 +612,6 @@ class _LocalAutoReject(BaseAutoReject):
 
     def transform(self, epochs, return_log=False):
         """Fix and find the bad epochs.
-
-        .. note::
-           LocalAutoReject partially supports multiple channels.
-           While fitting, at this point requires selection of channel types,
-           the transform can handle multiple channel types, if `.threshes_`
-           parameter contains all necessary channels and `.consensus`
-           and `n_interpolate` have meaningful channel type specific
-           settings. These are commonly obtained from
-           :func:`autoreject.LocalAutoRejectCV`.
 
         Parameters
         ----------
@@ -682,9 +673,8 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                     n_folds))
 
     # The thresholds must be learnt from the entire data
-    local_reject = _LocalAutoReject(thresh_func=thresh_func,
-                                    verbose=verbose,
-                                    picks=picks_)
+    local_reject = _AutoReject(thresh_func=thresh_func,
+                               verbose=verbose, picks=picks_)
     local_reject.fit(epochs)
 
     assert len(local_reject.consensus_) == 1  # works with one ch_type
@@ -750,11 +740,11 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
     return local_reject, loss
 
 
-class LocalAutoRejectCV(object):
+class AutoRejectCV(object):
     r"""Efficiently find n_interpolate and consensus.
 
     .. note::
-       LocalAutoRejectCV by design supports multiple channels.
+       AutoRejectCV by design supports multiple channels.
        If no picks are passed separate solutions will be computed for each
        channel type and internally combined. This then readily supports
        cleaning unseen epochs from the different channel types used during fit.
@@ -789,7 +779,7 @@ class LocalAutoRejectCV(object):
     Attributes
     -----------
     local_reject_ : list
-        The instances of LocalAutoReject for each channel type.
+        The instances of _AutoReject for each channel type.
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
@@ -819,7 +809,7 @@ class LocalAutoRejectCV(object):
             self.consensus = np.linspace(0, 1.0, 11)
 
     def fit(self, epochs):
-        """Fit the epochs on the LocalAutoRejectCV object.
+        """Fit the epochs on the AutoRejectCV object.
 
         Parameters
         ----------
@@ -828,7 +818,7 @@ class LocalAutoRejectCV(object):
 
         Returns
         -------
-        self : instance of LocalAutoRejectCV
+        self : instance of AutoRejectCV
             The instance.
         """
         self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)

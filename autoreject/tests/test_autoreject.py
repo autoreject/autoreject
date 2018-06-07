@@ -11,7 +11,7 @@ import mne
 from mne.datasets import sample
 from mne import io
 
-from autoreject import (_GlobalAutoReject, _LocalAutoReject, LocalAutoRejectCV,
+from autoreject import (_GlobalAutoReject, _AutoReject, AutoRejectCV,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
 from autoreject.utils import _get_picks_by_type
@@ -55,7 +55,7 @@ def test_global_autoreject():
 
 
 def test_autoreject():
-    """Test basic _LocalAutoReject functionality."""
+    """Test basic _AutoReject functionality."""
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -69,7 +69,7 @@ def test_autoreject():
                         picks=picks, baseline=(None, 0), decim=10,
                         reject=None, preload=False)[:10]
 
-    ar = _LocalAutoReject()
+    ar = _AutoReject()
     assert_raises(ValueError, ar.fit, epochs)
     epochs.load_data()
 
@@ -128,16 +128,15 @@ def test_autoreject():
         include=[], exclude=[])
     ch_types = ['mag', 'eeg']
 
-    ar = _LocalAutoReject(picks=picks)  # XXX : why do we need this??
+    ar = _AutoReject(picks=picks)  # XXX : why do we need this??
     assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
                   param_name, param_range)
 
     thresh_func = partial(compute_thresholds,
                           method='bayesian_optimization',
                           random_state=42)
-    ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
-                           n_interpolate=[1, 2],
-                           consensus=[0.5, 1])
+    ar = AutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
+                      n_interpolate=[1, 2], consensus=[0.5, 1])
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
@@ -204,9 +203,8 @@ def test_autoreject():
 
     # test that transform ignores bad channels
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
-    ar_bads = LocalAutoRejectCV(cv=3, thresh_func=thresh_func,
-                                n_interpolate=[1, 2],
-                                consensus=[0.5, 1])
+    ar_bads = AutoRejectCV(cv=3, thresh_func=thresh_func,
+                           n_interpolate=[1, 2], consensus=[0.5, 1])
     ar_bads.fit(epochs_with_bads_fit)
     epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
 
