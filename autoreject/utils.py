@@ -120,6 +120,11 @@ def _pprint(params, offset=0, printer=repr):
     printer : callable
         The function to convert entries to strings, typically
         the builtin str or repr
+
+    Returns
+    -------
+    lines : str
+        The pretty print of the dictionary as a string.
     """
     # Do a multi-line justified repr:
     options = np.get_printoptions()
