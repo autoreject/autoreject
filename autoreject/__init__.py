@@ -1,4 +1,4 @@
-from .autoreject import GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV
+from .autoreject import _GlobalAutoReject, _AutoReject, AutoReject
 from .autoreject import RejectLog
 from .autoreject import compute_thresholds, validation_curve, get_rejection_threshold
 from .ransac import Ransac

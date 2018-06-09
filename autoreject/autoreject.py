@@ -19,7 +19,7 @@ from sklearn.externals.joblib import Memory, Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
                     _handle_picks, _check_data,
-                    _get_picks_by_type)
+                    _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 from .viz import plot_epochs
 
@@ -34,13 +34,11 @@ def _slicemean(obj, this_slice, axis):
     return mean
 
 
-def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
-    """Validation curve on epochs.
+def validation_curve(epochs, y, param_name, param_range, cv=None):
+    """Validation curve on epochs for global autoreject.
 
     Parameters
     ----------
-    estimator : object that implements "fit" and "predict" method.
-        the estimator whose Validation curve must be found
     epochs : instance of mne.Epochs.
         The epochs.
     y : array
@@ -60,9 +58,7 @@ def validation_curve(estimator, epochs, y, param_name, param_range, cv=None):
         The scores in the test set
     """
     from sklearn.model_selection import validation_curve
-    if not isinstance(estimator, GlobalAutoReject):
-        msg = 'No guarantee that it will work on this estimator.'
-        raise NotImplementedError(msg)
+    estimator = _GlobalAutoReject()
 
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
@@ -96,8 +92,7 @@ class BaseAutoReject(BaseEstimator):
             return -np.sqrt(np.mean((np.median(X, axis=0) - self.mean_) ** 2))
 
 
-# XXX : make it private !
-class GlobalAutoReject(BaseAutoReject):
+class _GlobalAutoReject(BaseAutoReject):
     """Class to compute global rejection thresholds.
 
     Parameters
@@ -129,7 +124,7 @@ class GlobalAutoReject(BaseAutoReject):
         return self
 
 
-def get_rejection_threshold(epochs, decim=1, random_state=None):
+def get_rejection_threshold(epochs, decim=1, random_state=None, verbose=True):
     """Compute global rejection thresholds.
 
     Parameters
@@ -140,6 +135,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
         The decimation factor.
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
+    verbose : bool
+        If False, suppress all output messages.
 
     Returns
     -------
@@ -174,9 +171,10 @@ def get_rejection_threshold(epochs, decim=1, random_state=None):
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         all_threshes = np.sort(deltas.max(axis=1))
 
-        print('Estimating rejection dictionary for %s' % ch_type)
+        if verbose:
+            print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
-        est = GlobalAutoReject(n_channels=n_channels, n_times=n_times)
+        est = _GlobalAutoReject(n_channels=n_channels, n_times=n_times)
         cv = KFold(n_splits=5, random_state=random_state)
 
         def func(thresh):
@@ -355,6 +353,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     if picks_by_type is not None:
         threshes = dict()
         for ch_type, this_picks in picks_by_type:
+            if verbose is not False:
+                print('Computing thresholds ...')
             threshes.update(compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
                 picks=this_picks, augment=augment, verbose=verbose,
@@ -376,6 +376,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
 
         my_thresh = delayed(_compute_thresh)
         verbose = 51 if verbose is not False else 0  # send output to stdout
+        if verbose is not False:
+            print('Computing thresholds ...')
         threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
             my_thresh(data[:, pick], cv=cv, method=method, y=y,
                       random_state=random_state) for pick in picks)
@@ -383,7 +385,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     return threshes
 
 
-class LocalAutoReject(BaseAutoReject):
+class _AutoReject(BaseAutoReject):
     r"""Automatically reject bad epochs and repair bad trials.
 
     Parameters
@@ -441,6 +443,15 @@ class LocalAutoReject(BaseAutoReject):
         self.thresh_func = thresh_func
         self.picks = picks
         self.verbose = verbose
+
+    def __repr__(self):
+        """repr."""
+        class_name = self.__class__.__name__
+        params = dict(n_interpolate=self.n_interpolate,
+                      consensus=self.consensus,
+                      verbose=self.verbose, picks=self.picks)
+        return '%s(%s)' % (class_name, _pprint(params,
+                           offset=len(class_name),),)
 
     def _vote_bad_epochs(self, epochs, picks):
         """Each channel votes for an epoch as good or bad.
@@ -569,7 +580,7 @@ class LocalAutoReject(BaseAutoReject):
 
         Returns
         -------
-        self : instance of LocalAutoReject
+        self : instance of _AutoReject
             The instance.
         """
         self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
@@ -606,15 +617,6 @@ class LocalAutoReject(BaseAutoReject):
 
     def transform(self, epochs, return_log=False):
         """Fix and find the bad epochs.
-
-        .. note::
-           LocalAutoReject partially supports multiple channels.
-           While fitting, at this point requires selection of channel types,
-           the transform can handle multiple channel types, if `.threshes_`
-           parameter contains all necessary channels and `.consensus`
-           and `n_interpolate` have meaningful channel type specific
-           settings. These are commonly obtained from
-           :func:`autoreject.LocalAutoRejectCV`.
 
         Parameters
         ----------
@@ -656,8 +658,8 @@ class LocalAutoReject(BaseAutoReject):
 def _interpolate_bad_epochs(
         epochs, interp_channels, picks, verbose='progressbar'):
     """Actually do the interpolation."""
-    pos = 2  # XXX removed ._leave starte. Perhaps find better heuristic.
     assert len(epochs) == len(interp_channels)
+    pos = 2
 
     for epoch_idx, interp_chs in _pbar(
             list(enumerate(interp_channels)),
@@ -676,9 +678,8 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                     n_folds))
 
     # The thresholds must be learnt from the entire data
-    local_reject = LocalAutoReject(thresh_func=thresh_func,
-                                   verbose=verbose,
-                                   picks=picks_)
+    local_reject = _AutoReject(thresh_func=thresh_func,
+                               verbose=verbose, picks=picks_)
     local_reject.fit(epochs)
 
     assert len(local_reject.consensus_) == 1  # works with one ch_type
@@ -703,8 +704,8 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
             epochs_interp, interp_channels=interp_channels,
             picks=picks_, verbose=verbose)
 
-        # Hack to allow len(self.cv.split(X)) as ProgressBar
-        # assumes an iterable whereas self.cv.split(X) is a
+        # Hack to allow len(self.cv_.split(X)) as ProgressBar
+        # assumes an iterable whereas self.cv_.split(X) is a
         # generator
         class CVSplits(object):
             def __init__(self, gen, length):
@@ -744,11 +745,11 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
     return local_reject, loss
 
 
-class LocalAutoRejectCV(object):
-    r"""Efficiently find n_interp and n_consensus.
+class AutoReject(object):
+    r"""Efficiently find n_interpolate and consensus.
 
     .. note::
-       LocalAutoRejectCV by design supports multiple channels.
+       AutoReject by design supports multiple channels.
        If no picks are passed separate solutions will be computed for each
        channel type and internally combined. This then readily supports
        cleaning unseen epochs from the different channel types used during fit.
@@ -771,7 +772,8 @@ class LocalAutoRejectCV(object):
     picks : ndarray, shape(n_channels) | None
         The channels to be considered for autoreject. If None, defaults
         to data channels {'meg', 'eeg'}, which will lead fitting and combining
-        autoreject solutions across these channel types.
+        autoreject solutions across these channel types. Note that, if picks is
+        None, autoreject ignores channels marked bad in epochs.info['bads'].
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -782,7 +784,7 @@ class LocalAutoRejectCV(object):
     Attributes
     -----------
     local_reject_ : list
-        The instances of LocalAutoReject for each channel type.
+        The instances of _AutoReject for each channel type.
     threshes_ : dict
         The sensor-level thresholds with channel names as keys
         and the peak-to-peak thresholds as the values.
@@ -811,8 +813,17 @@ class LocalAutoRejectCV(object):
         if self.consensus is None:
             self.consensus = np.linspace(0, 1.0, 11)
 
+    def __repr__(self):
+        """repr."""
+        class_name = self.__class__.__name__
+        params = dict(n_interpolate=self.n_interpolate,
+                      consensus=self.consensus,
+                      cv=self.cv, verbose=self.verbose, picks=self.picks)
+        return '%s(%s)' % (class_name, _pprint(params,
+                           offset=len(class_name),),)
+
     def fit(self, epochs):
-        """Fit the epochs on the LocalAutoRejectCV object.
+        """Fit the epochs on the AutoReject object.
 
         Parameters
         ----------
@@ -821,14 +832,14 @@ class LocalAutoRejectCV(object):
 
         Returns
         -------
-        self : instance of LocalAutoRejectCV
+        self : instance of AutoReject
             The instance.
         """
         self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
-        # XXX: don't change cv !
-        if isinstance(self.cv, int):
-            self.cv = KFold(n_splits=self.cv)
+        self.cv_ = self.cv
+        if isinstance(self.cv_, int):
+            self.cv_ = KFold(n_splits=self.cv_)
 
         if self.n_interpolate is None:
             if len(self.picks_) < 4:
@@ -847,9 +858,11 @@ class LocalAutoRejectCV(object):
         self.local_reject_ = dict()
 
         for ch_type, this_picks in picks_by_type:
+            if self.verbose is not False:
+                print('Running autoreject on ch_type=%s' % ch_type)
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, self.thresh_func, this_picks,
-                                     self.n_interpolate, self.cv,
+                                     self.n_interpolate, self.cv_,
                                      self.consensus, self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
 
@@ -870,7 +883,7 @@ class LocalAutoRejectCV(object):
             self.local_reject_[ch_type] = this_local_reject
 
             if self.verbose is not False:
-                print('Estimated consensus=%0.2f and n_interpolate=%d'
+                print('\n\n\n\nEstimated consensus=%0.2f and n_interpolate=%d'
                       % (self.consensus_[ch_type],
                          self.n_interpolate_[ch_type]))
         return self

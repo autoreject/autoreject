@@ -11,7 +11,7 @@ import mne
 from mne.datasets import sample
 from mne import io
 
-from autoreject import (GlobalAutoReject, LocalAutoReject, LocalAutoRejectCV,
+from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold)
 from autoreject.utils import _get_picks_by_type
@@ -55,7 +55,7 @@ def test_global_autoreject():
 
 
 def test_autoreject():
-    """Test basic LocalAutoReject functionality."""
+    """Test basic _AutoReject functionality."""
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -69,7 +69,7 @@ def test_autoreject():
                         picks=picks, baseline=(None, 0), decim=10,
                         reject=None, preload=False)[:10]
 
-    ar = LocalAutoReject()
+    ar = _AutoReject()
     assert_raises(ValueError, ar.fit, epochs)
     epochs.load_data()
 
@@ -102,19 +102,19 @@ def test_autoreject():
     n_epochs, n_channels, n_times = X.shape
     X = X.reshape(n_epochs, -1)
 
-    ar = GlobalAutoReject()
+    ar = _GlobalAutoReject()
     assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_channels=n_channels)
+    ar = _GlobalAutoReject(n_channels=n_channels)
     assert_raises(ValueError, ar.fit, X)
-    ar = GlobalAutoReject(n_times=n_times)
+    ar = _GlobalAutoReject(n_times=n_times)
     assert_raises(ValueError, ar.fit, X)
-    ar_global = GlobalAutoReject(
+    ar_global = _GlobalAutoReject(
         n_channels=n_channels, n_times=n_times, thresh=40e-6)
     ar_global.fit(X)
 
     param_name = 'thresh'
     param_range = np.linspace(40e-6, 200e-6, 10)
-    assert_raises(ValueError, validation_curve, ar_global, X, None,
+    assert_raises(ValueError, validation_curve, X, None,
                   param_name, param_range)
 
     ##########################################################################
@@ -128,16 +128,13 @@ def test_autoreject():
         include=[], exclude=[])
     ch_types = ['mag', 'eeg']
 
-    ar = LocalAutoReject(picks=picks)  # XXX : why do we need this??
-    assert_raises(NotImplementedError, validation_curve, ar, epochs, None,
-                  param_name, param_range)
+    ar = _AutoReject(picks=picks)  # XXX : why do we need this??
 
     thresh_func = partial(compute_thresholds,
                           method='bayesian_optimization',
                           random_state=42)
-    ar = LocalAutoRejectCV(cv=3, picks=picks, thresh_func=thresh_func,
-                           n_interpolate=[1, 2],
-                           consensus=[0.5, 1])
+    ar = AutoReject(cv=3, picks=picks, thresh_func=thresh_func,
+                    n_interpolate=[1, 2], consensus=[0.5, 1])
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
@@ -163,6 +160,8 @@ def test_autoreject():
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
+    assert_true(repr(ar))
+    assert_true(repr(ar.local_reject_))
     reject_log2 = ar.get_reject_log(epochs_fit)
     assert_array_equal(reject_log.labels, reject_log2.labels)
     assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
@@ -204,9 +203,8 @@ def test_autoreject():
 
     # test that transform ignores bad channels
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
-    ar_bads = LocalAutoRejectCV(cv=3, thresh_func=thresh_func,
-                                n_interpolate=[1, 2],
-                                consensus=[0.5, 1])
+    ar_bads = AutoReject(cv=3, thresh_func=thresh_func,
+                         n_interpolate=[1, 2], consensus=[0.5, 1])
     ar_bads.fit(epochs_with_bads_fit)
     epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
 
