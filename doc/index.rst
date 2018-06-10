@@ -40,8 +40,8 @@ in your script:
 
 .. code:: python
 
-	>>> from autoreject import LocalAutoRejectCV
-	>>> ar = LocalAutoRejectCV()
+	>>> from autoreject import AutoReject
+	>>> ar = AutoReject()
 	>>> epochs_clean = ar.fit_transform(epochs)  # doctest: +SKIP
 
 This will automatically clean an `epochs` object read in using MNE-Python. To get the
