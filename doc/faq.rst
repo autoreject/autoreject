@@ -6,14 +6,28 @@ Should I apply ICA first or autoreject first?
 
 ICA solutions can be affected by high amplitude artifacts, therefore
 we recommend first using autoreject to detect the bad segments, then applying
-ICA, and finally interpolating the bad data::
+ICA, and finally interpolating the bad data.
+
+To ignore bad segments using autoreject (local), we could do::
 
 	>>> ar = Autoreject()
-	>>> ar.fit(epochs)
-	>>> ica.fit(epochs[~ar.reject_log.bad_epochs_idx])
+	>>> _, reject_log = ar.fit(epochs).transform(epochs)
+	>>> ica.fit(epochs[~reject_log.bad_epochs_idx])
+
+or use autoreject (global)::
+
+	>>> reject = get_rejection_threshold(epochs)
+	>>> ica.fit(epochs, reject=reject)
+
+Then, we can apply ICA::
+
 	>>> ica.exclude = [5, 7]  # exclude EOG components
 	>>> ica.transform(epochs)
-	>>> ar.transform(epochs)
+
+Finally, autoreject could be applied to clean the data::
+
+	>>> ar = Autoreject()
+	>>> epochs_clean = ar.fit(epochs).transform(epochs)
 
 Autoreject is not meant for eyeblink artifacts since it affects neighboring
 sensors. Indeed, a spatial filtering method like ICA is better suited for this.
