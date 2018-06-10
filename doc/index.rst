@@ -14,14 +14,18 @@ Installation
 We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_. To install ``autoreject``, you first need to install its dependencies::
 
 	$ conda install numpy matplotlib scipy scikit-learn
-	$ pip install mne
+	$ pip install -U mne
 
 An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'` 
 for nice progressbars.
 
-Then install autoreject::
+Then install the latest release of autoreject use::
 
-	$ pip install git+https://github.com/autoreject/autoreject.git#egg=autoreject
+	$ pip install -U autoreject
+
+If you want to install the latest version of the code (nightly) use::
+
+	$ pip install https://api.github.com/repos/autoreject/autoreject/zipball/master
 
 If you do not have admin privileges on the computer, use the ``--user`` flag
 with `pip`. To upgrade, use the ``--upgrade`` flag provided by `pip`.

@@ -35,6 +35,6 @@ Is it possible to get only bad sensor annotations and not interpolate?
 Yes! Simply do::
 
 	>>> ar.fit(epochs)
-	>>> ar.get_reject_log()
+	>>> ar.get_reject_log(epochs)
 
-No need to run `ar.transform()` in this case.
+No need to run `ar.transform(epochs)` in this case.
