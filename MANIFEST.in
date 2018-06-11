@@ -1,0 +1,16 @@
+include *.yml
+include LICENSE
+recursive-include autoreject *.py
+recursive-include examples *.py
+recursive-include examples *.txt
+
+### Exclude
+
+exclude Makefile
+exclude .coveragerc
+exclude *.yml
+exclude dictionary.txt
+exclude .mailmap
+recursive-exclude autoreject *.pyc
+
+recursive-exclude doc *

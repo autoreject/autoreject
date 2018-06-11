@@ -42,7 +42,10 @@ test-coverage:
 	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \
 	--cover-package=autoreject autoreject
 
-test: test-code test-doc
+test-manifest:
+	check-manifest --ignore doc;
+
+test: test-code test-doc test-manifest
 
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
