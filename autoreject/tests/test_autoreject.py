@@ -2,8 +2,6 @@
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
-from functools import partial
-
 import numpy as np
 from numpy.testing import assert_array_equal
 
