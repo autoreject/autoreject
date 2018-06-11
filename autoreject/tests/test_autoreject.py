@@ -2,8 +2,6 @@
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
-from functools import partial
-
 import numpy as np
 from numpy.testing import assert_array_equal
 
@@ -130,10 +128,7 @@ def test_autoreject():
 
     ar = _AutoReject(picks=picks)  # XXX : why do we need this??
 
-    thresh_func = partial(compute_thresholds,
-                          method='bayesian_optimization',
-                          random_state=42)
-    ar = AutoReject(cv=3, picks=picks, thresh_func=thresh_func,
+    ar = AutoReject(cv=3, picks=picks, random_state=42,
                     n_interpolate=[1, 2], consensus=[0.5, 1])
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
@@ -203,7 +198,7 @@ def test_autoreject():
 
     # test that transform ignores bad channels
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
-    ar_bads = AutoReject(cv=3, thresh_func=thresh_func,
+    ar_bads = AutoReject(cv=3, random_state=42,
                          n_interpolate=[1, 2], consensus=[0.5, 1])
     ar_bads.fit(epochs_with_bads_fit)
     epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
