@@ -131,6 +131,7 @@ html_theme_options = {
     'navbar_links': [
         ("Examples", "auto_examples/index"),
         ("API", "api"),
+        ("FAQ", "faq"),
         ("GitHub", "https://github.com/autoreject/autoreject", True)
     ],
     'bootswatch_theme': "united"
