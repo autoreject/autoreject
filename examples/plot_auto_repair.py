@@ -43,8 +43,7 @@ from mne.datasets import sample  # noqa
 # provided to the :class:`autoreject.AutoReject` class for computing
 # the channel-level thresholds.
 
-from autoreject import (AutoReject, compute_thresholds,
-                        set_matplotlib_defaults)  # noqa
+from autoreject import (AutoReject, set_matplotlib_defaults)  # noqa
 
 ###############################################################################
 # Let us now read in the raw `fif` file for MNE sample dataset.
@@ -83,13 +82,6 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     verbose=False, detrend=0, preload=True)
 
 ###############################################################################
-# First, we set up the function to compute the sensor-level thresholds.
-
-from functools import partial  # noqa
-thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
-                      random_state=42)
-
-###############################################################################
 # :class:`autoreject.AutoReject` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
@@ -102,9 +94,9 @@ thresh_func = partial(compute_thresholds, picks=picks, method='random_search',
 # Here we only use a subset of channels to save time.
 
 ar = AutoReject(n_interpolates, consensus_percs, picks=picks,
-                thresh_func=thresh_func)
+                thresh_method='random_search', random_state=42)
 
-# Not that fitting and transforming can be done on different compatible
+# Note that fitting and transforming can be done on different compatible
 # portions of data if needed.
 ar.fit(epochs['Auditory/Left'])
 epochs_clean = ar.transform(epochs['Auditory/Left'])

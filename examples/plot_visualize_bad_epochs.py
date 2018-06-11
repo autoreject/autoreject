@@ -85,14 +85,11 @@ epochs = mne.epochs.concatenate_epochs(epochs)
 # Now, we apply autoreject
 
 from autoreject import AutoReject, compute_thresholds  # noqa
-from functools import partial  # noqa
 
 this_epoch = epochs['famous']
 exclude = []  # XXX
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
-
-thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 
 ###############################################################################
 # Note that :class:`autoreject.AutoReject` by design supports multiple
@@ -107,8 +104,7 @@ thresh_func = partial(compute_thresholds, random_state=42, n_jobs=1)
 # may be saved by fitting :class:`autoreject.AutoReject` on a
 # representative subsample of the data.
 
-
-ar = AutoReject(thresh_func=thresh_func, picks=picks, verbose='tqdm')
+ar = AutoReject(picks=picks, random_state=42, n_jobs=1, verbose='tqdm')
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
