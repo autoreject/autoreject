@@ -27,19 +27,6 @@ Functions
    get_rejection_threshold
    validation_curve
 
-
-Visualization
-=============
-
-Functions
-
-.. currentmodule:: autoreject.viz
-
-.. autosummary::
-   :toctree: generated/
-
-   plot_epochs
-
 Utilities
 =========
 
