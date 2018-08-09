@@ -5,7 +5,6 @@
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
 import os.path as op
-import warnings
 from functools import partial
 
 import numpy as np
@@ -1149,11 +1148,10 @@ def _apply_drop(reject_log, epochs, threshes_, picks_,
     if np.any(reject_log.bad_epochs):
         epochs.drop(np.nonzero(reject_log.bad_epochs)[0],
                     reason='AUTOREJECT')
-    else:
-        warnings.warn(
-            "No bad epochs were found for your data. Returning "
-            "a copy of the data you wanted to clean. Interpolation "
-            "may have been done.")
+    elif verbose:
+        print("No bad epochs were found for your data. Returning "
+              "a copy of the data you wanted to clean. Interpolation "
+              "may have been done.")
 
 
 def _get_interp_chs(labels, ch_names, picks):
