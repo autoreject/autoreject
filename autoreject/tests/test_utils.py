@@ -63,3 +63,20 @@ def test_utils():
     _interpolate_bads_eeg(evoked_ar, picks=None)
     mne.channels.interpolation._interpolate_bads_eeg(evoked_mne)
     assert_array_equal(evoked_ar.data, evoked_mne.data)
+
+
+def test_interpolate_bads():
+    """Test interpolate bads"""
+    event_id = None
+    events = mne.find_events(raw)
+    tmin, tmax = -0.2, 0.5
+    for ii, ch_name in enumerate(raw.info['ch_names'][:14]):
+        raw.set_channel_types({ch_name: 'bio'})
+        raw.rename_channels({ch_name: 'BIO%02d' % ii})
+
+    picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=False)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        baseline=(None, 0), decim=10,
+                        reject=None, preload=True)[:10]
+    epochs.info['bads'] = ['MEG 2212']
+    interpolate_bads(epochs, picks)
