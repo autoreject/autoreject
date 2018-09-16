@@ -13,7 +13,7 @@ before_install:
 install:
     - conda create -n testenv --yes pip python=${PYTHON_VERSION}
     - source activate testenv
-    - conda install --yes --quiet numpy=1.12 scipy=0.19 scikit-learn=0.18 matplotlib
+    - conda install --yes --quiet numpy scipy scikit-learn matplotlib
     - conda install --yes --quiet nose coverage
     - pip install -q flake8 mne check-manifest
     - pip install coverage coveralls
