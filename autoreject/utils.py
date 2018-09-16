@@ -10,7 +10,7 @@ import numpy as np
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
-from mne import pick_types, pick_channels, pick_info
+from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 from mne.externals import six
 
