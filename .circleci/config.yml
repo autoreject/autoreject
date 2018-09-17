@@ -1,0 +1,42 @@
+version: 2
+jobs:
+    build:
+        docker:
+            - image: circleci/python:3.7.0-stretch-node-browsers
+        steps:
+            - checkout
+            - restore_cache:
+                keys:
+                  - data-cache
+            - run:
+                name: Install miniconda
+                command: |
+                  wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh;
+                  chmod +x ~/miniconda.sh;
+                  ~/miniconda.sh -b -p ~/miniconda;
+                  echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+            - run:
+                name: Setup Python environment
+                command: |
+                    pip install --upgrade pip
+                    pip install matplotlib Pillow
+                    pip install sphinx sphinx-gallery sphinx_bootstrap_theme
+                    pip install cython scipy
+                    pip install --upgrade mne
+                    pip install scikit-learn==0.18
+                    pip install scikit-optimize tqdm
+                    pip install numpydoc
+                    pip install -e .
+            - run:
+                name: Build the documentation
+                command: |
+                    cd doc && make html
+            - store_artifacts:
+                path: doc/_build/html/
+                destination: html
+            - save_cache:
+                key: data-cache
+                paths:
+                  - ~/.mne
+                  - ~/mne_data/MNE-sample-data
+                  - examples/ds117
