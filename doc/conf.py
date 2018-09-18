@@ -132,6 +132,7 @@ html_theme_options = {
         ("Examples", "auto_examples/index"),
         ("API", "api"),
         ("FAQ", "faq"),
+        ("What's new", "whats_new"),
         ("GitHub", "https://github.com/autoreject/autoreject", True)
     ],
     'bootswatch_theme': "united"

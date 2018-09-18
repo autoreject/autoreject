@@ -10,7 +10,7 @@ import numpy as np
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
-from mne import pick_types, pick_channels, pick_info
+from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 from mne.externals import six
 
@@ -356,22 +356,20 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     else:
         picked_info = inst.info.copy()
 
-    def get_picks_bad_good(info):
-        picks_meg = pick_types(info, meg=True, eeg=False, exclude=[],
-                               stim=False)
-        ch_names = [info['ch_names'][p] for p in picks_meg]
-        picks_good = pick_types(info, meg=True, eeg=False, exclude='bads',
-                                stim=False)
+    def get_picks_bad_good(info, picks_meg):
+        picks_good = [p for p in picks_meg
+                      if info['ch_names'][p] not in info['bads']]
 
         # select the bad meg channel to be interpolated
         if len(info['bads']) == 0:
             picks_bad = []
         else:
-            picks_bad = pick_channels(ch_names, info['bads'],
-                                      exclude=[])
+            picks_bad = [p for p in picks_meg
+                         if info['ch_names'][p] in info['bads']]
         return picks_meg, picks_good, picks_bad
 
-    picks_meg, picks_good, picks_bad = get_picks_bad_good(picked_info)
+    picks_meg, picks_good, picks_bad = get_picks_bad_good(
+        picked_info, range(picked_info['nchan']))
     # return without doing anything if there are no meg channels
     if len(picks_meg) == 0 or len(picks_bad) == 0:
         return
@@ -386,7 +384,8 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     # the unpicked info of the data.
     # Since we may have picked the info, we need to double map
     # the indices.
-    _, picks_good_, picks_bad_orig = get_picks_bad_good(inst.info.copy())
+    _, picks_good_, picks_bad_orig = get_picks_bad_good(
+        inst.info.copy(), picks)
     ch_names_a = [picked_info['ch_names'][pp] for pp in picks_bad]
     ch_names_b = [inst.info['ch_names'][pp] for pp in picks_bad_orig]
     assert ch_names_a == ch_names_b
