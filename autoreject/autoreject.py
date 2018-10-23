@@ -4,6 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
+import os.path as op
 import warnings
 from functools import partial
 
@@ -12,6 +13,7 @@ from scipy.stats.distributions import uniform
 
 import mne
 from mne import pick_types
+from mne.externals.h5io import read_hdf5, write_hdf5
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -79,6 +81,23 @@ def validation_curve(epochs, y, param_name, param_range, cv=None):
                          cv=cv, n_jobs=1, verbose=0)
 
     return train_scores, test_scores
+
+
+def read_autoreject(fname):
+    """Read autoreject object.
+
+    Parameters
+    ----------
+    fname : str
+        The filename where the autoreject object is saved.
+
+    Returns
+    -------
+    ar : instance of autoreject.AutoReject
+    """
+    state = read_hdf5(fname, title='autoreject')
+    ar = AutoReject(state)
+    return ar
 
 
 class BaseAutoReject(BaseEstimator):
@@ -830,6 +849,22 @@ class AutoReject(object):
         return '%s(%s)' % (class_name, _pprint(params,
                            offset=len(class_name),),)
 
+    def __getstate__(self):
+        """Get the state of autoreject as a dictionary."""
+        state = dict()
+        opt_params = []
+
+        non_opt_params = [
+            'n_interpolate', 'n_interpolate_', 'consensus', 'consensus_',
+            'cv', 'picks', 'picks_', 'n_jobs', 'verbose', 'random_state',
+            'threshes_', 'loss_']  # local_reject_
+        for param in non_opt_params:
+            state[param] = getattr(self, param)
+        for param in opt_params:
+            if hasattr(self, param):
+                state[param] = getattr(self, param)
+        return state
+
     def fit(self, epochs):
         """Fit the epochs on the AutoReject object.
 
@@ -998,6 +1033,25 @@ class AutoReject(object):
             The rejection log. Returned only of return_log is True.
         """
         return self.fit(epochs).transform(epochs, return_log=return_log)
+
+    def save(self, fname, overwrite=False):
+        """Save autoreject object.
+
+        Parameters
+        ----------
+        fname : str
+            The filename to save to. The filename must end
+            in '.h5' or '.hdf5'.
+        overwrite : bool
+            If True, overwrite file if it already exists. Defaults to False.
+        """
+        fname = op.realpath(fname)
+        if not overwrite and op.isfile(fname):
+            raise ValueError('%s already exists. Please make overwrite=True'
+                             'if you want to overwrite this file' % fname)
+
+        write_hdf5(fname, self.__getstate__(), overwrite=overwrite,
+                   title='autoreject')
 
 
 def _check_fit(epochs, threshes_, picks_):

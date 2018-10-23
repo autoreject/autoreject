@@ -2,16 +2,19 @@
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
+import os.path as op
+
 import numpy as np
 from numpy.testing import assert_array_equal
 
 import mne
 from mne.datasets import sample
 from mne import io
+from mne.utils import _TempDir
 
 from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
-                        get_rejection_threshold)
+                        get_rejection_threshold, read_autoreject)
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
@@ -241,3 +244,27 @@ def test_autoreject():
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
     assert_equal(set(threshes_b.keys()), set(ch_names))
+
+
+def test_io():
+    """Test IO functionality."""
+    event_id = None
+    tmin, tmax = -0.2, 0.5
+    events = mne.find_events(raw)
+    savedir = _TempDir()
+    fname = op.join(savedir, 'autoreject.hdf5')
+
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
+                           eog=True, exclude=[])
+    # raise error if preload is false
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0),
+                        reject=None, preload=False)
+
+    ar = AutoReject(cv=3, random_state=42, n_interpolate=[1, 2],
+                    consensus=[0.5, 1])
+    ar.save(fname)
+    read_autoreject(fname)
+    ar.fit(epochs)
+    ar.save(fname)
+    read_autoreject(fname)
