@@ -254,17 +254,27 @@ def test_io():
     savedir = _TempDir()
     fname = op.join(savedir, 'autoreject.hdf5')
 
-    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False,
-                           eog=True, exclude=[])
+    include = [u'EEG %03d' % i for i in range(1, 45, 3)]
+    picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
+                           eog=True, include=include, exclude=[])
+
     # raise error if preload is false
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        picks=picks, baseline=(None, 0),
-                        reject=None, preload=False)
+                        picks=picks, baseline=(None, 0), decim=4,
+                        reject=None, preload=True)[:10]
+    ar = AutoReject(cv=2, random_state=42, n_interpolate=[1],
+                    consensus=[0.5])
+    ar.save(fname)  # save without fitting
 
-    ar = AutoReject(cv=3, random_state=42, n_interpolate=[1, 2],
-                    consensus=[0.5, 1])
-    ar.save(fname)
-    read_autoreject(fname)
+    # check that fit after saving is the same as fit
+    # without saving
+    ar2 = read_autoreject(fname)
     ar.fit(epochs)
-    ar.save(fname)
-    read_autoreject(fname)
+    ar2.fit(epochs)
+    assert_equal(np.sum([ar.threshes_[k] - ar2.threshes_[k]
+                        for k in ar.threshes_.keys()]), 0.)
+
+    assert_raises(ValueError, ar.save, fname)
+    ar.save(fname, overwrite=True)
+    ar3 = read_autoreject(fname)
+    epochs_clean = ar3.transform(epochs)

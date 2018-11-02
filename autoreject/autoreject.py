@@ -30,6 +30,10 @@ from .viz import plot_epochs
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
+INIT_PARAMS = ['n_interpolate', 'consensus', 'cv',
+               'picks', 'n_jobs', 'verbose', 'random_state',
+               'thresh_method']
+
 
 def _slicemean(obj, this_slice, axis):
     mean = np.nan
@@ -96,7 +100,9 @@ def read_autoreject(fname):
     ar : instance of autoreject.AutoReject
     """
     state = read_hdf5(fname, title='autoreject')
-    ar = AutoReject(state)
+    init_kwargs = {param: state[param] for param in INIT_PARAMS}
+    ar = AutoReject(**init_kwargs)
+    ar.__setstate__(state)
     return ar
 
 
@@ -852,18 +858,24 @@ class AutoReject(object):
     def __getstate__(self):
         """Get the state of autoreject as a dictionary."""
         state = dict()
-        opt_params = []
 
-        non_opt_params = [
-            'n_interpolate', 'n_interpolate_', 'consensus', 'consensus_',
-            'cv', 'picks', 'picks_', 'n_jobs', 'verbose', 'random_state',
-            'threshes_', 'loss_']  # local_reject_
-        for param in non_opt_params:
+        fit_params = [
+            'n_interpolate_', 'consensus_', 'picks_',
+            'threshes_', 'loss_',
+        ]
+
+        for param in INIT_PARAMS:
             state[param] = getattr(self, param)
-        for param in opt_params:
+        for param in fit_params:
             if hasattr(self, param):
                 state[param] = getattr(self, param)
         return state
+
+    def __setstate__(self, state):
+        """Set the state of autoreject."""
+        for param in state.keys():
+            if param not in INIT_PARAMS:
+                setattr(self, param, state[param])
 
     def fit(self, epochs):
         """Fit the epochs on the AutoReject object.
