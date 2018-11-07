@@ -30,9 +30,9 @@ from .viz import plot_epochs
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
-INIT_PARAMS = ['n_interpolate', 'consensus', 'cv',
+INIT_PARAMS = ('n_interpolate', 'consensus', 'cv',
                'picks', 'n_jobs', 'verbose', 'random_state',
-               'thresh_method']
+               'thresh_method')
 
 
 def _slicemean(obj, this_slice, axis):
@@ -861,20 +861,36 @@ class AutoReject(object):
 
         fit_params = [
             'n_interpolate_', 'consensus_', 'picks_',
-            'threshes_', 'loss_',
+            'threshes_', 'loss_'
         ]
+
+        local_reject_params = [
+            'consensus', 'n_interpolate', 'picks', 'verbose']
 
         for param in INIT_PARAMS:
             state[param] = getattr(self, param)
         for param in fit_params:
             if hasattr(self, param):
                 state[param] = getattr(self, param)
+        if hasattr(self, 'local_reject_'):
+            state['local_reject_'] = dict()
+            for ch_type in self.local_reject_:
+                state['local_reject_'][ch_type] = dict()
+                for param in local_reject_params:
+                    state['local_reject_'][ch_type][param] = \
+                        getattr(self.local_reject_[ch_type], param)
         return state
 
     def __setstate__(self, state):
         """Set the state of autoreject."""
         for param in state.keys():
-            if param not in INIT_PARAMS:
+            if param == 'local_reject_':
+                local_reject_ = dict()
+                for ch_type in state['local_reject_']:
+                    local_reject_[ch_type] = \
+                        _AutoReject(**state['local_reject_'][ch_type])
+                self.local_reject_ = local_reject_
+            elif param not in INIT_PARAMS:
                 setattr(self, param, state[param])
 
     def fit(self, epochs):
