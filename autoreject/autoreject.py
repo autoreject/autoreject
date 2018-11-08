@@ -34,6 +34,9 @@ INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
                'verbose', 'n_jobs', 'cv', 'random_state',
                'thresh_method')
 
+FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_', 'picks_',
+              'loss_')
+
 
 def _slicemean(obj, this_slice, axis):
     mean = np.nan
@@ -859,14 +862,9 @@ class AutoReject(object):
         """Get the state of autoreject as a dictionary."""
         state = dict()
 
-        fit_params_cv = (
-            'n_interpolate_', 'consensus_', 'picks_',
-            'threshes_', 'loss_'
-        )
-
         for param in INIT_PARAMS:
             state[param] = getattr(self, param)
-        for param in fit_params_cv:
+        for param in FIT_PARAMS:
             if hasattr(self, param):
                 state[param] = getattr(self, param)
 
@@ -874,8 +872,7 @@ class AutoReject(object):
             state['local_reject_'] = dict()
             for ch_type in self.local_reject_:
                 state['local_reject_'][ch_type] = dict()
-                for param in INIT_PARAMS[:4] + \
-                        ('threshes_', 'n_interpolate_', 'consensus_'):
+                for param in INIT_PARAMS[:4] + FIT_PARAMS[:3]:
                     state['local_reject_'][ch_type][param] = \
                         getattr(self.local_reject_[ch_type], param)
         return state
@@ -891,7 +888,7 @@ class AutoReject(object):
                         for key in INIT_PARAMS[:4]
                     }
                     local_reject_[ch_type] = _AutoReject(**init_kwargs)
-                    for key in ('threshes_', 'n_interpolate_', 'consensus_'):
+                    for key in FIT_PARAMS[:3]:
                         setattr(local_reject_[ch_type], key,
                                 state['local_reject_'][ch_type][key])
                 self.local_reject_ = local_reject_
