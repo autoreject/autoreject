@@ -30,8 +30,8 @@ from .viz import plot_epochs
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
-INIT_PARAMS = ('n_interpolate', 'consensus', 'cv',
-               'picks', 'n_jobs', 'verbose', 'random_state',
+INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
+               'verbose', 'n_jobs', 'cv', 'random_state',
                'thresh_method')
 
 
@@ -859,24 +859,23 @@ class AutoReject(object):
         """Get the state of autoreject as a dictionary."""
         state = dict()
 
-        fit_params = [
+        fit_params_cv = (
             'n_interpolate_', 'consensus_', 'picks_',
             'threshes_', 'loss_'
-        ]
-
-        local_reject_params = [
-            'consensus', 'n_interpolate', 'picks', 'verbose']
+        )
 
         for param in INIT_PARAMS:
             state[param] = getattr(self, param)
-        for param in fit_params:
+        for param in fit_params_cv:
             if hasattr(self, param):
                 state[param] = getattr(self, param)
+
         if hasattr(self, 'local_reject_'):
             state['local_reject_'] = dict()
             for ch_type in self.local_reject_:
                 state['local_reject_'][ch_type] = dict()
-                for param in local_reject_params:
+                for param in INIT_PARAMS[:4] + \
+                        ('threshes_', 'n_interpolate_', 'consensus_'):
                     state['local_reject_'][ch_type][param] = \
                         getattr(self.local_reject_[ch_type], param)
         return state
@@ -887,8 +886,14 @@ class AutoReject(object):
             if param == 'local_reject_':
                 local_reject_ = dict()
                 for ch_type in state['local_reject_']:
-                    local_reject_[ch_type] = \
-                        _AutoReject(**state['local_reject_'][ch_type])
+                    init_kwargs = {
+                        key: state['local_reject_'][ch_type][key]
+                        for key in INIT_PARAMS[:4]
+                    }
+                    local_reject_[ch_type] = _AutoReject(**init_kwargs)
+                    for key in ('threshes_', 'n_interpolate_', 'consensus_'):
+                        setattr(local_reject_[ch_type], key,
+                                state['local_reject_'][ch_type][key])
                 self.local_reject_ = local_reject_
             elif param not in INIT_PARAMS:
                 setattr(self, param, state[param])

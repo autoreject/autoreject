@@ -277,4 +277,6 @@ def test_io():
     assert_raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)
     ar3 = read_autoreject(fname)
-    epochs_clean = ar3.transform(epochs)
+    epochs_clean1 = ar.transform(epochs)
+    epochs_clean2 = ar3.transform(epochs)
+    assert_array_equal(epochs_clean1.get_data(), epochs_clean2.get_data())
