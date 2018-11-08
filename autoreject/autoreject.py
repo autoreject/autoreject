@@ -30,12 +30,12 @@ from .viz import plot_epochs
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
 
-INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
-               'verbose', 'n_jobs', 'cv', 'random_state',
-               'thresh_method')
+_INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
+                'verbose', 'n_jobs', 'cv', 'random_state',
+                'thresh_method')
 
-FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_', 'picks_',
-              'loss_')
+_FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_', 'picks_',
+               'loss_')
 
 
 def _slicemean(obj, this_slice, axis):
@@ -103,7 +103,7 @@ def read_autoreject(fname):
     ar : instance of autoreject.AutoReject
     """
     state = read_hdf5(fname, title='autoreject')
-    init_kwargs = {param: state[param] for param in INIT_PARAMS}
+    init_kwargs = {param: state[param] for param in _INIT_PARAMS}
     ar = AutoReject(**init_kwargs)
     ar.__setstate__(state)
     return ar
@@ -862,9 +862,9 @@ class AutoReject(object):
         """Get the state of autoreject as a dictionary."""
         state = dict()
 
-        for param in INIT_PARAMS:
+        for param in _INIT_PARAMS:
             state[param] = getattr(self, param)
-        for param in FIT_PARAMS:
+        for param in _FIT_PARAMS:
             if hasattr(self, param):
                 state[param] = getattr(self, param)
 
@@ -872,7 +872,7 @@ class AutoReject(object):
             state['local_reject_'] = dict()
             for ch_type in self.local_reject_:
                 state['local_reject_'][ch_type] = dict()
-                for param in INIT_PARAMS[:4] + FIT_PARAMS[:3]:
+                for param in _INIT_PARAMS[:4] + _FIT_PARAMS[:3]:
                     state['local_reject_'][ch_type][param] = \
                         getattr(self.local_reject_[ch_type], param)
         return state
@@ -885,14 +885,14 @@ class AutoReject(object):
                 for ch_type in state['local_reject_']:
                     init_kwargs = {
                         key: state['local_reject_'][ch_type][key]
-                        for key in INIT_PARAMS[:4]
+                        for key in _INIT_PARAMS[:4]
                     }
                     local_reject_[ch_type] = _AutoReject(**init_kwargs)
-                    for key in FIT_PARAMS[:3]:
+                    for key in _FIT_PARAMS[:3]:
                         setattr(local_reject_[ch_type], key,
                                 state['local_reject_'][ch_type][key])
                 self.local_reject_ = local_reject_
-            elif param not in INIT_PARAMS:
+            elif param not in _INIT_PARAMS:
                 setattr(self, param, state[param])
 
     def fit(self, epochs):
