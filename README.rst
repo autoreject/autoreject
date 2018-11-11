@@ -27,6 +27,8 @@ These are the dependencies to use autoreject:
 * mne-python (>=0.14)
 * scikit-learn (>=0.18)
 
+Two optional dependencies are `tqdm` (for nice progressbars) and `h5py` (for IO).
+
 Cite
 ----
 
