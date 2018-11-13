@@ -14,7 +14,7 @@ from mne.utils import _TempDir
 
 from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
-                        get_rejection_threshold, read_autoreject)
+                        get_rejection_threshold, read_auto_reject)
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
@@ -268,7 +268,7 @@ def test_io():
 
     # check that fit after saving is the same as fit
     # without saving
-    ar2 = read_autoreject(fname)
+    ar2 = read_auto_reject(fname)
     ar.fit(epochs)
     ar2.fit(epochs)
     assert_equal(np.sum([ar.threshes_[k] - ar2.threshes_[k]
@@ -276,7 +276,7 @@ def test_io():
 
     assert_raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)
-    ar3 = read_autoreject(fname)
+    ar3 = read_auto_reject(fname)
     epochs_clean1, reject_log1 = ar.transform(epochs, return_log=True)
     epochs_clean2, reject_log2 = ar3.transform(epochs, return_log=True)
     assert_array_equal(epochs_clean1.get_data(), epochs_clean2.get_data())

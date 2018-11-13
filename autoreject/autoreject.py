@@ -90,13 +90,13 @@ def validation_curve(epochs, y, param_name, param_range, cv=None):
     return train_scores, test_scores
 
 
-def read_autoreject(fname):
-    """Read autoreject object.
+def read_auto_reject(fname):
+    """Read AutoReject object.
 
     Parameters
     ----------
     fname : str
-        The filename where the autoreject object is saved.
+        The filename where the AutoReject object is saved.
 
     Returns
     -------
