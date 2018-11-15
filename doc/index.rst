@@ -17,7 +17,8 @@ We recommend the `Anaconda Python distribution <https://www.continuum.io/downloa
 	$ pip install -U mne
 
 An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'` 
-for nice progressbars.
+for nice progressbars. In case you want to be able to read and write `autoreject` objects using the HDF5 format,
+you may also want to install `h5py <https://pypi.org/project/h5py/>`_.
 
 Then install the latest release of autoreject use::
 

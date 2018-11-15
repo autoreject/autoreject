@@ -15,7 +15,7 @@ install:
     - source activate testenv
     - conda install --yes --quiet numpy scipy scikit-learn matplotlib
     - conda install --yes --quiet nose coverage
-    - pip install -q flake8 mne check-manifest
+    - pip install -q flake8 mne check-manifest h5py
     - pip install coverage coveralls
     - python setup.py install
 script:

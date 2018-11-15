@@ -2,16 +2,19 @@
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
+import os.path as op
+
 import numpy as np
 from numpy.testing import assert_array_equal
 
 import mne
 from mne.datasets import sample
 from mne import io
+from mne.utils import _TempDir
 
 from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
-                        get_rejection_threshold)
+                        get_rejection_threshold, read_auto_reject)
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
@@ -241,3 +244,40 @@ def test_autoreject():
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
     assert_equal(set(threshes_b.keys()), set(ch_names))
+
+
+def test_io():
+    """Test IO functionality."""
+    event_id = None
+    tmin, tmax = -0.2, 0.5
+    events = mne.find_events(raw)
+    savedir = _TempDir()
+    fname = op.join(savedir, 'autoreject.hdf5')
+
+    include = [u'EEG %03d' % i for i in range(1, 45, 3)]
+    picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
+                           eog=True, include=include, exclude=[])
+
+    # raise error if preload is false
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0), decim=4,
+                        reject=None, preload=True)[:10]
+    ar = AutoReject(cv=2, random_state=42, n_interpolate=[1],
+                    consensus=[0.5])
+    ar.save(fname)  # save without fitting
+
+    # check that fit after saving is the same as fit
+    # without saving
+    ar2 = read_auto_reject(fname)
+    ar.fit(epochs)
+    ar2.fit(epochs)
+    assert_equal(np.sum([ar.threshes_[k] - ar2.threshes_[k]
+                        for k in ar.threshes_.keys()]), 0.)
+
+    assert_raises(ValueError, ar.save, fname)
+    ar.save(fname, overwrite=True)
+    ar3 = read_auto_reject(fname)
+    epochs_clean1, reject_log1 = ar.transform(epochs, return_log=True)
+    epochs_clean2, reject_log2 = ar3.transform(epochs, return_log=True)
+    assert_array_equal(epochs_clean1.get_data(), epochs_clean2.get_data())
+    assert_array_equal(reject_log1.labels, reject_log2.labels)

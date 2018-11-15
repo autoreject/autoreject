@@ -15,6 +15,9 @@ Current
 Changelog
 ~~~~~~~~~
 
+- Introduced a new method :meth:`autoreject.AutoReject.save` and function :func:`autoreject.read_auto_reject`
+  for IO of autoreject objects, by `Mainak Jas`_ in `#120 <https://github.com/autoreject/autoreject/pull/120>`_
+
 Bug
 ~~~
 

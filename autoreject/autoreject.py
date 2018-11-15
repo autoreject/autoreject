@@ -4,6 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
+import os.path as op
 import warnings
 from functools import partial
 
@@ -12,6 +13,7 @@ from scipy.stats.distributions import uniform
 
 import mne
 from mne import pick_types
+from mne.externals.h5io import read_hdf5, write_hdf5
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -27,6 +29,13 @@ from .viz import plot_epochs
 
 mem = Memory(cachedir='cachedir')
 mem.clear(warn=False)
+
+_INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
+                'verbose', 'n_jobs', 'cv', 'random_state',
+                'thresh_method')
+
+_FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_', 'picks_',
+               'loss_')
 
 
 def _slicemean(obj, this_slice, axis):
@@ -79,6 +88,25 @@ def validation_curve(epochs, y, param_name, param_range, cv=None):
                          cv=cv, n_jobs=1, verbose=0)
 
     return train_scores, test_scores
+
+
+def read_auto_reject(fname):
+    """Read AutoReject object.
+
+    Parameters
+    ----------
+    fname : str
+        The filename where the AutoReject object is saved.
+
+    Returns
+    -------
+    ar : instance of autoreject.AutoReject
+    """
+    state = read_hdf5(fname, title='autoreject')
+    init_kwargs = {param: state[param] for param in _INIT_PARAMS}
+    ar = AutoReject(**init_kwargs)
+    ar.__setstate__(state)
+    return ar
 
 
 class BaseAutoReject(BaseEstimator):
@@ -830,6 +858,43 @@ class AutoReject(object):
         return '%s(%s)' % (class_name, _pprint(params,
                            offset=len(class_name),),)
 
+    def __getstate__(self):
+        """Get the state of autoreject as a dictionary."""
+        state = dict()
+
+        for param in _INIT_PARAMS:
+            state[param] = getattr(self, param)
+        for param in _FIT_PARAMS:
+            if hasattr(self, param):
+                state[param] = getattr(self, param)
+
+        if hasattr(self, 'local_reject_'):
+            state['local_reject_'] = dict()
+            for ch_type in self.local_reject_:
+                state['local_reject_'][ch_type] = dict()
+                for param in _INIT_PARAMS[:4] + _FIT_PARAMS[:3]:
+                    state['local_reject_'][ch_type][param] = \
+                        getattr(self.local_reject_[ch_type], param)
+        return state
+
+    def __setstate__(self, state):
+        """Set the state of autoreject."""
+        for param in state.keys():
+            if param == 'local_reject_':
+                local_reject_ = dict()
+                for ch_type in state['local_reject_']:
+                    init_kwargs = {
+                        key: state['local_reject_'][ch_type][key]
+                        for key in _INIT_PARAMS[:4]
+                    }
+                    local_reject_[ch_type] = _AutoReject(**init_kwargs)
+                    for key in _FIT_PARAMS[:3]:
+                        setattr(local_reject_[ch_type], key,
+                                state['local_reject_'][ch_type][key])
+                self.local_reject_ = local_reject_
+            elif param not in _INIT_PARAMS:
+                setattr(self, param, state[param])
+
     def fit(self, epochs):
         """Fit the epochs on the AutoReject object.
 
@@ -998,6 +1063,25 @@ class AutoReject(object):
             The rejection log. Returned only of return_log is True.
         """
         return self.fit(epochs).transform(epochs, return_log=return_log)
+
+    def save(self, fname, overwrite=False):
+        """Save autoreject object.
+
+        Parameters
+        ----------
+        fname : str
+            The filename to save to. The filename must end
+            in '.h5' or '.hdf5'.
+        overwrite : bool
+            If True, overwrite file if it already exists. Defaults to False.
+        """
+        fname = op.realpath(fname)
+        if not overwrite and op.isfile(fname):
+            raise ValueError('%s already exists. Please make overwrite=True'
+                             'if you want to overwrite this file' % fname)
+
+        write_hdf5(fname, self.__getstate__(), overwrite=overwrite,
+                   title='autoreject')
 
 
 def _check_fit(epochs, threshes_, picks_):
