@@ -12,7 +12,6 @@ import mne
 from mne.utils import check_version as version_is_greater_equal
 from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
-from mne.externals import six
 
 from sklearn.externals.joblib import Memory
 
@@ -132,7 +131,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
