@@ -413,7 +413,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
     mne.set_log_level('WARNING')
 
-    def _compute_dots(info, ch_names, mode='fast'):
+    def _compute_dots(info, locs3d, mode='fast'):
         """Compute all-to-all dots."""
         templates = _read_coil_defs()
         coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
@@ -439,8 +439,9 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
 
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
+    locs3d = np.array([ch['loc'][:3] for ch in info['chs']])
     self_dots, cross_dots = _compute_fast_dots(
-        info, info['ch_names'], mode=mode)
+        info, locs3d, mode=mode)
 
     cross_dots = cross_dots[pick_to, :][:, pick_from]
     self_dots = self_dots[pick_from, :][:, pick_from]

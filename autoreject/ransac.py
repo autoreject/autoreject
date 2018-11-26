@@ -149,7 +149,7 @@ class Ransac(object):
             # don't do the following as it will sort the channels!
             # pick_from = pick_channels(ch_names, ch_subsets[idx])
             pick_from = np.array([ch_names.index(name)
-                                 for name in ch_subsets[idx]])
+                                  for name in ch_subsets[idx]])
             mapping = np.zeros((n_channels, n_channels))
             if self.ch_type == 'meg':
                 mapping[:, pick_from] = _fast_map_meg_channels(
