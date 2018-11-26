@@ -225,18 +225,19 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
     ch_names = [inst.info['ch_names'][p] for p in picks]
     for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
                                         desc=mesg, verbose=verbose)):
-        inst_clean = inst.copy()
-        inst_clean.info['bads'] = [ch]
-        interpolate_bads(inst_clean, picks=picks, reset_bads=True, mode='fast')
+        inst.info['bads'] = [ch]
+        pick_interp = mne.pick_channels(inst.info['ch_names'], [ch])[0]
+        data_orig = inst._data[:, pick_interp].copy()
 
-        pick_interp = mne.pick_channels(inst_clean.info['ch_names'], [ch])[0]
+        interpolate_bads(inst, picks=picks, reset_bads=True, mode='fast')
 
         if isinstance(inst, mne.Evoked):
-            inst_interp.data[pick] = inst_clean.data[pick_interp]
+            inst_interp.data[pick] = inst.data[pick_interp]
         elif isinstance(inst, BaseEpochs):
-            inst_interp._data[:, pick] = inst_clean._data[:, pick_interp]
+            inst_interp._data[:, pick] = inst._data[:, pick_interp]
         else:
             raise ValueError('Unrecognized type for inst')
+        inst._data[:, pick_interp] = data_orig.copy()
     return inst_interp
 
 
@@ -412,7 +413,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
     mne.set_log_level('WARNING')
 
-    def _compute_dots(info, mode='fast'):
+    def _compute_dots(info, ch_names, mode='fast'):
         """Compute all-to-all dots."""
         templates = _read_coil_defs()
         coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
@@ -425,7 +426,8 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
                                     my_origin, 'meg', lut_fun, n_fact).T
         return self_dots, cross_dots
 
-    _compute_fast_dots = mem.cache(_compute_dots, verbose=0)
+    _compute_fast_dots = mem.cache(_compute_dots, verbose=0,
+                                   ignore=['info', 'mode'])
     info['bads'] = []  # if bads is different, hash will be different
 
     info_from = pick_info(info, pick_from, copy=True)
@@ -438,7 +440,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
     self_dots, cross_dots = _compute_fast_dots(
-        info, mode=mode)
+        info, info['ch_names'], mode=mode)
 
     cross_dots = cross_dots[pick_to, :][:, pick_from]
     self_dots = self_dots[pick_from, :][:, pick_from]
