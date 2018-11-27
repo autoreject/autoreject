@@ -625,7 +625,7 @@ class _AutoReject(BaseAutoReject):
         self.consensus_[ch_type] = self.consensus
 
         self.threshes_ = self.thresh_func(
-            epochs, picks=self.picks_, verbose=self.verbose)
+            epochs.copy(), picks=self.picks_, verbose=self.verbose)
 
         reject_log = self.get_reject_log(epochs=epochs, picks=self.picks_)
 

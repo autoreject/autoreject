@@ -378,14 +378,14 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     # as the MNE interpolation code is not fogriving.
     # This is why we picked the info.
     mapping = _fast_map_meg_channels(
-        picked_info.copy(), pick_from=picks_good, pick_to=picks_bad,
+        picked_info, pick_from=picks_good, pick_to=picks_bad,
         mode=mode)
     # the downside is that the mapping matrix now does not match
     # the unpicked info of the data.
     # Since we may have picked the info, we need to double map
     # the indices.
     _, picks_good_, picks_bad_orig = get_picks_bad_good(
-        inst.info.copy(), picks)
+        inst.info, picks)
     ch_names_a = [picked_info['ch_names'][pp] for pp in picks_bad]
     ch_names_b = [inst.info['ch_names'][pp] for pp in picks_bad_orig]
     assert ch_names_a == ch_names_b
@@ -428,7 +428,6 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
 
     _compute_fast_dots = mem.cache(_compute_dots, verbose=0,
                                    ignore=['info', 'mode'])
-    info['bads'] = []  # if bads is different, hash will be different
 
     info_from = pick_info(info, pick_from, copy=True)
     templates = _read_coil_defs()
