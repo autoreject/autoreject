@@ -341,7 +341,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
 def compute_thresholds(epochs, method='bayesian_optimization',
                        random_state=None, picks=None, augment=True,
-                       verbose='progressbar', n_jobs=1):
+                       dots=None, verbose='progressbar', n_jobs=1):
     """Compute thresholds for each channel.
 
     Parameters
@@ -358,6 +358,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     augment : boolean
         Whether to augment the data or not. By default it is True, but
         set it to False, if the channel locations are not available.
+    dots : tuple of ndarray
+        The self dots and cross dots
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -385,14 +387,14 @@ def compute_thresholds(epochs, method='bayesian_optimization',
                 print('Computing thresholds ...')
             threshes.update(compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
-                picks=this_picks, augment=augment, verbose=verbose,
+                picks=this_picks, augment=augment, dots=dots, verbose=verbose,
                 n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
         data, y = epochs.get_data(), np.ones((n_epochs, ))
         if augment:
             epochs_interp = clean_by_interp(epochs, picks=picks,
-                                            verbose=verbose)
+                                            dots=dots, verbose=verbose)
             # non-data channels will be duplicate
             data = np.concatenate((epochs.get_data(),
                                    epochs_interp.get_data()), axis=0)
@@ -458,7 +460,7 @@ class _AutoReject(BaseAutoReject):
     def __init__(self, consensus=0.1,
                  n_interpolate=0, thresh_func=None,
                  method='bayesian_optimization',
-                 picks=None,
+                 picks=None, dots=None,
                  verbose='progressbar'):
         """Init it."""
         if thresh_func is None:
@@ -471,6 +473,7 @@ class _AutoReject(BaseAutoReject):
         self.thresh_func = thresh_func
         self.picks = picks
         self.verbose = verbose
+        self.dots = dots
 
     def __repr__(self):
         """repr."""
@@ -625,7 +628,8 @@ class _AutoReject(BaseAutoReject):
         self.consensus_[ch_type] = self.consensus
 
         self.threshes_ = self.thresh_func(
-            epochs.copy(), picks=self.picks_, verbose=self.verbose)
+            epochs.copy(), dots=self.dots, picks=self.picks_,
+            verbose=self.verbose)
 
         reject_log = self.get_reject_log(epochs=epochs, picks=self.picks_)
 
@@ -672,7 +676,7 @@ class _AutoReject(BaseAutoReject):
         epochs_clean = epochs.copy()
         # this one knows how to handle picks.
         _apply_interp(reject_log, self, epochs_clean, self.threshes_,
-                      self.picks_, self.verbose)
+                      self.picks_, self.dots, self.verbose)
 
         _apply_drop(reject_log, self, epochs_clean, self.threshes_,
                     self.picks_, self.verbose)
@@ -684,7 +688,7 @@ class _AutoReject(BaseAutoReject):
 
 
 def _interpolate_bad_epochs(
-        epochs, interp_channels, picks, verbose='progressbar'):
+        epochs, interp_channels, picks, dots=None, verbose='progressbar'):
     """Actually do the interpolation."""
     assert len(epochs) == len(interp_channels)
     pos = 2
@@ -695,12 +699,12 @@ def _interpolate_bad_epochs(
             position=pos, leave=True, verbose=verbose):
         epoch = epochs[epoch_idx]
         epoch.info['bads'] = interp_chs
-        interpolate_bads(epoch, picks=picks, reset_bads=True)
+        interpolate_bads(epoch, dots=dots, picks=picks, reset_bads=True)
         epochs._data[epoch_idx] = epoch._data
 
 
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
-                         consensus, verbose):
+                         consensus, dots, verbose):
     n_folds = cv.get_n_splits()
     loss = np.zeros((len(consensus), len(n_interpolate),
                     n_folds))
@@ -730,7 +734,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
         # for learning we need to go by channnel type, even for meg
         _interpolate_bad_epochs(
             epochs_interp, interp_channels=interp_channels,
-            picks=picks_, verbose=verbose)
+            picks=picks_, dots=dots, verbose=verbose)
 
         # Hack to allow len(self.cv_.split(X)) as ProgressBar
         # assumes an iterable whereas self.cv_.split(X) is a
@@ -843,6 +847,7 @@ class AutoReject(object):
         self.picks = picks  # XXX : should maybe be ch_types?
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.dots = None
 
         if self.consensus is None:
             self.consensus = np.linspace(0, 1.0, 11)
@@ -916,7 +921,8 @@ class AutoReject(object):
 
         thresh_func = partial(compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,
-                              random_state=self.random_state)
+                              random_state=self.random_state,
+                              dots=self.dots)
 
         if self.n_interpolate is None:
             if len(self.picks_) < 4:
@@ -940,7 +946,7 @@ class AutoReject(object):
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, thresh_func, this_picks,
                                      self.n_interpolate, self.cv_,
-                                     self.consensus, self.verbose)
+                                     self.consensus, self.dots, self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
 
             best_idx, best_jdx = \
@@ -1033,7 +1039,7 @@ class AutoReject(object):
         reject_log = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
         _apply_interp(reject_log, epochs_clean, self.threshes_,
-                      self.picks_, self.verbose)
+                      self.picks_, self.dots, self.verbose)
 
         _apply_drop(reject_log, epochs_clean, self.threshes_, self.picks_,
                     self.verbose)
@@ -1093,14 +1099,14 @@ def _check_fit(epochs, threshes_, picks_):
                 'correctly.')
 
 
-def _apply_interp(reject_log, epochs, threshes_, picks_,
+def _apply_interp(reject_log, epochs, threshes_, picks_, dots,
                   verbose):
     _check_fit(epochs, threshes_, picks_)
     interp_channels = _get_interp_chs(
         reject_log.labels, reject_log.ch_names, picks_)
     _interpolate_bad_epochs(
         epochs, interp_channels=interp_channels,
-        picks=picks_, verbose=verbose)
+        picks=picks_, dots=dots, verbose=verbose)
 
 
 def _apply_drop(reject_log, epochs, threshes_, picks_,

@@ -195,7 +195,7 @@ def _get_epochs_type():
     return BaseEpochs
 
 
-def clean_by_interp(inst, picks=None, verbose='progressbar'):
+def clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
     """Clean epochs/evoked by LOOCV.
 
     Parameters
@@ -205,6 +205,8 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
     picks : ndarray, shape(n_channels,) | None
         The channels to be considered for autoreject. If None, defaults
         to data channels {'meg', 'eeg'}.
+    dots : tuple of ndarray
+        The self dots and cross dots.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -260,7 +262,7 @@ def fetch_file(url, file_name, resume=True, timeout=10.):
                 resume=resume, hash_=None, timeout=timeout)
 
 
-def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
+def interpolate_bads(inst, picks, dots=None, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels."""
     import mne
     # to prevent cobyla printf error
@@ -276,7 +278,8 @@ def interpolate_bads(inst, picks, reset_bads=True, mode='accurate'):
     meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
     meg_picks_interp = [p for p in picks if p in meg_picks]
     if len(meg_picks_interp) > 0:
-        _interpolate_bads_meg_fast(inst, picks=meg_picks_interp, mode=mode)
+        _interpolate_bads_meg_fast(inst, picks=meg_picks_interp,
+                                   dots=dots, mode=mode)
 
     if reset_bads is True:
         inst.info['bads'] = []
@@ -344,7 +347,8 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=None):
     _do_interp_dots(inst, interpolation, goods_idx, bads_idx)
 
 
-def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
+def _interpolate_bads_meg_fast(inst, picks, dot=None, mode='accurate',
+                               dots=None, verbose=None):
     """Interpolate bad channels from data in good channels."""
     # We can have pre-picked instances or not.
     # And we need to handle it.
@@ -379,7 +383,7 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
     # This is why we picked the info.
     mapping = _fast_map_meg_channels(
         picked_info, pick_from=picks_good, pick_to=picks_bad,
-        mode=mode)
+        dots=dots, mode=mode)
     # the downside is that the mapping matrix now does not match
     # the unpicked info of the data.
     # Since we may have picked the info, we need to double map
@@ -399,7 +403,7 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate', verbose=None):
 
 
 def _fast_map_meg_channels(info, pick_from, pick_to,
-                           mode='fast'):
+                           dots=None, mode='fast'):
     from mne.io.pick import pick_info
     from mne.forward._field_interpolation import _setup_dots
     from mne.forward._field_interpolation import _compute_mapping_matrix
@@ -413,10 +417,10 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
     mne.set_log_level('WARNING')
 
-    def _compute_dots(info, locs3d, dev_head_t, mode='fast'):
+    def _compute_dots(info, mode='fast'):
         """Compute all-to-all dots."""
         templates = _read_coil_defs()
-        coils = _create_meg_coils(info['chs'], 'normal', dev_head_t,
+        coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
                                   templates)
         my_origin = _check_origin((0., 0., 0.04), info_from)
         int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils, 'meg')
@@ -425,9 +429,6 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
         cross_dots = _do_cross_dots(int_rad, False, coils, coils,
                                     my_origin, 'meg', lut_fun, n_fact).T
         return self_dots, cross_dots
-
-    _compute_fast_dots = mem.cache(_compute_dots, verbose=0,
-                                   ignore=['info', 'mode'])
 
     info_from = pick_info(info, pick_from, copy=True)
     templates = _read_coil_defs()
@@ -438,9 +439,10 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
 
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
-    locs3d = np.array([ch['loc'][:3] for ch in info['chs']])
-    self_dots, cross_dots = _compute_fast_dots(
-        info, locs3d, info['dev_head_t'], mode=mode)
+    if dots is None:
+        dots = self_dots, cross_dots = _compute_dots(info, mode=mode)
+    else:
+        self_dots, cross_dots = dots
 
     cross_dots = cross_dots[pick_to, :][:, pick_from]
     self_dots = self_dots[pick_from, :][:, pick_from]
