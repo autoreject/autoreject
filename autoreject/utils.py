@@ -13,10 +13,6 @@ from mne.utils import check_version as version_is_greater_equal
 from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 
-from sklearn.externals.joblib import Memory
-
-mem = Memory(cachedir='cachedir')
-
 
 def _get_ch_type_from_picks(picks, info):
     """Get the channel types from picks."""
@@ -231,7 +227,8 @@ def clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
         pick_interp = mne.pick_channels(inst.info['ch_names'], [ch])[0]
         data_orig = inst._data[:, pick_interp].copy()
 
-        interpolate_bads(inst, picks=picks, reset_bads=True, mode='fast')
+        interpolate_bads(inst, picks=picks, dots=dots,
+                         reset_bads=True, mode='fast')
 
         if isinstance(inst, mne.Evoked):
             inst_interp.data[pick] = inst.data[pick_interp]
@@ -347,7 +344,7 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=None):
     _do_interp_dots(inst, interpolation, goods_idx, bads_idx)
 
 
-def _interpolate_bads_meg_fast(inst, picks, dot=None, mode='accurate',
+def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
                                dots=None, verbose=None):
     """Interpolate bad channels from data in good channels."""
     # We can have pre-picked instances or not.
@@ -356,6 +353,7 @@ def _interpolate_bads_meg_fast(inst, picks, dot=None, mode='accurate',
     inst_picked = True
     if len(inst.ch_names) > len(picks):
         picked_info = pick_info(inst.info, picks)
+        dots = _pick_dots(dots, picks, picks)
         inst_picked = False
     else:
         picked_info = inst.info.copy()
@@ -402,13 +400,40 @@ def _interpolate_bads_meg_fast(inst, picks, dot=None, mode='accurate',
     _do_interp_dots(inst, mapping, picks_good_, picks_bad_orig)
 
 
+def _compute_dots(info, mode='fast'):
+    """Compute all-to-all dots."""
+    from mne.forward._field_interpolation import _setup_dots
+    from mne.forward._lead_dots import _do_self_dots, _do_cross_dots
+    from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
+    from mne.bem import _check_origin
+
+    templates = _read_coil_defs()
+    coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
+                              templates)
+    my_origin = _check_origin((0., 0., 0.04), info)
+    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils, 'meg')
+    self_dots = _do_self_dots(int_rad, False, coils, my_origin, 'meg',
+                              lut_fun, n_fact, n_jobs=1)
+    cross_dots = _do_cross_dots(int_rad, False, coils, coils,
+                                my_origin, 'meg', lut_fun, n_fact).T
+    return self_dots, cross_dots
+
+
+def _pick_dots(dots, pick_from, pick_to):
+    if dots is None:
+        return dots
+    self_dots, cross_dots = dots
+    self_dots = self_dots[pick_from, :][:, pick_from]
+    cross_dots = cross_dots[pick_to, :][:, pick_from]
+    return [self_dots, cross_dots]
+
+
 def _fast_map_meg_channels(info, pick_from, pick_to,
                            dots=None, mode='fast'):
     from mne.io.pick import pick_info
     from mne.forward._field_interpolation import _setup_dots
     from mne.forward._field_interpolation import _compute_mapping_matrix
     from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
-    from mne.forward._lead_dots import _do_self_dots, _do_cross_dots
     from mne.bem import _check_origin
 
     miss = 1e-4  # Smoothing criterion for MEG
@@ -416,19 +441,6 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     # XXX: hack to silence _compute_mapping_matrix
     verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
     mne.set_log_level('WARNING')
-
-    def _compute_dots(info, mode='fast'):
-        """Compute all-to-all dots."""
-        templates = _read_coil_defs()
-        coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
-                                  templates)
-        my_origin = _check_origin((0., 0., 0.04), info_from)
-        int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils, 'meg')
-        self_dots = _do_self_dots(int_rad, False, coils, my_origin, 'meg',
-                                  lut_fun, n_fact, n_jobs=1)
-        cross_dots = _do_cross_dots(int_rad, False, coils, coils,
-                                    my_origin, 'meg', lut_fun, n_fact).T
-        return self_dots, cross_dots
 
     info_from = pick_info(info, pick_from, copy=True)
     templates = _read_coil_defs()
@@ -444,8 +456,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     else:
         self_dots, cross_dots = dots
 
-    cross_dots = cross_dots[pick_to, :][:, pick_from]
-    self_dots = self_dots[pick_from, :][:, pick_from]
+    self_dots, cross_dots = _pick_dots(dots, pick_from, pick_to)
 
     ch_names = [c['ch_name'] for c in info_from['chs']]
     fmd = dict(kind='meg', ch_names=ch_names,

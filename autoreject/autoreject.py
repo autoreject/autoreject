@@ -19,23 +19,20 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score
-from sklearn.externals.joblib import Memory, Parallel, delayed
+from sklearn.externals.joblib import Parallel, delayed
 
 from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
-                    _handle_picks, _check_data,
+                    _handle_picks, _check_data, _compute_dots,
                     _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 from .viz import plot_epochs
-
-mem = Memory(cachedir='cachedir')
-mem.clear(warn=False)
 
 _INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
                 'verbose', 'n_jobs', 'cv', 'random_state',
                 'thresh_method')
 
-_FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_', 'picks_',
-               'loss_')
+_FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_',
+               'dots', 'picks_', 'loss_')
 
 
 def _slicemean(obj, this_slice, axis):
@@ -387,8 +384,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
                 print('Computing thresholds ...')
             threshes.update(compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
-                picks=this_picks, augment=augment, dots=dots, verbose=verbose,
-                n_jobs=n_jobs))
+                picks=this_picks, augment=augment, dots=dots,
+                verbose=verbose, n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
         data, y = epochs.get_data(), np.ones((n_epochs, ))
@@ -711,7 +708,8 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
 
     # The thresholds must be learnt from the entire data
     local_reject = _AutoReject(thresh_func=thresh_func,
-                               verbose=verbose, picks=picks_)
+                               verbose=verbose, picks=picks_,
+                               dots=dots)
     local_reject.fit(epochs)
 
     assert len(local_reject.consensus_) == 1  # works with one ch_type
@@ -847,7 +845,6 @@ class AutoReject(object):
         self.picks = picks  # XXX : should maybe be ch_types?
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.dots = None
 
         if self.consensus is None:
             self.consensus = np.linspace(0, 1.0, 11)
@@ -877,7 +874,7 @@ class AutoReject(object):
             state['local_reject_'] = dict()
             for ch_type in self.local_reject_:
                 state['local_reject_'][ch_type] = dict()
-                for param in _INIT_PARAMS[:4] + _FIT_PARAMS[:3]:
+                for param in _INIT_PARAMS[:4] + _FIT_PARAMS[:4]:
                     state['local_reject_'][ch_type][param] = \
                         getattr(self.local_reject_[ch_type], param)
         return state
@@ -893,7 +890,7 @@ class AutoReject(object):
                         for key in _INIT_PARAMS[:4]
                     }
                     local_reject_[ch_type] = _AutoReject(**init_kwargs)
-                    for key in _FIT_PARAMS[:3]:
+                    for key in _FIT_PARAMS[:4]:
                         setattr(local_reject_[ch_type], key,
                                 state['local_reject_'][ch_type][key])
                 self.local_reject_ = local_reject_
@@ -919,6 +916,16 @@ class AutoReject(object):
         if isinstance(self.cv_, int):
             self.cv_ = KFold(n_splits=self.cv_)
 
+        # XXX : maybe use an mne function in pick.py ?
+        picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
+        ch_types = [ch_type for ch_type, _ in picks_by_type]
+        self.dots = None
+        if 'mag' in ch_types or 'grad' in ch_types:
+            meg_picks = pick_types(epochs.info, meg=True,
+                                   eeg=False, exclude=[])
+            this_info = mne.pick_info(epochs.info, meg_picks, copy=True)
+            self.dots = _compute_dots(this_info)
+
         thresh_func = partial(compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,
                               random_state=self.random_state,
@@ -932,8 +939,6 @@ class AutoReject(object):
             max_interp = min(len(self.picks_) - 1, 32)
             self.n_interpolate = np.array([1, 4, max_interp])
 
-        # XXX : maybe use an mne function in pick.py ?
-        picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
         self.n_interpolate_ = dict()  # rho
         self.consensus_ = dict()  # kappa
         self.threshes_ = dict()  # update
@@ -946,7 +951,8 @@ class AutoReject(object):
             this_local_reject, this_loss = \
                 _run_local_reject_cv(epochs, thresh_func, this_picks,
                                      self.n_interpolate, self.cv_,
-                                     self.consensus, self.dots, self.verbose)
+                                     self.consensus, self.dots,
+                                     self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
 
             best_idx, best_jdx = \
