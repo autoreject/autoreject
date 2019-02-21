@@ -41,21 +41,28 @@ def _slicemean(obj, this_slice, axis):
     return mean
 
 
-def validation_curve(epochs, y, param_name, param_range, cv=None):
+def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
+                     cv=None, return_param_range=False):
     """Validation curve on epochs for global autoreject.
 
     Parameters
     ----------
     epochs : instance of mne.Epochs.
         The epochs.
-    y : array
+    y : array | None
         The labels.
     param_name : str
         Name of the parameter that will be varied.
-    param_range : array
+        Defaults to 'thresh'.
+    param_range : array | None
         The values of the parameter that will be evaluated.
+        If None, 15 values between the min and the max treshold
+        will be tested.
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation strategy.
+    return_param_range : bool
+        If True the used param_range is returned.
+        Defaults to False.
 
     Returns
     -------
@@ -63,6 +70,9 @@ def validation_curve(epochs, y, param_name, param_range, cv=None):
         The scores in the training set
     test_scores : array
         The scores in the test set
+    param_range : array
+        The thresholds used to build the validation curve.
+        Only returned if `return_param_range` is True.
     """
     from sklearn.model_selection import validation_curve
     estimator = _GlobalAutoReject()
@@ -75,6 +85,10 @@ def validation_curve(epochs, y, param_name, param_range, cv=None):
     X = epochs.get_data()[:, data_picks, :]
     n_epochs, n_channels, n_times = X.shape
 
+    if param_range is None:
+        ptps = np.ptp(X, axis=2)
+        param_range = np.linspace(ptps.min(), ptps.max(), 15)
+
     estimator.n_channels = n_channels
     estimator.n_times = n_times
 
@@ -83,7 +97,11 @@ def validation_curve(epochs, y, param_name, param_range, cv=None):
                          param_name="thresh", param_range=param_range,
                          cv=cv, n_jobs=1, verbose=0)
 
-    return train_scores, test_scores
+    out = (train_scores, test_scores)
+    if return_param_range:
+        out += (param_range,)
+
+    return out
 
 
 def read_auto_reject(fname):
