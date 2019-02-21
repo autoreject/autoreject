@@ -11,6 +11,8 @@ visualize the bad sensors in each trial
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
+# sphinx_gallery_thumbnail_number = 2
+
 ###############################################################################
 # First, we download the data from OpenfMRI. We will download the tarfile,
 # extract the necessary files and delete the tar from the disk
