@@ -42,6 +42,7 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 
 import numpy as np  # noqa
 param_range = np.linspace(40e-6, 200e-6, 30)
+param_range = None
 
 ###############################################################################
 # Next, we can use :func:`autoreject.validation_curve` to compute the Root Mean
@@ -51,8 +52,9 @@ param_range = np.linspace(40e-6, 200e-6, 30)
 
 from autoreject import validation_curve  # noqa
 
-_, test_scores = validation_curve(
-    epochs, y=None, param_name="thresh", param_range=param_range, cv=5)
+_, test_scores, param_range = validation_curve(
+    epochs, y=None, param_name="thresh", param_range=param_range, cv=5,
+    return_param_range=True)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]
@@ -80,7 +82,7 @@ plt.plot(scaling * param_range, scaling * test_scores,
          markeredgecolor=colors[0], markersize=8, label='CV scores')
 plt.ylabel('RMSE (%s)' % unit)
 plt.xlabel('Threshold (%s)' % unit)
-plt.xlim((scaling * param_range[0] - 10, scaling * param_range[-1] + 10))
+plt.xlim((scaling * param_range[0] * 0.9, scaling * param_range[-1] * 1.1))
 plt.axvline(scaling * best_thresh, label='auto global', color=colors[2],
             linewidth=2, linestyle='--')
 plt.axvline(scaling * human_thresh, label='manual', color=colors[1],

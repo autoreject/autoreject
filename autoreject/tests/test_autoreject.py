@@ -119,10 +119,17 @@ def test_autoreject():
         n_channels=n_channels, n_times=n_times, thresh=40e-6)
     ar_global.fit(X)
 
-    param_name = 'thresh'
     param_range = np.linspace(40e-6, 200e-6, 10)
-    assert_raises(ValueError, validation_curve, X, None,
-                  param_name, param_range)
+
+    train_scores, test_scores = \
+        validation_curve(epochs_fit, param_range=param_range)
+    assert len(train_scores) == len(test_scores)
+
+    train_scores, test_scores, param_range = \
+        validation_curve(epochs_fit, return_param_range=True)
+    assert len(train_scores) == len(test_scores) == len(param_range)
+
+    assert_raises(ValueError, validation_curve, X, param_range=param_range)
 
     ##########################################################################
     # picking AutoReject
