@@ -10,6 +10,7 @@ import numpy as np
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
+from mne.utils.check import _check_ch_locs
 from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 
@@ -37,6 +38,10 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
     if epochs.preload is False:
         raise ValueError('Data must be preloaded.')
     n_bads = len(epochs.info['bads'])
+
+    if not _check_ch_locs(epochs.info['chs']):
+        raise RuntimeError('Valid channel positions are needed'
+                           'for autoreject to work')
 
     picked_info = mne.io.pick.pick_info(epochs.info, picks)
     ch_types_picked = {
