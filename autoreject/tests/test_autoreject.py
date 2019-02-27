@@ -140,6 +140,10 @@ def test_autoreject():
     for ch in epochs_nochs.info['chs']:
         ch['loc'] = np.zeros(9)
     assert_raises(RuntimeError, ar.fit, epochs_nochs)
+    ar2 = AutoReject(cv=3, picks=picks, random_state=42,
+                     n_interpolate=[1, 2], consensus=[0.5, 1],
+                     verbose='blah')
+    assert_raises(ValueError, ar2.fit, epochs_fit)
 
     ar.fit(epochs_fit)
     reject_log = ar.get_reject_log(epochs_fit)
