@@ -10,7 +10,6 @@ import numpy as np
 
 import mne
 from mne.utils import check_version as version_is_greater_equal
-from mne.utils.check import _check_ch_locs
 from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 
@@ -27,6 +26,19 @@ def _get_ch_type_from_picks(picks, info):
         if key not in keys:
             keys.append(key)
     return keys
+
+
+def _check_ch_locs(chs):
+    """Check if channel locations exist.
+    Parameters
+    ----------
+    chs : dict
+        The channels from info['chs']
+    """
+    locs3d = np.array([ch['loc'][:3] for ch in chs])
+    return not ((locs3d == 0).all() or
+                (~np.isfinite(locs3d)).all() or
+                np.allclose(locs3d, 0.))
 
 
 def _check_data(epochs, picks, ch_constraint='data_channels',
