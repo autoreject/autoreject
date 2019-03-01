@@ -1097,12 +1097,12 @@ class AutoReject(object):
 
 
 def _check_fit(epochs, threshes_, picks_):
+    msg = ('You are passing channels which were not present '
+           'at fit-time. Please fit it again, this time '
+           'correctly.')
     if not all(epochs.ch_names[pp] in threshes_
-       for pp in picks_):
-            raise ValueError(
-                'You are passing channels which were not present '
-                'at fit-time. Please fit it again, this time '
-                'correctly.')
+               for pp in picks_):
+        raise ValueError(msg)
 
 
 def _apply_interp(reject_log, epochs, threshes_, picks_, dots,

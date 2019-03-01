@@ -136,6 +136,10 @@ def test_autoreject():
     assert_raises(AttributeError, ar.fit, X)
     assert_raises(ValueError, ar.transform, X)
     assert_raises(ValueError, ar.transform, epochs)
+    epochs_nochs = epochs_fit.copy()
+    for ch in epochs_nochs.info['chs']:
+        ch['loc'] = np.zeros(9)
+    assert_raises(RuntimeError, ar.fit, epochs_nochs)
 
     ar.fit(epochs_fit)
     reject_log = ar.get_reject_log(epochs_fit)
