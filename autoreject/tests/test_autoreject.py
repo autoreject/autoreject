@@ -140,6 +140,10 @@ def test_autoreject():
     for ch in epochs_nochs.info['chs']:
         ch['loc'] = np.zeros(9)
     assert_raises(RuntimeError, ar.fit, epochs_nochs)
+    ar2 = AutoReject(cv=3, picks=picks, random_state=42,
+                     n_interpolate=[1, 2], consensus=[0.5, 1],
+                     verbose='blah')
+    assert_raises(ValueError, ar2.fit, epochs_fit)
 
     ar.fit(epochs_fit)
     reject_log = ar.get_reject_log(epochs_fit)
@@ -241,7 +245,7 @@ def test_autoreject():
     epochs.load_data()
     assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
     index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
-                          for ii, pp in enumerate(picks)])
+                            for ii, pp in enumerate(picks)])
     threshes_a = compute_thresholds(
         epochs_fit, picks=picks, method='random_search')
     assert_equal(set(threshes_a.keys()), set(ch_names))
@@ -267,7 +271,7 @@ def test_io():
                         picks=picks, baseline=(None, 0), decim=4,
                         reject=None, preload=True)[:10]
     ar = AutoReject(cv=2, random_state=42, n_interpolate=[1],
-                    consensus=[0.5])
+                    consensus=[0.5], verbose=False)
     ar.save(fname)  # save without fitting
 
     # check that fit after saving is the same as fit
@@ -276,7 +280,7 @@ def test_io():
     ar.fit(epochs)
     ar2.fit(epochs)
     assert_equal(np.sum([ar.threshes_[k] - ar2.threshes_[k]
-                        for k in ar.threshes_.keys()]), 0.)
+                         for k in ar.threshes_.keys()]), 0.)
 
     assert_raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)

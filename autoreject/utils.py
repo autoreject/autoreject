@@ -173,6 +173,12 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
+
+    if verbose is not False and \
+            verbose not in ['progressbar', 'tqdm', 'tqdm_notebook']:
+        raise ValueError('verbose must be one of {progressbar,'
+                         'tqdm, tqdm_notebook, False}. Got %s' % verbose)
+
     if verbose == 'progressbar':
         from mne.utils import ProgressBar
 
