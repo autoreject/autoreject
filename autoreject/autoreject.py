@@ -101,6 +101,8 @@ def read_auto_reject(fname):
     """
     state = read_hdf5(fname, title='autoreject')
     init_kwargs = {param: state[param] for param in _INIT_PARAMS}
+    if isinstance(init_kwargs['verbose'], int):
+        init_kwargs['verbose'] = bool(init_kwargs['verbose'])
     ar = AutoReject(**init_kwargs)
     ar.__setstate__(state)
     return ar
@@ -889,6 +891,8 @@ class AutoReject(object):
                         key: state['local_reject_'][ch_type][key]
                         for key in _INIT_PARAMS[:4]
                     }
+                    if isinstance(init_kwargs['verbose'], int):
+                        init_kwargs['verbose'] = bool(init_kwargs['verbose'])
                     local_reject_[ch_type] = _AutoReject(**init_kwargs)
                     for key in _FIT_PARAMS[:4]:
                         setattr(local_reject_[ch_type], key,
