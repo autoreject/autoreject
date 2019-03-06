@@ -33,6 +33,14 @@ Finally, autoreject could be applied to clean the data::
 Autoreject is not meant for eyeblink artifacts since it affects neighboring
 sensors. Indeed, a spatial filtering method like ICA is better suited for this.
 
+Is it dangerous to do source estimation with interpolated channels?
+-------------------------------------------------------------------
+
+Interpolated data is no different from measured data. It's what you would expect
+to see if there were no artifacts in the data. Interpolation is nothing magical.
+It simply takes a weighted average of the data in the neighboring good channels. Indeed, if the artifact was left in the data, it will bias the source estimate
+far more than any potential harm that interpolation may pose.
+
 How do I manually set the `n_interpolate` and `consensus` parameter?
 --------------------------------------------------------------------------
 
