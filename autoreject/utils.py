@@ -9,7 +9,6 @@ import warnings
 import numpy as np
 
 import mne
-from mne.utils import check_version as version_is_greater_equal
 from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 
@@ -181,18 +180,8 @@ def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
 
     if verbose == 'progressbar':
         from mne.utils import ProgressBar
-
-        _ProgressBar = ProgressBar
-        if not version_is_greater_equal('mne', '0.14'):
-            class _ProgressBar(ProgressBar):
-                def __iter__(self):
-                    """Iterate to auto-increment the pbar with 1."""
-                    self.max_value = len(iterable)
-                    for obj in iterable:
-                        yield obj
-                    self.update_with_increment_value(1)
-
-        pbar = _ProgressBar(iterable, mesg=desc, spinner=True)
+        pbar = ProgressBar(iterable, mesg=desc, spinner=True)
+        print('')
     elif verbose == 'tqdm':
         from tqdm import tqdm
         pbar = tqdm(iterable, desc=desc, leave=leave, position=position,
