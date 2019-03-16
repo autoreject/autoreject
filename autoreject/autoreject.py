@@ -382,8 +382,6 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     if picks_by_type is not None:
         threshes = dict()
         for ch_type, this_picks in picks_by_type:
-            if verbose is not False:
-                print('Computing thresholds ...')
             threshes.update(compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
                 picks=this_picks, augment=augment, dots=dots,
@@ -404,12 +402,12 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         ch_names = epochs.ch_names
 
         my_thresh = delayed(_compute_thresh)
-        verbose = 51 if verbose is not False else 0  # send output to stdout
-        if verbose is not False:
-            print('Computing thresholds ...')
-        threshes = Parallel(n_jobs=n_jobs, verbose=verbose)(
+        parallel = Parallel(n_jobs=n_jobs, verbose=0)
+        desc = 'Computing thresholds ...'
+        threshes = parallel(
             my_thresh(data[:, pick], cv=cv, method=method, y=y,
-                      random_state=random_state) for pick in picks)
+                      random_state=random_state)
+            for pick in _pbar(picks, desc=desc, verbose=verbose))
         threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
     return threshes
 
@@ -706,7 +704,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                          consensus, dots, verbose):
     n_folds = cv.get_n_splits()
     loss = np.zeros((len(consensus), len(n_interpolate),
-                    n_folds))
+                     n_folds))
 
     # The thresholds must be learnt from the entire data
     local_reject = _AutoReject(thresh_func=thresh_func,
