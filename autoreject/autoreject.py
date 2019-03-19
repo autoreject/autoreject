@@ -172,7 +172,7 @@ class _GlobalAutoReject(BaseAutoReject):
 
 
 def get_rejection_threshold(epochs, decim=1, random_state=None,
-                            ch_types=None, verbose=True):
+                            ch_types=None, cv=5, verbose=True):
     """Compute global rejection thresholds.
 
     Parameters
@@ -187,6 +187,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
         will have keys ['mag', 'grad', 'eeg', 'eog'].
+    cv : int
+        The numbef of folds used. Defaults to 5.
     verbose : bool
         If False, suppress all output messages.
 
@@ -236,7 +238,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
         est = _GlobalAutoReject(n_channels=n_channels, n_times=n_times)
-        cv = KFold(n_splits=5, random_state=random_state)
+        cv = KFold(n_splits=cv, random_state=random_state)
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]

@@ -66,6 +66,7 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
 
         if debug:
             print("iter", i, "best_x", best_x, best_f)
+
     if debug:
         import matplotlib.pyplot as plt
         scale = 1e6

@@ -42,7 +42,6 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 
 import numpy as np  # noqa
 param_range = np.linspace(40e-6, 200e-6, 30)
-param_range = None
 
 ###############################################################################
 # Next, we can use :func:`autoreject.validation_curve` to compute the Root Mean
@@ -51,13 +50,15 @@ param_range = None
 # channels) peak-to-peak thresholds.
 
 from autoreject import validation_curve  # noqa
+from autoreject import get_rejection_threshold  # noqa
 
 _, test_scores, param_range = validation_curve(
-    epochs, y=None, param_name="thresh", param_range=param_range, cv=5,
-    return_param_range=True)
+    epochs, param_range=param_range, cv=5, return_param_range=True)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]
+
+reject2 = get_rejection_threshold(epochs, random_state=0, cv=5)
 
 ###############################################################################
 # Now let us plot the RMSE values against the candidate thresholds.
@@ -74,16 +75,23 @@ plt.figure(figsize=(8, 5))
 plt.tick_params(axis='x', which='both', bottom='off', top='off')
 plt.tick_params(axis='y', which='both', left='off', right='off')
 
-colors = ['#E24A33', '#348ABD', '#988ED5']
+colors = ['#E24A33', '#348ABD', '#988ED5', 'k']
 
 plt.plot(scaling * param_range, scaling * test_scores,
          'o-', markerfacecolor='w',
          color=colors[0], markeredgewidth=2, linewidth=2,
          markeredgecolor=colors[0], markersize=8, label='CV scores')
+plt.plot(scaling * param_range,
+         scaling * gp.predict(np.array(param_range)[:, None]),
+         'o-', markerfacecolor='w',
+         color=colors[0], markeredgewidth=2, linewidth=2,
+         markeredgecolor='r', markersize=8, label='GP')
 plt.ylabel('RMSE (%s)' % unit)
 plt.xlabel('Threshold (%s)' % unit)
 plt.xlim((scaling * param_range[0] * 0.9, scaling * param_range[-1] * 1.1))
 plt.axvline(scaling * best_thresh, label='auto global', color=colors[2],
+            linewidth=2, linestyle='--')
+plt.axvline(scaling * reject2['eeg'], label='bayes opt', color=colors[3],
             linewidth=2, linestyle='--')
 plt.axvline(scaling * human_thresh, label='manual', color=colors[1],
             linewidth=2, linestyle=':')
