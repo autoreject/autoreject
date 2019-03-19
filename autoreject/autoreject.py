@@ -215,6 +215,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     if decim > 1:
         epochs = epochs.copy()
         epochs.decimate(decim=decim)
+
+    cv = KFold(n_splits=cv, random_state=random_state)
     for ch_type in ch_types:
         if ch_type not in epochs:
             continue
@@ -237,7 +239,6 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
         est = _GlobalAutoReject(n_channels=n_channels, n_times=n_times)
-        cv = KFold(n_splits=cv, random_state=random_state)
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
