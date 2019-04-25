@@ -20,6 +20,13 @@ from .utils import _check_data
 
 
 def _iterate_epochs(ransac, epochs, idxs, verbose):
+
+    # Select random subset
+    if ransac.n_jobs > 1:
+        ransac.random_state = ransac.random_state + idxs.max()
+    ransac.ch_subsets_ = ransac._get_random_subsets(epochs.info)
+    ransac.mappings_ = ransac._get_mappings(epochs)
+
     n_channels = len(ransac.picks)
     corrs = np.zeros((len(idxs), n_channels))
     for idx, _ in enumerate(_pbar(idxs, desc='Iterating epochs',
@@ -188,8 +195,6 @@ class Ransac(object):
                     ch_constraint='single_channel_type', verbose=self.verbose)
         self.ch_type = _get_channel_type(epochs, self.picks)
         n_epochs = len(epochs)
-        self.ch_subsets_ = self._get_random_subsets(epochs.info)
-        self.mappings_ = self._get_mappings(epochs)
 
         n_jobs = check_n_jobs(self.n_jobs)
         parallel = Parallel(n_jobs, verbose=10)
