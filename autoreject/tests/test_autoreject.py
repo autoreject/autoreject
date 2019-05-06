@@ -54,6 +54,12 @@ def test_global_autoreject():
         assert_equal(reject1[key], reject2[key])
         assert_true(abs(reject1[key] - reject3[key]) < tols[key])
 
+    reject = get_rejection_threshold(epochs, decim=4, ch_types='eeg')
+    assert 'eog' not in reject
+    assert 'eeg' in reject
+    assert_raises(ValueError, get_rejection_threshold, epochs,
+                  decim=4, ch_types=5)
+
 
 def test_autoreject():
     """Test basic _AutoReject functionality."""
