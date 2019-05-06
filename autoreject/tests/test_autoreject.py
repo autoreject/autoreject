@@ -56,6 +56,7 @@ def test_global_autoreject():
 
     reject = get_rejection_threshold(epochs, decim=4, ch_types='eeg')
     assert 'eog' not in reject
+    assert 'eeg' in reject
     assert_raises(ValueError, get_rejection_threshold, epochs,
                   decim=4, ch_types=5)
 
