@@ -153,7 +153,8 @@ class _GlobalAutoReject(BaseAutoReject):
         return self
 
 
-def get_rejection_threshold(epochs, decim=1, random_state=None, verbose=True):
+def get_rejection_threshold(epochs, decim=1, random_state=None,
+                            ch_types=None, verbose=True):
     """Compute global rejection thresholds.
 
     Parameters
@@ -164,14 +165,17 @@ def get_rejection_threshold(epochs, decim=1, random_state=None, verbose=True):
         The decimation factor.
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
+    ch_types : str | list of str | None
+        The channel types for which to find the rejection dictionary.
+        e.g., ['mag', 'grad']. If None, the rejection dictionary
+        will have keys ['mag', 'grad', 'eeg', 'eog'].
     verbose : bool
         If False, suppress all output messages.
 
     Returns
     -------
     reject : dict
-        The rejection dictionary with keys 'mag', 'grad', 'eeg', 'eog'
-        and 'ecg'.
+        The rejection dictionary with keys as specified by ch_types.
 
     Note
     ----
@@ -179,10 +183,20 @@ def get_rejection_threshold(epochs, decim=1, random_state=None, verbose=True):
     rejection dictionary.
     """
     reject = dict()
+
+    if ch_types is not None and not isinstance(ch_types, (list, str)):
+        raise ValueError('ch_types must be of type None, list,'
+                         'or str. Got %s' % type(ch_types))
+
+    if ch_types is None:
+        ch_types = ['mag', 'grad', 'eeg', 'eog']
+    elif isinstance(ch_types, str):
+        ch_types = [ch_types]
+
     if decim > 1:
         epochs = epochs.copy()
         epochs.decimate(decim=decim)
-    for ch_type in ['mag', 'grad', 'eeg', 'eog']:
+    for ch_type in ch_types:
         if ch_type not in epochs:
             continue
 
