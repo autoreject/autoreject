@@ -86,10 +86,10 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
 ###############################################################################
-# Note that:class:`autoreject.AutoReject` by design supports
+# Note that :class:`autoreject.AutoReject` by design supports
 # multiple channels.
-# If no picks are passed separate solutions will be computed for each channel
-# type and internally combines. This then readily supports cleaning
+# If no picks are passed, separate solutions will be computed for each channel
+# type and internally combined. This then readily supports cleaning
 # unseen epochs from the different channel types used during fit.
 # Here we only use a subset of channels to save time.
 
