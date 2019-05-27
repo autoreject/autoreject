@@ -44,11 +44,10 @@ import numpy as np  # noqa
 param_range = np.linspace(40e-6, 200e-6, 30)
 
 ###############################################################################
-# Next, we can use :class:`autoreject.GlobalAutoReject` to find global
-# (i.e., for all channels) peak-to-peak thresholds. It is a class which
-# follows a :mod:`scikit-learn`-like API. To compute the Root Mean Squared
-# (RMSE) values at the candidate thresholds, we will use the function
-# :func:`autoreject.validation_curve`.
+# Next, we can use :func:`autoreject.validation_curve` to compute the Root Mean
+# Squared (RMSE) values at the candidate thresholds. Under the hood, this is
+# using  :class:`autoreject._GlobalAutoReject` to find global (i.e., for all
+# channels) peak-to-peak thresholds.
 
 from autoreject import validation_curve  # noqa
 
@@ -65,7 +64,7 @@ import matplotlib.pyplot as plt  # noqa
 from autoreject import set_matplotlib_defaults  # noqa
 set_matplotlib_defaults(plt)
 
-human_thresh = 80e-6
+human_thresh = 80e-6  # this is a threshold determined visually by a human
 unit = r'$\mu$V'
 scaling = 1e6
 
