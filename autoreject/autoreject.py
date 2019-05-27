@@ -162,7 +162,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     epochs : mne.Epochs object
         The epochs from which to estimate the epochs dictionary
     decim : int
-        The decimation factor.
+        The decimation factor: Increment for selecting every nth time slice.
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
     ch_types : str | list of str | None
@@ -794,7 +794,7 @@ class AutoReject(object):
 
     .. note::
        AutoReject by design supports multiple channels.
-       If no picks are passed separate solutions will be computed for each
+       If no picks are passed, separate solutions will be computed for each
        channel type and internally combined. This then readily supports
        cleaning unseen epochs from the different channel types used during fit.
 
@@ -806,8 +806,7 @@ class AutoReject(object):
         If None, defaults to `np.linspace(0, 1.0, 11)`
     n_interpolate : array | None
         The values to try for the number of channels for which to interpolate.
-        This is :math:`\\rho`.If None, defaults to
-        np.array([1, 4, 32])
+        This is :math:`\\rho`.If None, defaults to np.array([1, 4, 32])
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
     picks : ndarray, shape(n_channels) | None
