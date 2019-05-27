@@ -14,7 +14,9 @@ repair epochs.
 ###############################################################################
 # Let us first define the parameters. `n_interpolates` are the :math:`\rho`
 # values that we would like :mod:`autoreject` to try and `consensus_percs`
-# are the :math:`\kappa` values that :mod:`autoreject` will try.
+# are the :math:`\kappa` values that :mod:`autoreject` will try (see the
+# `autoreject paper <https://doi.org/10.1016/j.neuroimage.2017.06.030>`_) for
+# more information on these parameters).
 #
 # Epochs with more than :math:`\kappa * N` sensors (:math:`N` total sensors)
 # bad are dropped. For the rest of the epochs, the worst :math:`\rho`
