@@ -3,18 +3,20 @@
 Detect bad sensors using RANSAC
 ===============================
 
-This example demonstrates how to use RANSAC [1] from the PREP pipeline to
+This example demonstrates how to use RANSAC [1]_ from the PREP pipeline to
 detect bad sensors and repair them. Note that this implementation in
-:mod:`autoreject` [2] is an extension of the original implementation and
+:mod:`autoreject` [2]_ is an extension of the original implementation and
 works for MEG sensors as well.
 
-[1] Bigdely-Shamlo, Nima, et al.
-    "The PREP pipeline: standardized preprocessing for large-scale EEG
-    analysis." Frontiers in neuroinformatics 9 (2015).
-[2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort,
-    "Autoreject: Automated artifact rejection for MEG and EEG." arXiv preprint
-    arXiv:1612.08194, 2016.
-"""  # noqa
+References
+----------
+.. [1] Bigdely-Shamlo, N., Mullen, T., Kothe, C., Su, K. M., & Robbins, K. A.
+       (2015). The PREP pipeline: standardized preprocessing for large-scale
+       EEG analysis. Frontiers in neuroinformatics, 9, 16.
+.. [2] Jas, M., Engemann, D. A., Bekhti, Y., Raimondo, F., & Gramfort, A.
+       (2017). Autoreject: Automated artifact rejection for MEG and EEG data.
+       NeuroImage, 159, 417-429.
+"""
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD (3-clause)
