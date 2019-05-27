@@ -43,13 +43,14 @@ picks = mne.pick_types(epochs.info, meg='grad', eeg=False, stim=False,
 
 
 ###############################################################################
-# Now, we can define a threshold range over which the threshold must be found
-# and then compute the channel-level thresholds using
-# :func:`autoreject.compute_thresholds`.
+# Now, we compute the channel-level thresholds using
+# :func:`autoreject.compute_thresholds`. The `method` parameter will determine
+# how we will search for thresholds over a range of potential candidates.
 
 import numpy as np  # noqa
 from autoreject import compute_thresholds  # noqa
 
+# Get a dictionary of rejection thresholds
 threshes = compute_thresholds(epochs, picks=picks, method='random_search',
                               random_state=42, augment=False,
                               verbose='progressbar')

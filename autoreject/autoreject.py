@@ -379,6 +379,13 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         If `'tqdm'`, use `tqdm.tqdm`.
         If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
+    n_jobs : int
+        Number of jobs to run in parallel
+
+    Returns
+    -------
+    threshes : dict
+        The channel-level rejection thresholds
 
     Examples
     --------
