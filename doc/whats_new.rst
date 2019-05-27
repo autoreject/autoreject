@@ -31,6 +31,6 @@ API
 ~~~
 
 - Added `ch_types` argument to :func:`autoreject.get_rejection_threshold` to find
-  rejection thresholds for only subset of channel types in the data, by `Mainak Jas` in `#140 <https://github.com/autoreject/autoreject/pull/140>`_
+  rejection thresholds for only subset of channel types in the data, by `Mainak Jas`_ in `#140 <https://github.com/autoreject/autoreject/pull/140>`_
 
 .. _Mainak Jas: https://perso.telecom-paristech.fr/mjas/
