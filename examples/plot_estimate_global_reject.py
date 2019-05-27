@@ -39,6 +39,9 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 # Now we get the rejection dictionary
 
 from autoreject import get_rejection_threshold  # noqa
+
+# We could use the `decim` parameter to only take every nth time slice
+# this would speed up the computation time at the expense of accuracy
 reject = get_rejection_threshold(epochs, decim=1)
 
 ###############################################################################
