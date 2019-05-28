@@ -21,6 +21,7 @@ Dependencies
 
 These are the dependencies to use autoreject:
 
+* Python (>=3.5)
 * numpy (>=1.8)
 * matplotlib (>=1.3)
 * scipy (>=0.16)
@@ -38,5 +39,5 @@ If you use this code in your project, please cite::
     "Automated rejection and repair of bad trials in MEG/EEG." In 6th International Workshop on
     Pattern Recognition in Neuroimaging (PRNI). 2016.
 
-    Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort. 2017. 
+    Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort. 2017.
     Autoreject: Automated artifact rejection for MEG and EEG data. NeuroImage, 159, 417-429.
