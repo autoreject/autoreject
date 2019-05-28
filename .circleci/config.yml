@@ -2,30 +2,30 @@ version: 2
 jobs:
     build:
         docker:
-            - image: circleci/python:3.7.0-stretch-node-browsers
+            - image: circleci/python:3.7.3-stretch
         steps:
             - checkout
             - restore_cache:
                 keys:
-                  - data-cache
+                  - data-cache-{{ checksum ./autoreject/__init__.py}}  # restore cache from last build. Unless __init__.py has changed since then
             - run:
                 name: Install miniconda
                 command: |
-                  wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O ~/miniconda.sh;
+                  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
                   chmod +x ~/miniconda.sh;
                   ~/miniconda.sh -b -p ~/miniconda;
                   echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
             - run:
                 name: Setup Python environment
                 command: |
+                    conda update --yes --quiet conda
+                    conda create -n testenv --yes python=3.5
+                    source activate testenv
+                    conda install --yes --quiet numpy matplotlib scipy scikit-learn
+                    conda install --yes --quiet cython pillow
                     pip install --upgrade pip
-                    pip install matplotlib Pillow
-                    pip install sphinx sphinx-gallery sphinx_bootstrap_theme
-                    pip install cython scipy
-                    pip install --upgrade mne
-                    pip install scikit-learn==0.18
-                    pip install scikit-optimize tqdm
-                    pip install numpydoc
+                    pip install scikit-optimize tqdm mne
+                    pip install sphinx sphinx-gallery sphinx_bootstrap_theme numpydoc
                     pip install -e .
             - run:
                 name: Build the documentation
@@ -35,7 +35,7 @@ jobs:
                 path: doc/_build/html/
                 destination: html
             - save_cache:
-                key: data-cache
+                key: data-cache-{{ checksum ./autoreject/__init__.py}}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
