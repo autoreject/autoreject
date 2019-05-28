@@ -11,12 +11,14 @@ This is a library to automatically reject bad trials and repair bad sensors in m
 Installation
 ============
 
-We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_. To install ``autoreject``, you first need to install its dependencies::
+We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_
+and a **Python version >=3.5** To install ``autoreject``, you first need to
+install its dependencies::
 
 	$ conda install numpy matplotlib scipy scikit-learn
 	$ pip install -U mne
 
-An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'` 
+An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'`
 for nice progressbars. In case you want to be able to read and write `autoreject` objects using the HDF5 format,
 you may also want to install `h5py <https://pypi.org/project/h5py/>`_.
 
@@ -79,6 +81,6 @@ Cite
 [1] Mainak Jas, Denis Engemann, Federico Raimondo, Yousra Bekhti, and Alexandre Gramfort, "`Automated rejection and repair of bad trials in MEG/EEG <https://hal.archives-ouvertes.fr/hal-01313458/document>`_."
 In 6th International Workshop on Pattern Recognition in Neuroimaging (PRNI), 2016.
 
-[2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort. 2017. 
+[2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort. 2017.
 "`Autoreject: Automated artifact rejection for MEG and EEG data <http://www.sciencedirect.com/science/article/pii/S1053811917305013>`_".
 NeuroImage, 159, 417-429.
