@@ -25,3 +25,5 @@ autoreject.egg-info/
 .tags
 tags
 .coverage
+
+/examples/ds117/
