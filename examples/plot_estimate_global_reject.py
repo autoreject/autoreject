@@ -40,9 +40,12 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 
 from autoreject import get_rejection_threshold  # noqa
 
-# We could use the `decim` parameter to only take every nth time slice
-# this would speed up the computation time at the expense of accuracy
-reject = get_rejection_threshold(epochs, decim=1)
+# We can use the `decim` parameter to only take every nth time slice.
+# This speeds up the computation time. Note however that for low sampling
+# rates and high decimation parameters, you might not detect "peaky artifacts"
+# (with a fast timecourse) in your data. A low amount of decimation however is
+# almost always beneficial at no decrease of accuracy.
+reject = get_rejection_threshold(epochs, decim=2)
 
 ###############################################################################
 # and print it
