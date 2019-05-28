@@ -813,7 +813,7 @@ class AutoReject(object):
         If None, defaults to `np.linspace(0, 1.0, 11)`
     n_interpolate : array | None
         The values to try for the number of channels for which to interpolate.
-        This is :math:`\\rho`.If None, defaults to np.array([1, 4, 32])
+        This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
     picks : ndarray, shape(n_channels) | None
