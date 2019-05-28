@@ -7,7 +7,7 @@ jobs:
             - checkout
             - restore_cache:
                 keys:
-                  - data-cache-{{ checksum ./autoreject/__init__.py}}  # restore cache from last build. Unless __init__.py has changed since then
+                  - data-cache-{{ checksum "./autoreject/__init__.py" }}  # restore cache from last build. Unless __init__.py has changed since then
             - run:
                 name: Install miniconda
                 command: |
@@ -30,12 +30,13 @@ jobs:
             - run:
                 name: Build the documentation
                 command: |
+                    source activate testenv
                     cd doc && make html
             - store_artifacts:
                 path: doc/_build/html/
                 destination: html
             - save_cache:
-                key: data-cache-{{ checksum ./autoreject/__init__.py}}
+                key: data-cache-{{ checksum "./autoreject/__init__.py" }}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
