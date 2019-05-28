@@ -1,8 +1,7 @@
 language: python
 
 env:
-  - PYTHON_VERSION=2.7
-  - PYTHON_VERSION=3.6
+  - PYTHON_VERSION=3.5
 
 before_install:
   - wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
