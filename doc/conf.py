@@ -307,7 +307,7 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('https://docs.python.org/', None),
-                       'seaborn': ('https://web.stanford.edu/~mwaskom/software/seaborn/', None),  # noqa: E501
+                       'seaborn': ('https://seaborn.pydata.org/', None),
                        'mne': ('http://martinos.org/mne/stable/', None)
                        }
 
