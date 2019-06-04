@@ -19,18 +19,12 @@ from .utils import _pbar, _handle_picks
 from .utils import _check_data
 
 
-def _iterate_epochs(ransac, epochs, idxs, verbose):
-
-    # Select random subset
-    if ransac.n_jobs > 1:
-        ransac.random_state = ransac.random_state + idxs.max()
-    ransac.ch_subsets_ = ransac._get_random_subsets(epochs.info)
-    ransac.mappings_ = ransac._get_mappings(epochs)
-
+def _iterate_epochs(ransac, epochs, idxs, ch_subset, verbose):
+    ransac.mappings_ = ransac._get_mappings(epochs, ch_subset)
     n_channels = len(ransac.picks)
     corrs = np.zeros((len(idxs), n_channels))
     for idx, _ in enumerate(_pbar(idxs, desc='Iterating epochs',
-                            verbose=verbose)):
+                                  verbose=verbose)):
         ransac.corr_ = ransac._compute_correlations(
             epochs.get_data()[idx, ransac.picks])
         corrs[idx, :] = ransac.corr_
@@ -118,10 +112,10 @@ class Ransac(object):
         self.verbose = verbose
         self.picks = picks
 
-    def _get_random_subsets(self, info):
+    def _get_random_subsets(self, info, random_state):
         """ Get random channels"""
         # have to set the seed here
-        rng = check_random_state(self.random_state)
+        rng = check_random_state(random_state)
         picked_info = mne.io.pick.pick_info(info, self.picks)
         n_channels = len(picked_info['ch_names'])
 
@@ -141,10 +135,9 @@ class Ransac(object):
 
         return ch_subsets
 
-    def _get_mappings(self, inst):
+    def _get_mappings(self, inst, ch_subsets):
         from .utils import _fast_map_meg_channels
 
-        ch_subsets = self.ch_subsets_
         picked_info = mne.io.pick.pick_info(inst.info, self.picks)
         pos = np.array([ch['loc'][:3] for ch in picked_info['chs']])
         ch_names = picked_info['ch_names']
@@ -202,9 +195,12 @@ class Ransac(object):
         if self.verbose is not False and self.n_jobs > 1:
             print('Iterating epochs ...')
         verbose = False if self.n_jobs > 1 else self.verbose
-        corrs = parallel(my_iterator(self, epochs, idxs, verbose)
-                         for idxs in np.array_split(np.arange(n_epochs),
-                         n_jobs))
+        self.ch_subsets_ = [self._get_random_subsets(
+                            epochs.info, self.random_state + random_state)
+                            for random_state in np.arange(0, n_epochs, n_jobs)]
+        epoch_idxs = np.array_split(np.arange(n_epochs), n_jobs)
+        corrs = parallel(my_iterator(self, epochs, idxs, chs, verbose)
+                         for idxs, chs in zip(epoch_idxs, self.ch_subsets_))
         self.corr_ = np.concatenate(corrs)
         if self.verbose is not False and self.n_jobs > 1:
             print('[Done]')
