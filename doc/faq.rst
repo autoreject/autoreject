@@ -1,6 +1,9 @@
 Frequently asked questions
 ==========================
 
+This section of the documentation provides a *discussion-like* format, answering
+"How-to" questions.
+
 Should I apply ICA first or autoreject first?
 ---------------------------------------------
 
@@ -49,7 +52,7 @@ as a list of a single element::
 
 	>>> ar = AutoReject(n_interpolate=[1], consensus_percs=[0.6])
 
-Note this will still run a cross-validation loop to generate the 
+Note this will still run a cross-validation loop to generate the
 validation score.
 
 Is it possible to get only bad sensor annotations and not interpolate?
