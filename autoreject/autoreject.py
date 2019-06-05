@@ -21,7 +21,7 @@ from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score
 from sklearn.externals.joblib import Parallel, delayed
 
-from .utils import (clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
+from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
                     _handle_picks, _check_data, _compute_dots,
                     _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
@@ -354,7 +354,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
 def compute_thresholds(epochs, method='bayesian_optimization',
                        random_state=None, picks=None, augment=True,
-                       dots=None, verbose='progressbar', n_jobs=1):
+                       verbose='progressbar', n_jobs=1):
     """Compute thresholds for each channel.
 
     Parameters
@@ -371,8 +371,6 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     augment : boolean
         Whether to augment the data or not. By default it is True, but
         set it to False, if the channel locations are not available.
-    dots : tuple of ndarray
-        The self dots and cross dots
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -393,6 +391,14 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     EEG sensors this way:
         >>> compute_thresholds(epochs)
     """
+    return _compute_thresholds(epochs, method=method,
+                               random_state=random_state, picks=picks,
+                               augment=augment, verbose=verbose, n_jobs=n_jobs)
+
+
+def _compute_thresholds(epochs, method='bayesian_optimization',
+                        random_state=None, picks=None, augment=True,
+                        dots=None, verbose='progressbar', n_jobs=1):
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
     picks = _handle_picks(info=epochs.info, picks=picks)
@@ -411,8 +417,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         n_epochs = len(epochs)
         data, y = epochs.get_data(), np.ones((n_epochs, ))
         if augment:
-            epochs_interp = clean_by_interp(epochs, picks=picks,
-                                            dots=dots, verbose=verbose)
+            epochs_interp = _clean_by_interp(epochs, picks=picks,
+                                             dots=dots, verbose=verbose)
             # non-data channels will be duplicate
             data = np.concatenate((epochs.get_data(),
                                    epochs_interp.get_data()), axis=0)

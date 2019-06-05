@@ -203,7 +203,7 @@ def _get_epochs_type():
     return BaseEpochs
 
 
-def clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
+def clean_by_interp(inst, picks=None, verbose='progressbar'):
     """Clean epochs/evoked by LOOCV.
 
     Parameters
@@ -213,8 +213,6 @@ def clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
     picks : ndarray, shape(n_channels,) | None
         The channels to be considered for autoreject. If None, defaults
         to data channels {'meg', 'eeg'}.
-    dots : tuple of ndarray
-        The self dots and cross dots.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -227,6 +225,10 @@ def clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
     inst_clean : instance of mne.Evoked or mne.Epochs
         Instance after interpolation of bad channels.
     """
+    return _clean_by_interp(inst, picks=picks, verbose=verbose)
+
+
+def _clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
     picks = _handle_picks(info=inst_interp.info, picks=picks)
