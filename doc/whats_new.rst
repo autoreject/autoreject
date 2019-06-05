@@ -21,7 +21,7 @@ Changelog
 - Make MEG interpolation faster by precomputing dot products for the interpolation, by `Mainak Jas`_
   in `#122 <https://github.com/autoreject/autoreject/pull/122>`_
 
-- Add default option from `param_range` in :func:`autoreject.validation_curve, by `Alex Gramfort`_
+- Add default option for `param_range` in :func:`autoreject.validation_curve, by `Alex Gramfort`_
   in `#129 <https://github.com/autoreject/autoreject/pull/129>`_
 
 Bug
