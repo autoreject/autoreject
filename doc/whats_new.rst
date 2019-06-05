@@ -26,6 +26,7 @@ Bug
   error when running :class:`autoreject.Autoreject`. Fixed by `Mainak Jas`_ in `#115 <https://github.com/autoreject/autoreject/pull/115>`_
 - Added check for channel locations so that autoreject does not
   hang when the channel positions are nan. Fixed by `Mainak Jas`_ in `#130 <https://github.com/autoreject/autoreject/pull/130>`_
+- Fixed bug in random seed for the Ransac algorithm when n_jobs > 1, by `Legrand Nico`_ and `Mainak Jas`_ in `#138 <https://github.com/autoreject/autoreject/pull/138>`_
 
 API
 ~~~
@@ -34,3 +35,4 @@ API
   rejection thresholds for only subset of channel types in the data, by `Mainak Jas`_ in `#140 <https://github.com/autoreject/autoreject/pull/140>`_
 
 .. _Mainak Jas: https://perso.telecom-paristech.fr/mjas/
+.. _Legrand Nico: https://legrandnico.github.io/
