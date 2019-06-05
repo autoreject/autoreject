@@ -409,7 +409,7 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
     if picks_by_type is not None:
         threshes = dict()
         for ch_type, this_picks in picks_by_type:
-            threshes.update(compute_thresholds(
+            threshes.update(_compute_thresholds(
                 epochs=epochs, method=method, random_state=random_state,
                 picks=this_picks, augment=augment, dots=dots,
                 verbose=verbose, n_jobs=n_jobs))
@@ -488,7 +488,7 @@ class _AutoReject(BaseAutoReject):
                  verbose='progressbar'):
         """Init it."""
         if thresh_func is None:
-            thresh_func = compute_thresholds
+            thresh_func = _compute_thresholds
         if not (0 <= consensus <= 1):
             raise ValueError('"consensus" must be between 0 and 1. '
                              'You gave me %s.' % consensus)
@@ -954,7 +954,7 @@ class AutoReject(object):
             this_info = mne.pick_info(epochs.info, meg_picks, copy=True)
             self.dots = _compute_dots(this_info)
 
-        thresh_func = partial(compute_thresholds, n_jobs=self.n_jobs,
+        thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,
                               random_state=self.random_state,
                               dots=self.dots)
