@@ -128,8 +128,9 @@ html_theme_options = {
     'navbar_sidebarrel': False,
     'navbar_links': [
         ("Examples", "auto_examples/index"),
-        ("API", "api"),
+        ("Explanation", "explanation",)
         ("FAQ", "faq"),
+        ("API", "api"),
         ("What's new", "whats_new"),
         ("GitHub", "https://github.com/autoreject/autoreject", True)
     ],
