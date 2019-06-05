@@ -21,8 +21,8 @@ from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score
 from sklearn.externals.joblib import Parallel, delayed
 
-from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type, _pbar,
-                    _handle_picks, _check_data, _compute_dots,
+from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
+                    _pbar, _handle_picks, _check_data, _compute_dots,
                     _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 from .viz import plot_epochs
