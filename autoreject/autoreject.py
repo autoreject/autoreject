@@ -56,7 +56,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         Defaults to 'thresh'.
     param_range : array | None
         The values of the parameter that will be evaluated.
-        If None, 15 values between the min and the max treshold
+        If None, 15 values between the min and the max threshold
         will be tested.
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation strategy.
@@ -187,7 +187,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         e.g., ['mag', 'grad']. If None, the rejection dictionary
         will have keys ['mag', 'grad', 'eeg', 'eog'].
     cv : int
-        The numbef of folds used. Defaults to 5.
+        The number of folds used. Defaults to 5.
     verbose : bool
         If False, suppress all output messages.
 
