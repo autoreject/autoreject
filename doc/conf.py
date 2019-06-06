@@ -128,7 +128,7 @@ html_theme_options = {
     'navbar_sidebarrel': False,
     'navbar_links': [
         ("Examples", "auto_examples/index"),
-        ("Explanation", "explanation",)
+        ("Explanation", "explanation"),
         ("FAQ", "faq"),
         ("API", "api"),
         ("What's new", "whats_new"),
