@@ -53,11 +53,14 @@ from autoreject import validation_curve  # noqa
 from autoreject import get_rejection_threshold  # noqa
 
 _, test_scores, param_range = validation_curve(
-    epochs, param_range=param_range, cv=5, return_param_range=True)
+    epochs, param_range=param_range, cv=5, return_param_range=True, n_jobs=1)
 
 test_scores = -test_scores.mean(axis=1)
 best_thresh = param_range[np.argmin(test_scores)]
 
+###############################################################################
+# We can also get the best threshold more efficiently using Bayesian
+# optimization
 reject2 = get_rejection_threshold(epochs, random_state=0, cv=5)
 
 ###############################################################################
@@ -81,11 +84,6 @@ plt.plot(scaling * param_range, scaling * test_scores,
          'o-', markerfacecolor='w',
          color=colors[0], markeredgewidth=2, linewidth=2,
          markeredgecolor=colors[0], markersize=8, label='CV scores')
-plt.plot(scaling * param_range,
-         scaling * gp.predict(np.array(param_range)[:, None]),
-         'o-', markerfacecolor='w',
-         color=colors[0], markeredgewidth=2, linewidth=2,
-         markeredgecolor='r', markersize=8, label='GP')
 plt.ylabel('RMSE (%s)' % unit)
 plt.xlabel('Threshold (%s)' % unit)
 plt.xlim((scaling * param_range[0] * 0.9, scaling * param_range[-1] * 1.1))
