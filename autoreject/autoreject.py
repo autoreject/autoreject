@@ -42,7 +42,7 @@ def _slicemean(obj, this_slice, axis):
 
 
 def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
-                     cv=None, return_param_range=False):
+                     cv=None, return_param_range=False, n_jobs=1):
     """Validation curve on epochs for global autoreject.
 
     Parameters
@@ -63,6 +63,8 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
     return_param_range : bool
         If True the used param_range is returned.
         Defaults to False.
+    n_jobs : int
+        The number of thresholds to compute in parallel.
 
     Returns
     -------
@@ -95,7 +97,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
     train_scores, test_scores = \
         validation_curve(estimator, X.reshape(n_epochs, -1), y=y,
                          param_name="thresh", param_range=param_range,
-                         cv=cv, n_jobs=1, verbose=0)
+                         cv=cv, n_jobs=n_jobs, verbose=0)
 
     out = (train_scores, test_scores)
     if return_param_range:
