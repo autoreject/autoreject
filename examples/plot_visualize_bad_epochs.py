@@ -122,7 +122,7 @@ set_matplotlib_defaults(plt, style='seaborn-white')
 loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
 plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
-plt.xticks(range(len(ar.consensus)), ar.consensus)
+plt.xticks(range(len(ar.consensus)), ['%.1f' % c for c in ar.consensus])
 plt.yticks(range(len(ar.n_interpolate)), ar.n_interpolate)
 
 # Draw rectangle at location of best parameters
