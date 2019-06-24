@@ -1,4 +1,4 @@
-__version__ = '0.2.dev0'
+__version__ = '0.2'
 
 from .autoreject import _GlobalAutoReject, _AutoReject, AutoReject
 from .autoreject import RejectLog, read_auto_reject

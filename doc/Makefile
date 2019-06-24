@@ -139,7 +139,7 @@ install:
 	# --no-checkout just fetches the root folder without content
 	# --depth 1 is a speed optimization since we don't need the
 	# history prior to the last commit
-	git clone --no-checkout --depth 1 https://github.com/autoreject/autoreject.github.io.git _build/autoreject.github.io
+	git clone --no-checkout --depth 1 git@github.com:autoreject/autoreject.github.io.git _build/autoreject.github.io
 	touch _build/autoreject.github.io/.nojekyll
 	make html
 	cd _build/ && \
