@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 """Setup autoreject."""
 import os
-import setuptools  # noqa; we are using a setuptools namespace
-from numpy.distutils.core import setup
+from setuptools import setup, find_packages
 
 # get the version (don't import autoreject here to avoid dependency)
 version = None
@@ -21,6 +20,7 @@ DESCRIPTION = descr
 MAINTAINER = 'Mainak Jas'
 MAINTAINER_EMAIL = 'mainakjas@gmail.com'
 LICENSE = 'BSD (3-clause)'
+URL = 'http://autoreject.github.io/'
 DOWNLOAD_URL = 'https://github.com/autoreject/autoreject.git'
 VERSION = version
 
@@ -31,6 +31,7 @@ if __name__ == "__main__":
           description=DESCRIPTION,
           license=LICENSE,
           version=VERSION,
+          url=URL,
           download_url=DOWNLOAD_URL,
           long_description=open('README.rst').read(),
           long_description_content_type='text/x-rst',
@@ -47,9 +48,9 @@ if __name__ == "__main__":
               'Operating System :: MacOS',
           ],
           platforms='any',
-          packages=[
-              'autoreject'
-          ],
+          keywords=('electroencephalography eeg magnetoencephalography '
+                    'meg preprocessing analysis'),
+          packages=find_packages(),
           project_urls={'Documentation': 'http://autoreject.github.io/',
                         'Bug Reports': 'https://github.com/autoreject/autoreject/issues',  # noqa: E501
                         'Source': 'https://github.com/autoreject/autoreject'
