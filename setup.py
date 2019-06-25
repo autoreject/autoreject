@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+"""Setup autoreject."""
 import os
 import setuptools  # noqa; we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -32,6 +33,7 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=open('README.rst').read(),
+          long_description_content_type='text/x-rst',
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
@@ -48,4 +50,8 @@ if __name__ == "__main__":
           packages=[
               'autoreject'
           ],
+          project_urls={'Documentation': 'http://autoreject.github.io/',
+                        'Bug Reports': 'https://github.com/autoreject/autoreject/issues',  # noqa: E501
+                        'Source': 'https://github.com/autoreject/autoreject'
+                        }
           )
