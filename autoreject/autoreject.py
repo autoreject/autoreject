@@ -1218,8 +1218,21 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, show=True):
-        """Plot. Returns a figure."""
+    def plot(self, horizontal=False, show=True):
+        """Plot.
+        
+        Parameters
+        ----------
+        horizontal : bool
+            If False, will plot sensors on x-axis and epochs on y-axis. 
+            If True, the axes will be flipped.
+        show : bool
+            Display the figure immediately.
+
+        Returns
+        -------
+        figure : Instance of matplotlib.figure.Figure
+        """
         import matplotlib.pyplot as plt
 
         figure = plt.figure(figsize=(12, 6))
@@ -1227,7 +1240,7 @@ class RejectLog(object):
         ax.grid(False)
         ch_names_ = self.ch_names[7::10]
 
-        if self.labels.shape[0] > self.labels.shape[1]:
+        if horizontal:
             plt.imshow(self.labels.T, cmap='Reds',
                        interpolation='nearest')
             ax.set_xlabel('Epochs')
