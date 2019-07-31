@@ -1218,7 +1218,6 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-
     def plot(self, orientation='vertical', show=True):
         """Plot.
 
@@ -1226,7 +1225,8 @@ class RejectLog(object):
         ----------
         orientation : 'vertical' or 'horizontal'
             If `'vertical'`, will plot sensors on x-axis and epochs on y-axis.
-            If `'horizontal'`, will plot epochs on x-axis and sensors on y-axis.
+            If `'horizontal'`, will plot epochs on x-axis and sensors
+            on y-axis.
         show : bool
             Display the figure immediately.
 
@@ -1256,7 +1256,8 @@ class RejectLog(object):
             plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
                      xticklabels=ch_names_)
         else:
-            raise ValueError("Orientation can be only 'horizontal' or 'vertical'.")
+            msg = "Orientation can be only 'horizontal' or 'vertical'."
+            raise ValueError(msg)
 
         # XXX to be fixed
         plt.setp(ax.get_yticklabels(), rotation=0)
@@ -1266,7 +1267,6 @@ class RejectLog(object):
         if show:
             plt.show()
         return figure
-
 
     def plot_epochs(self, epochs, scalings=None, title=''):
         """Plot interpolated and dropped epochs.
