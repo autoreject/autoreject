@@ -1218,14 +1218,15 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, horizontal=False, show=True):
+
+    def plot(self, orientation='vertical', show=True):
         """Plot.
-        
+
         Parameters
         ----------
-        horizontal : bool
-            If False, will plot sensors on x-axis and epochs on y-axis. 
-            If True, the axes will be flipped.
+        orientation : 'vertical' or 'horizontal'
+            If `'vertical'`, will plot sensors on x-axis and epochs on y-axis.
+            If `'horizontal'`, will plot epochs on x-axis and sensors on y-axis.
         show : bool
             Display the figure immediately.
 
@@ -1240,20 +1241,22 @@ class RejectLog(object):
         ax.grid(False)
         ch_names_ = self.ch_names[7::10]
 
-        if horizontal:
+        if orientation == 'horizontal':
             plt.imshow(self.labels.T, cmap='Reds',
                        interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
             plt.setp(ax, yticks=range(7, self.labels.shape[1], 10),
                      yticklabels=ch_names_)
-        else:
+        elif orientation == 'vertical':
             plt.imshow(self.labels, cmap='Reds',
                        interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
             plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
                      xticklabels=ch_names_)
+        else:
+            raise ValueError("Orientation can be only 'horizontal' or 'vertical'.")
 
         # XXX to be fixed
         plt.setp(ax.get_yticklabels(), rotation=0)
@@ -1263,6 +1266,7 @@ class RejectLog(object):
         if show:
             plt.show()
         return figure
+
 
     def plot_epochs(self, epochs, scalings=None, title=''):
         """Plot interpolated and dropped epochs.
