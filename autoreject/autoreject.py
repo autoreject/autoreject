@@ -1228,7 +1228,7 @@ class RejectLog(object):
             If `'horizontal'`, will plot epochs on x-axis and sensors
             on y-axis.
         show : bool
-            Display the figure immediately.
+            If True, display the figure immediately.
 
         Returns
         -------
