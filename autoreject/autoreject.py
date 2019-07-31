@@ -1256,7 +1256,7 @@ class RejectLog(object):
             plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
                      xticklabels=ch_names_)
         else:
-            msg = """orientation can be only 
+            msg = """orientation can be only \
                   'horizontal' or 'vertical'. Got %s""" % orientation
             raise ValueError(msg)
 
