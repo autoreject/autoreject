@@ -1218,26 +1218,38 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self):
-        """Plot."""
+    def plot(self, show=True):
+        """Plot. Returns a figure."""
         import matplotlib.pyplot as plt
 
-        plt.figure(figsize=(12, 6))
-        plt.imshow(self.labels, cmap='Reds',
-                   interpolation='nearest')
-        # XXX to be fixed
-        ch_names_ = self.ch_names[7::10]
+        figure = plt.figure(figsize=(12, 6))
         ax = plt.gca()
         ax.grid(False)
-        ax.set_xlabel('Channels')
-        ax.set_ylabel('Epochs')
-        plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
-                 xticklabels=ch_names_)
+        ch_names_ = self.ch_names[7::10]
+
+        if self.labels.shape[0] > self.labels.shape[1]:
+            plt.imshow(self.labels.T, cmap='Reds',
+                       interpolation='nearest')
+            ax.set_xlabel('Epochs')
+            ax.set_ylabel('Channels')
+            plt.setp(ax, yticks=range(7, self.labels.shape[1], 10),
+                     yticklabels=ch_names_)
+        else:
+            plt.imshow(self.labels, cmap='Reds',
+                       interpolation='nearest')
+            ax.set_xlabel('Channels')
+            ax.set_ylabel('Epochs')
+            plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
+                     xticklabels=ch_names_)
+
+        # XXX to be fixed
         plt.setp(ax.get_yticklabels(), rotation=0)
         plt.setp(ax.get_xticklabels(), rotation=90)
         ax.tick_params(axis=u'both', which=u'both', length=0)
         plt.tight_layout(rect=[None, None, None, 1.1])
-        plt.show()
+        if show:
+            plt.show()
+        return figure
 
     def plot_epochs(self, epochs, scalings=None, title=''):
         """Plot interpolated and dropped epochs.
