@@ -1236,20 +1236,19 @@ class RejectLog(object):
         """
         import matplotlib.pyplot as plt
 
-        figure = plt.figure(figsize=(12, 6))
-        ax = plt.gca()
+        figure, ax = plt.subplots(figsize=(12, 6))
         ax.grid(False)
         ch_names_ = self.ch_names[7::10]
 
         if orientation == 'horizontal':
-            plt.imshow(self.labels.T, cmap='Reds',
+            ax.imshow(self.labels.T, cmap='Reds',
                        interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
             plt.setp(ax, yticks=range(7, self.labels.shape[1], 10),
                      yticklabels=ch_names_)
         elif orientation == 'vertical':
-            plt.imshow(self.labels, cmap='Reds',
+            ax.imshow(self.labels, cmap='Reds',
                        interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
