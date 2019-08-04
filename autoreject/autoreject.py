@@ -1242,14 +1242,14 @@ class RejectLog(object):
 
         if orientation == 'horizontal':
             ax.imshow(self.labels.T, cmap='Reds',
-                       interpolation='nearest')
+                      interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
             plt.setp(ax, yticks=range(7, self.labels.shape[1], 10),
                      yticklabels=ch_names_)
         elif orientation == 'vertical':
             ax.imshow(self.labels, cmap='Reds',
-                       interpolation='nearest')
+                      interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
             plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
