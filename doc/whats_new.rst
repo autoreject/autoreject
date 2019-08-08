@@ -15,6 +15,8 @@ Current
 Changelog
 ~~~~~~~~~
 
+- Make plotting of reject log more flexible by allowing to change the orientation of plot, option to supress the immediate display of the plot and returing the plot figure for further modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak` in `#152 <https://github.com/autoreject/autoreject/pull/152>` 
+
 Bug
 ~~~
 
@@ -56,3 +58,4 @@ API
 .. _Mainak Jas: https://perso.telecom-paristech.fr/mjas/
 .. _Legrand Nico: https://legrandnico.github.io/
 .. _Alex Gramfort: http://alexandre.gramfort.net
+.. _Marcin Koculak: https://mkoculak.github.io/
