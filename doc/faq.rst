@@ -22,11 +22,11 @@ step, because autoreject only works on epoched data. ICA is ignoring the time
 domain of the data, so we can simply turn the raw data into equally spaced
 "fixed length" epochs using ::func::`mne.make_fixed_length_events`::
 
-	>>> epo_duration = 1.0
-	>>> events = mne.make_fixed_length_events(raw, duration=epo_duration)
-	>>> epochs = mne.Epochs(raw, events, tmin=0.0, tmax=epo_duration)
+	>>> tstep = 1.0
+	>>> events = mne.make_fixed_length_events(raw, duration=tstep)
+	>>> epochs = mne.Epochs(raw, events, tmin=0.0, tmax=tstep)
 	>>> reject = get_rejection_threshold(epochs)
-	>>> ica.fit(epochs, reject=reject)
+	>>> ica.fit(epochs, reject=reject, tstep=tstep)
 
 After the estimation step and all other processing that happened on the
 components, the ICA results can be applied to the raw data::
@@ -37,7 +37,7 @@ components, the ICA results can be applied to the raw data::
 After obtaining the ICA cleaned raw data, you may consider making your own
 specific epochs, and applying autoreject (local).
 
-As an alternative to using autoreject (global) before the ICA, and autorejct
+As an alternative to using autoreject (global) before the ICA, and autoreject
 (local) as a second step later on, you can use autoreject (local) directly
 on your epochs to detect the bad segments, then applying ICA, and finally
 interpolating the bad data.
