@@ -24,7 +24,8 @@ jobs:
                     conda install --yes --quiet numpy matplotlib scipy scikit-learn
                     conda install --yes --quiet cython pillow
                     pip install --upgrade pip
-                    pip install scikit-optimize tqdm mne
+                    pip install scikit-optimize tqdm
+                    pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
                     pip install sphinx sphinx-gallery sphinx_bootstrap_theme numpydoc
                     pip install -e .
             - run:
