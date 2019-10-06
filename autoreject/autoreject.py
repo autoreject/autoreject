@@ -13,6 +13,7 @@ from scipy.stats.distributions import uniform
 import mne
 from mne import pick_types
 from mne.externals.h5io import read_hdf5, write_hdf5
+from mne.viz import plot_epochs as plot_mne_epochs
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
@@ -24,7 +25,6 @@ from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,
                     _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
-from .viz import plot_epochs
 
 _INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
                 'verbose', 'n_jobs', 'cv', 'random_state',
@@ -528,7 +528,7 @@ class _AutoReject(BaseAutoReject):
                       consensus=self.consensus,
                       verbose=self.verbose, picks=self.picks)
         return '%s(%s)' % (class_name, _pprint(params,
-                           offset=len(class_name),),)
+                                               offset=len(class_name),),)
 
     def _vote_bad_epochs(self, epochs, picks):
         """Each channel votes for an epoch as good or bad.
@@ -769,7 +769,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
     desc = 'n_interp'
 
     for jdx, n_interp in enumerate(_pbar(n_interpolate, desc=desc,
-                                   position=1, verbose=verbose)):
+                                         position=1, verbose=verbose)):
         # we can interpolate before doing cross-valida(tion
         # because interpolation is independent across trials.
         local_reject.n_interpolate_[ch_type] = n_interp
@@ -906,7 +906,7 @@ class AutoReject(object):
                       thresh_method=self.thresh_method,
                       random_state=self.random_state, n_jobs=self.n_jobs)
         return '%s(%s)' % (class_name, _pprint(params,
-                           offset=len(class_name),),)
+                                               offset=len(class_name),),)
 
     def __getstate__(self):
         """Get the state of autoreject as a dictionary."""
@@ -1289,8 +1289,42 @@ class RejectLog(object):
         fig : Instance of matplotlib.figure.Figure
             Epochs traces.
         """
-        return plot_epochs(
+        labels = self.labels
+        n_epochs, n_channels = labels.shape
+
+        if not labels.shape[0] == len(epochs.events):
+            raise ValueError('The number of epochs should match the number of'
+                             'epochs *before* autoreject. Please provide'
+                             'the epochs object before running autoreject')
+        if not labels.shape[1] == len(epochs.ch_names):
+            raise ValueError('The number of channels should match the number'
+                             ' of channels before running autoreject.')
+        bad_epochs_idx = np.where(self.bad_epochs)[0]
+        if len(bad_epochs_idx) > 0 and \
+                bad_epochs_idx.max() > len(epochs.events):
+            raise ValueError('You had a bad_epoch with index'
+                             '%d but there are only %d epochs. Make sure'
+                             ' to provide the epochs *before* running'
+                             'autoreject.'
+                             % (bad_epochs_idx.max(),
+                                len(epochs.events)))
+
+        color_map = {0: None, 1: 'r', 2: (0.6, 0.6, 0.6, 1.0)}
+        epoch_colors = list()
+        for epoch_idx, label_epoch in enumerate(labels):
+            if self.bad_epochs[epoch_idx]:
+                epoch_color = ['r'] * n_channels
+                epoch_colors.append(epoch_color)
+                continue
+            epoch_color = list()
+            for this_label in label_epoch:
+                if not np.isnan(this_label):
+                    epoch_color.append(color_map[this_label])
+                else:
+                    epoch_color.append(None)
+            epoch_colors.append(epoch_color)
+
+        return plot_mne_epochs(
             epochs=epochs,
-            bad_epochs_idx=np.where(self.bad_epochs)[0],
-            log_labels=self.labels, scalings=scalings,
+            epoch_colors=epoch_colors, scalings=scalings,
             title='')
