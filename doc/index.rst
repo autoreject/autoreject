@@ -15,7 +15,7 @@ We recommend the `Anaconda Python distribution <https://www.continuum.io/downloa
 and a **Python version >=3.5** To install ``autoreject``, you first need to
 install its dependencies::
 
-	$ conda install numpy matplotlib scipy scikit-learn
+	$ conda install numpy matplotlib scipy scikit-learn joblib
 	$ pip install -U mne
 
 An optional dependency is `tqdm <https://tqdm.github.io/>`_ if you want to use the verbosity flags `'tqdm'` or `'tqdm_notebook'`
