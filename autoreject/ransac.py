@@ -8,7 +8,7 @@ also works for MEG data.
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
 
 import numpy as np
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 import mne
 from mne.channels.interpolation import _make_interpolation_matrix

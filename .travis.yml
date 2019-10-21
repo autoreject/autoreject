@@ -12,7 +12,7 @@ install:
   - conda update --yes --quiet conda
   - conda create -n testenv --yes pip python=${PYTHON_VERSION}
   - source activate testenv
-  - conda install --yes --quiet numpy scipy scikit-learn matplotlib
+  - conda install --yes --quiet numpy scipy scikit-learn matplotlib joblib
   - conda install --yes --quiet nose coverage
   - pip install -q flake8 check-manifest h5py
   - pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master

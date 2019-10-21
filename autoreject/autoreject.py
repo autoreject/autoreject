@@ -10,6 +10,8 @@ from functools import partial
 import numpy as np
 from scipy.stats.distributions import uniform
 
+from joblib import Parallel, delayed
+
 import mne
 from mne import pick_types
 from mne.externals.h5io import read_hdf5, write_hdf5
@@ -19,7 +21,6 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score
-from sklearn.externals.joblib import Parallel, delayed
 
 from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,

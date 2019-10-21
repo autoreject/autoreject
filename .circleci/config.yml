@@ -21,10 +21,10 @@ jobs:
                     conda update --yes --quiet conda
                     conda create -n testenv --yes python=3.5
                     source activate testenv
-                    conda install --yes --quiet numpy matplotlib scipy scikit-learn
+                    conda install --yes --quiet numpy matplotlib scipy scikit-learn joblib
                     conda install --yes --quiet cython pillow
                     pip install --upgrade pip
-                    pip install scikit-optimize tqdm
+                    pip install tqdm
                     pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
                     pip install sphinx sphinx-gallery sphinx_bootstrap_theme numpydoc
                     pip install -e .
