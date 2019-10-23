@@ -19,7 +19,7 @@ This repository hosts code to automatically reject trials and repair sensors for
 
 The documentation can be found under the following links:
 
-- for the `stable release < https://autoreject.github.io/>`_
+- for the `stable release <https://autoreject.github.io/>`_
 - for the `latest (development) version <https://circleci.com/api/v1.1/project/github/autoreject/autoreject/latest/artifacts/0/html/index.html?branch=master>`_
 
 Dependencies
