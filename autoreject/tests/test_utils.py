@@ -5,6 +5,7 @@ from numpy.testing import assert_array_equal
 
 import mne
 from mne.datasets import sample
+from mne.bem import _check_origin
 from mne import io
 
 from autoreject.utils import clean_by_interp, interpolate_bads
@@ -60,8 +61,10 @@ def test_utils():
     # test that autoreject EEG interpolation code behaves the same as MNE
     evoked_ar = evoked_orig.copy()
     evoked_mne = evoked_orig.copy()
+
+    origin = _check_origin('auto', evoked_ar.info)
     _interpolate_bads_eeg(evoked_ar, picks=None)
-    mne.channels.interpolation._interpolate_bads_eeg(evoked_mne)
+    mne.channels.interpolation._interpolate_bads_eeg(evoked_mne, origin=origin)
     assert_array_equal(evoked_ar.data, evoked_mne.data)
 
 
