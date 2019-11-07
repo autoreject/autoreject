@@ -15,7 +15,7 @@ install:
   - conda install --yes --quiet numpy scipy scikit-learn matplotlib joblib
   - conda install --yes --quiet nose coverage
   - pip install -q flake8 check-manifest h5py
-  - pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
+  - pip install mne==0.19.1
   - pip install coverage
   - python setup.py install
 script:

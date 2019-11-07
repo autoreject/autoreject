@@ -25,7 +25,7 @@ jobs:
                     conda install --yes --quiet cython pillow
                     pip install --upgrade pip
                     pip install tqdm
-                    pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
+                    pip install mne==0.19.1
                     pip install sphinx sphinx-gallery sphinx_bootstrap_theme numpydoc
                     pip install -e .
             - run:

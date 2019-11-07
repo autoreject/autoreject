@@ -2,29 +2,6 @@
 
 .. _whats_new:
 
-What's new?
-===========
-
-.. currentmodule:: autoreject
-
-.. _current:
-
-Current
--------
-
-Changelog
-~~~~~~~~~
-
-- Make plotting of reject log more flexible by allowing to change the orientation of plot, option to supress the immediate display of the plot and returning the plot figure for further modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in `#152 <https://github.com/autoreject/autoreject/pull/152>`_
-
-Bug
-~~~
-
-API
-~~~
-
-.. _0.2:
-
 0.2
 ---
 
