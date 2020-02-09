@@ -1,7 +1,7 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD (3-clause)
 
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import mne
 from mne.datasets import sample
@@ -65,7 +65,7 @@ def test_utils():
     origin = _check_origin('auto', evoked_ar.info)
     _interpolate_bads_eeg(evoked_ar, picks=None)
     mne.channels.interpolation._interpolate_bads_eeg(evoked_mne, origin=origin)
-    assert_array_equal(evoked_ar.data, evoked_mne.data)
+    assert_array_almost_equal(evoked_ar.data, evoked_mne.data)
 
 
 def test_interpolate_bads():
