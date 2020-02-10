@@ -1205,7 +1205,7 @@ class RejectLog(object):
     bad_epochs : array-like, shape (n_epochs,)
         The boolean array with entries True for epochs that
         are marked as bad.
-    labels : array, shape (n_channels, n_epochs)
+    labels : array, shape (n_epochs, n_channels)
         It contains integers that encode if a channel in a given
         epoch is good (value 0), bad (1), or bad and interpolated (2).
     ch_names : list of str
