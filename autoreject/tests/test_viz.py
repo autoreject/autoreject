@@ -2,14 +2,13 @@
 # License: BSD (3-clause)
 
 import numpy as np
+import pytest
 
 import mne
 from mne.datasets import sample
 from mne import io
 
 import autoreject
-
-from nose.tools import pytest.raises
 
 import matplotlib
 matplotlib.use('Agg')

@@ -2,6 +2,7 @@
 # License: BSD (3-clause)
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
+import pytest
 
 import mne
 from mne.datasets import sample
@@ -11,8 +12,6 @@ from mne import io
 from autoreject.utils import clean_by_interp, interpolate_bads
 from autoreject.utils import _interpolate_bads_eeg
 import mne.channels.interpolation
-
-from nose.tools import pytest.raises
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
@@ -27,7 +26,6 @@ evoked = mne.read_evokeds(evoked_fname, condition='Left Auditory',
 
 def test_utils():
     """Test utils."""
-
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -69,7 +67,7 @@ def test_utils():
 
 
 def test_interpolate_bads():
-    """Test interpolate bads"""
+    """Test interpolate bads."""
     event_id = None
     events = mne.find_events(raw)
     tmin, tmax = -0.2, 0.5

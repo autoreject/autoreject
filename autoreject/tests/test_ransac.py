@@ -1,13 +1,13 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD (3-clause)
 
+import pytest
+
 import mne
 from mne.datasets import sample
 from mne import io
 
 from autoreject import Ransac
-
-from nose.tools import pytest.raises, assert_true
 
 import matplotlib
 matplotlib.use('Agg')
@@ -21,7 +21,6 @@ raw.info['projs'] = list()
 
 def test_ransac():
     """Some basic tests for ransac."""
-
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
 

@@ -6,6 +6,7 @@ import os.path as op
 
 import numpy as np
 from numpy.testing import assert_array_equal
+import pytest
 
 import mne
 from mne.datasets import sample
@@ -17,8 +18,6 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         get_rejection_threshold, read_auto_reject)
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
-
-from nose.tools import pytest.raises, assert_true, assert_equal
 
 import matplotlib
 matplotlib.use('Agg')
