@@ -18,7 +18,7 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
-from nose.tools import assert_raises, assert_true, assert_equal
+from nose.tools import pytest.raises, assert_true, assert_equal
 
 import matplotlib
 matplotlib.use('Agg')
@@ -57,7 +57,7 @@ def test_global_autoreject():
     reject = get_rejection_threshold(epochs, decim=4, ch_types='eeg')
     assert 'eog' not in reject
     assert 'eeg' in reject
-    assert_raises(ValueError, get_rejection_threshold, epochs,
+    pytest.raises(ValueError, get_rejection_threshold, epochs,
                   decim=4, ch_types=5)
 
 
@@ -77,7 +77,7 @@ def test_autoreject():
                         reject=None, preload=False)[:10]
 
     ar = _AutoReject()
-    assert_raises(ValueError, ar.fit, epochs)
+    pytest.raises(ValueError, ar.fit, epochs)
     epochs.load_data()
 
     ar.fit(epochs)
@@ -110,11 +110,11 @@ def test_autoreject():
     X = X.reshape(n_epochs, -1)
 
     ar = _GlobalAutoReject()
-    assert_raises(ValueError, ar.fit, X)
+    pytest.raises(ValueError, ar.fit, X)
     ar = _GlobalAutoReject(n_channels=n_channels)
-    assert_raises(ValueError, ar.fit, X)
+    pytest.raises(ValueError, ar.fit, X)
     ar = _GlobalAutoReject(n_times=n_times)
-    assert_raises(ValueError, ar.fit, X)
+    pytest.raises(ValueError, ar.fit, X)
     ar_global = _GlobalAutoReject(
         n_channels=n_channels, n_times=n_times, thresh=40e-6)
     ar_global.fit(X)
@@ -129,7 +129,7 @@ def test_autoreject():
         validation_curve(epochs_fit, return_param_range=True)
     assert len(train_scores) == len(test_scores) == len(param_range)
 
-    assert_raises(ValueError, validation_curve, X, param_range=param_range)
+    pytest.raises(ValueError, validation_curve, X, param_range=param_range)
 
     ##########################################################################
     # picking AutoReject
@@ -146,17 +146,17 @@ def test_autoreject():
 
     ar = AutoReject(cv=3, picks=picks, random_state=42,
                     n_interpolate=[1, 2], consensus=[0.5, 1])
-    assert_raises(AttributeError, ar.fit, X)
-    assert_raises(ValueError, ar.transform, X)
-    assert_raises(ValueError, ar.transform, epochs)
+    pytest.raises(AttributeError, ar.fit, X)
+    pytest.raises(ValueError, ar.transform, X)
+    pytest.raises(ValueError, ar.transform, epochs)
     epochs_nochs = epochs_fit.copy()
     for ch in epochs_nochs.info['chs']:
         ch['loc'] = np.zeros(9)
-    assert_raises(RuntimeError, ar.fit, epochs_nochs)
+    pytest.raises(RuntimeError, ar.fit, epochs_nochs)
     ar2 = AutoReject(cv=3, picks=picks, random_state=42,
                      n_interpolate=[1, 2], consensus=[0.5, 1],
                      verbose='blah')
-    assert_raises(ValueError, ar2.fit, epochs_fit)
+    pytest.raises(ValueError, ar2.fit, epochs_fit)
 
     ar.fit(epochs_fit)
     reject_log = ar.get_reject_log(epochs_fit)
@@ -243,13 +243,13 @@ def test_autoreject():
     assert len(ar.threshes_.keys()) == len(ar.picks)
     pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)[0]
     assert epochs.ch_names[pick_eog] not in ar.threshes_.keys()
-    assert_raises(
+    pytest.raises(
         IndexError, ar.transform,
         epochs.copy().pick_channels(
             [epochs.ch_names[pp] for pp in picks[:3]]))
 
     epochs.load_data()
-    assert_raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
+    pytest.raises(ValueError, compute_thresholds, epochs, 'dfdfdf')
     index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
                             for ii, pp in enumerate(picks)])
     threshes_a = compute_thresholds(
@@ -288,7 +288,7 @@ def test_io():
     assert np.sum([ar.threshes_[k] - ar2.threshes_[k]
                          for k in ar.threshes_.keys()]) == 0.
 
-    assert_raises(ValueError, ar.save, fname)
+    pytest.raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)
     ar3 = read_auto_reject(fname)
     epochs_clean1, reject_log1 = ar.transform(epochs, return_log=True)

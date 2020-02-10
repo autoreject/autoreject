@@ -9,7 +9,7 @@ from mne import io
 
 import autoreject
 
-from nose.tools import assert_raises
+from nose.tools import pytest.raises
 
 import matplotlib
 matplotlib.use('Agg')
@@ -41,6 +41,6 @@ def test_viz():
     reject_log.plot_epochs(epochs)
     reject_log.plot()
     reject_log.plot(orientation='horizontal')
-    assert_raises(ValueError, reject_log.plot_epochs, epochs[:2])
-    assert_raises(ValueError, reject_log.plot, 'down')
+    pytest.raises(ValueError, reject_log.plot_epochs, epochs[:2])
+    pytest.raises(ValueError, reject_log.plot, 'down')
     plt.close('all')

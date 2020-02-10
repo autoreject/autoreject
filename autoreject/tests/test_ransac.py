@@ -7,7 +7,7 @@ from mne import io
 
 from autoreject import Ransac
 
-from nose.tools import assert_raises, assert_true
+from nose.tools import pytest.raises, assert_true
 
 import matplotlib
 matplotlib.use('Agg')
@@ -38,16 +38,16 @@ def test_ransac():
     assert len(epochs_clean) == len(epochs)
     # Pass numpy instead of epochs
     X = epochs.get_data()
-    assert_raises(AttributeError, ransac.fit, X)
+    pytest.raises(AttributeError, ransac.fit, X)
     #
     # should not contain both channel types
     picks = mne.pick_types(epochs.info, meg=True, eeg=False, stim=False,
                            eog=False, exclude=[])
     ransac = Ransac(picks=picks)
-    assert_raises(ValueError, ransac.fit, epochs)
+    pytest.raises(ValueError, ransac.fit, epochs)
     #
     # should not contain other channel types.
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
                            eog=False, exclude=[])
     ransac = Ransac(picks=picks)
-    assert_raises(ValueError, ransac.fit, epochs)
+    pytest.raises(ValueError, ransac.fit, epochs)
