@@ -12,7 +12,7 @@ from autoreject.utils import clean_by_interp, interpolate_bads
 from autoreject.utils import _interpolate_bads_eeg
 import mne.channels.interpolation
 
-from nose.tools import assert_raises
+from nose.tools import pytest.raises
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
@@ -40,7 +40,7 @@ def test_utils():
     this_epoch = epochs.copy()
     epochs_clean = clean_by_interp(this_epoch)
     assert_array_equal(this_epoch.get_data(), epochs.get_data())
-    assert_raises(AssertionError, assert_array_equal, epochs_clean.get_data(),
+    pytest.raises(AssertionError, assert_array_equal, epochs_clean.get_data(),
                   this_epoch.get_data())
 
     picks_meg = mne.pick_types(evoked.info, meg='grad', eeg=False, exclude=[])
@@ -55,7 +55,7 @@ def test_utils():
         evoked.interpolate_bads(reset_bads=False)
         assert_array_equal(evoked.data[picks_bad],
                            evoked_autoreject.data[picks_bad])
-        assert_raises(AssertionError, assert_array_equal,
+        pytest.raises(AssertionError, assert_array_equal,
                       evoked_orig.data[picks_bad], evoked.data[picks_bad])
 
     # test that autoreject EEG interpolation code behaves the same as MNE
