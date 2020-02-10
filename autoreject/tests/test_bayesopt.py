@@ -15,4 +15,4 @@ def test_bayesopt():
     all_x = np.arange(0., 2.1, 0.1)
     best_x, _ = bayes_opt(func, initial_x, all_x, expected_improvement,
                           max_iter=10, debug=False)
-    assert_true(best_x - x_star < 0.01)
+    assert best_x - x_star < 0.01

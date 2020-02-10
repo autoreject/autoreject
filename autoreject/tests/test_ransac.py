@@ -35,7 +35,7 @@ def test_ransac():
 
     ransac = Ransac(picks=picks)
     epochs_clean = ransac.fit_transform(epochs)
-    assert_true(len(epochs_clean) == len(epochs))
+    assert len(epochs_clean) == len(epochs)
     # Pass numpy instead of epochs
     X = epochs.get_data()
     assert_raises(AttributeError, ransac.fit, X)

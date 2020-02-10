@@ -49,10 +49,10 @@ def test_global_autoreject():
     reject2 = get_rejection_threshold(epochs, decim=1, random_state=42)
     reject3 = get_rejection_threshold(epochs, decim=2, random_state=42)
     tols = dict(eeg=5e-6, eog=5e-6, grad=10e-12, mag=5e-15)
-    assert_true(reject1, isinstance(reject1, dict))
+    assert reject1, isinstance(reject1, dict)
     for key, value in list(reject1.items()):
-        assert_equal(reject1[key], reject2[key])
-        assert_true(abs(reject1[key] - reject3[key]) < tols[key])
+        assert reject1[key] == reject2[key]
+        assert abs(reject1[key] - reject3[key]) < tols[key]
 
     reject = get_rejection_threshold(epochs, decim=4, ch_types='eeg')
     assert 'eog' not in reject
@@ -81,7 +81,7 @@ def test_autoreject():
     epochs.load_data()
 
     ar.fit(epochs)
-    assert_true(len(ar.picks_) == len(picks) - 1)
+    assert len(ar.picks_) == len(picks) - 1
 
     # epochs with no picks.
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
@@ -162,16 +162,12 @@ def test_autoreject():
     reject_log = ar.get_reject_log(epochs_fit)
     for ch_type in ch_types:
         # test that kappa & rho are selected
-        assert_true(
-            ar.n_interpolate_[ch_type] in ar.n_interpolate)
-        assert_true(
-            ar.consensus_[ch_type] in ar.consensus)
+        assert ar.n_interpolate_[ch_type] in ar.n_interpolate
+        assert ar.consensus_[ch_type] in ar.consensus
 
-        assert_true(
-            ar.n_interpolate_[ch_type] ==
+        assert (ar.n_interpolate_[ch_type] ==
             ar.local_reject_[ch_type].n_interpolate_[ch_type])
-        assert_true(
-            ar.consensus_[ch_type] ==
+        assert (ar.consensus_[ch_type] ==
             ar.local_reject_[ch_type].consensus_[ch_type])
 
     # test complementarity of goods and bads
@@ -179,8 +175,8 @@ def test_autoreject():
 
     # test that transform does not change state of ar
     epochs_clean = ar.transform(epochs_fit)  # apply same data
-    assert_true(repr(ar))
-    assert_true(repr(ar.local_reject_))
+    assert repr(ar)
+    assert repr(ar.local_reject_)
     reject_log2 = ar.get_reject_log(epochs_fit)
     assert_array_equal(reject_log.labels, reject_log2.labels)
     assert_array_equal(reject_log.bad_epochs, reject_log2.bad_epochs)
@@ -191,16 +187,13 @@ def test_autoreject():
     reject_log_new = ar.get_reject_log(epochs_new)
     assert_array_equal(len(reject_log_new.bad_epochs), len(epochs_new))
 
-    assert_true(
-        len(reject_log_new.bad_epochs) != len(reject_log.bad_epochs))
+    assert len(reject_log_new.bad_epochs) != len(reject_log.bad_epochs)
 
     picks_by_type = _get_picks_by_type(epochs.info, ar.picks)
     # test correct entries in fix log
-    assert_true(
-        np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0)
-    assert_true(
-        np.isnan(reject_log_new.labels[:, picks]).sum() == 0)
-    assert_equal(reject_log_new.labels.shape,
+    assert np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0
+    assert np.isnan(reject_log_new.labels[:, picks]).sum() == 0
+    assert (reject_log_new.labels.shape ==
                  (len(epochs_new), len(epochs_new.ch_names)))
 
     # test correct interpolations by type
@@ -218,7 +211,7 @@ def test_autoreject():
     is_same = epochs_new_clean.get_data() == epochs_new.get_data()
     if not np.isscalar(is_same):
         is_same = np.isscalar(is_same)
-    assert_true(not is_same)
+    assert not is_same
 
     # test that transform ignores bad channels
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
@@ -243,13 +236,13 @@ def test_autoreject():
         epochs_with_bads_clean.get_data()[:, bad_ix, :],
         epochs_with_bads_fit.get_data()[epo_ix, :, :][:, bad_ix, :])
 
-    assert_equal(epochs_clean.ch_names, epochs_fit.ch_names)
+    assert epochs_clean.ch_names == epochs_fit.ch_names
 
-    assert_true(isinstance(ar.threshes_, dict))
-    assert_true(len(ar.picks) == len(picks))
-    assert_true(len(ar.threshes_.keys()) == len(ar.picks))
+    assert isinstance(ar.threshes_, dict)
+    assert len(ar.picks) == len(picks)
+    assert len(ar.threshes_.keys()) == len(ar.picks)
     pick_eog = mne.pick_types(epochs.info, meg=False, eeg=False, eog=True)[0]
-    assert_true(epochs.ch_names[pick_eog] not in ar.threshes_.keys())
+    assert epochs.ch_names[pick_eog] not in ar.threshes_.keys()
     assert_raises(
         IndexError, ar.transform,
         epochs.copy().pick_channels(
@@ -261,10 +254,10 @@ def test_autoreject():
                             for ii, pp in enumerate(picks)])
     threshes_a = compute_thresholds(
         epochs_fit, picks=picks, method='random_search')
-    assert_equal(set(threshes_a.keys()), set(ch_names))
+    assert set(threshes_a.keys()) == set(ch_names)
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
-    assert_equal(set(threshes_b.keys()), set(ch_names))
+    assert set(threshes_b.keys()) == set(ch_names)
 
 
 def test_io():
@@ -292,8 +285,8 @@ def test_io():
     ar2 = read_auto_reject(fname)
     ar.fit(epochs)
     ar2.fit(epochs)
-    assert_equal(np.sum([ar.threshes_[k] - ar2.threshes_[k]
-                         for k in ar.threshes_.keys()]), 0.)
+    assert np.sum([ar.threshes_[k] - ar2.threshes_[k]
+                         for k in ar.threshes_.keys()]) == 0.
 
     assert_raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)
