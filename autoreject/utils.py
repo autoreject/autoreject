@@ -25,6 +25,7 @@ def _get_ch_type_from_picks(picks, info):
 
 def _check_ch_locs(chs):
     """Check if channel locations exist.
+
     Parameters
     ----------
     chs : dict
@@ -32,7 +33,7 @@ def _check_ch_locs(chs):
     """
     locs3d = np.array([ch['loc'][:3] for ch in chs])
     return not ((locs3d == 0).all() or
-                (~np.isfinite(locs3d)).all() or
+                (~np.isfinite(locs3d)).any() or
                 np.allclose(locs3d, 0.))
 
 
@@ -46,14 +47,14 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
         raise ValueError('Data must be preloaded.')
     n_bads = len(epochs.info['bads'])
 
-    if not _check_ch_locs(epochs.info['chs']):
-        raise RuntimeError('Valid channel positions are needed'
-                           'for autoreject to work')
-
     picked_info = mne.io.pick.pick_info(epochs.info, picks)
     ch_types_picked = {
         mne.io.meas_info.channel_type(picked_info, idx)
         for idx in range(len(picks))}
+
+    if not _check_ch_locs(picked_info['chs']):
+        raise RuntimeError('Valid channel positions are needed '
+                           'for autoreject to work')
 
     # XXX : ch_constraint -> allow_many_types=True | False
     if ch_constraint == 'data_channels':
