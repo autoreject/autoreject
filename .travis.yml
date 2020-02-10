@@ -13,14 +13,13 @@ install:
   - conda create -n testenv --yes pip python=${PYTHON_VERSION}
   - source activate testenv
   - conda install --yes --quiet numpy scipy scikit-learn matplotlib joblib
-  - conda install --yes --quiet nose coverage
+  - pip install pytest pytest-cov pytest-sugar pytest-faulthandler
   - pip install -q flake8 check-manifest h5py
   - pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
-  - pip install coverage
   - python setup.py install
 script:
-  - nosetests ./autoreject --with-coverage
+  - pytest ./autoreject --cov=./autoreject --cov-report=xml --verbose
   - flake8 --count .
-  - check-manifest --ignore .circleci*,doc
+  - check-manifest --ignore .circleci*, doc
 after_success:
   - bash <(curl -s https://codecov.io/bash)
