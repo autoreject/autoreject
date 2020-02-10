@@ -1,11 +1,9 @@
 import numpy as np
-from nose.tools import assert_true
 from autoreject.bayesopt import bayes_opt, expected_improvement
 
 
 def test_bayesopt():
     """Test for bayesian optimization."""
-
     x_star = 1.1
 
     def func(x):
