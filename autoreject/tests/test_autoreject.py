@@ -149,6 +149,10 @@ def test_autoreject():
     pytest.raises(ValueError, ar.transform, X)
     pytest.raises(ValueError, ar.transform, epochs)
     epochs_nochs = epochs_fit.copy()
+    # just one channel loc is nan or all channel locs are 0.
+    # Should raise error in both cases
+    epochs_nochs.info['chs'][1]['loc'][:] = np.nan
+    pytest.raises(RuntimeError, ar.fit, epochs_nochs)
     for ch in epochs_nochs.info['chs']:
         ch['loc'] = np.zeros(9)
     pytest.raises(RuntimeError, ar.fit, epochs_nochs)
