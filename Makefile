@@ -4,9 +4,6 @@
 
 PYTHON ?= python
 CYTHON ?= cython
-NOSETESTS ?= nosetests
-NOSETESTS_OPTIONS := $(shell pip list | grep nose-timer > /dev/null && \
-                       echo '--with-timer --timer-top-n 50')
 CTAGS ?= ctags
 
 all: clean test doc-noplot
@@ -32,15 +29,13 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code:
-	$(NOSETESTS) -s autoreject $(NOSETESTS_OPTIONS)
+	pytest ./autoreject
 test-doc:
-	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
-	--doctest-extension=inc --doctest-fixtures=_fixture `find doc/ -name '*.rst'`
+	pytest --doctest-glob='.rst'
 
 test-coverage:
-	rm -rf coverage .coverage
-	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \
-	--cover-package=autoreject autoreject
+	rm -rf .coverage
+	pytest --cov=autoreject/tests
 
 test-manifest:
 	check-manifest --ignore doc;
