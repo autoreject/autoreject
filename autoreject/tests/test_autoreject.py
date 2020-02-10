@@ -165,9 +165,9 @@ def test_autoreject():
         assert ar.consensus_[ch_type] in ar.consensus
 
         assert (ar.n_interpolate_[ch_type] ==
-            ar.local_reject_[ch_type].n_interpolate_[ch_type])
+                ar.local_reject_[ch_type].n_interpolate_[ch_type])
         assert (ar.consensus_[ch_type] ==
-            ar.local_reject_[ch_type].consensus_[ch_type])
+                ar.local_reject_[ch_type].consensus_[ch_type])
 
     # test complementarity of goods and bads
     assert_array_equal(len(reject_log.bad_epochs), len(epochs_fit))
@@ -193,7 +193,7 @@ def test_autoreject():
     assert np.isnan(reject_log_new.labels[:, non_picks]).sum() > 0
     assert np.isnan(reject_log_new.labels[:, picks]).sum() == 0
     assert (reject_log_new.labels.shape ==
-                 (len(epochs_new), len(epochs_new.ch_names)))
+            (len(epochs_new), len(epochs_new.ch_names)))
 
     # test correct interpolations by type
     for ch_type, this_picks in picks_by_type:
@@ -285,7 +285,7 @@ def test_io():
     ar.fit(epochs)
     ar2.fit(epochs)
     assert np.sum([ar.threshes_[k] - ar2.threshes_[k]
-                         for k in ar.threshes_.keys()]) == 0.
+                   for k in ar.threshes_.keys()]) == 0.
 
     pytest.raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)

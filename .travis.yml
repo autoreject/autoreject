@@ -20,6 +20,6 @@ install:
 script:
   - pytest ./autoreject --cov=./autoreject --cov-report=xml --verbose
   - flake8 --count .
-  - check-manifest --ignore .circleci*, doc
+  - check-manifest --ignore .circleci*,doc
 after_success:
   - bash <(curl -s https://codecov.io/bash)
