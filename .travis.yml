@@ -18,7 +18,7 @@ install:
   - pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
   - python setup.py install
 script:
-  - pytest . --cov=./autoreject --cov-report=xml --verbose
+  - pytest ./autoreject/tests --cov=./autoreject --cov-report=xml --cov-config=.coveragerc --verbose
   - flake8 --count .
   - check-manifest --ignore .circleci*,doc
 after_success:

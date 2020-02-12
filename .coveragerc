@@ -1,3 +1,6 @@
+[run]
+include=autoreject/*
+
 [report]
 # Regexes for lines to exclude from consideration
 exclude_lines =
