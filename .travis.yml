@@ -13,13 +13,13 @@ install:
   - conda create -n testenv --yes pip python=${PYTHON_VERSION}
   - source activate testenv
   - conda install --yes --quiet numpy scipy scikit-learn matplotlib joblib
-  - pip install codecov pytest pytest-cov pytest-sugar
+  - pip install pytest pytest-cov pytest-sugar
   - pip install -q flake8 check-manifest h5py
   - pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
   - python setup.py install
 script:
-  - pytest --cov --cov-report=xml --verbose autoreject/tests/
+  - pytest . --cov=./autoreject --cov-report=xml --verbose
   - flake8 --count .
   - check-manifest --ignore .circleci*,doc
 after_success:
-  - codecov
+  - bash <(curl -s https://codecov.io/bash)
