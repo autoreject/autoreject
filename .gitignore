@@ -1,3 +1,4 @@
+htmlcov
 coverage.xml
 *.pyc
 *.so
