@@ -13,16 +13,6 @@ from mne import pick_types, pick_info
 from mne.channels.interpolation import _do_interp_dots
 
 
-def _get_ch_type_from_picks(picks, info):
-    """Get the channel types from picks."""
-    keys = list()
-    for pp in picks:
-        key = mne.io.pick.channel_type(info=info, idx=pp)
-        if key not in keys:
-            keys.append(key)
-    return keys
-
-
 def _check_ch_locs(chs):
     """Check if channel locations exist.
 

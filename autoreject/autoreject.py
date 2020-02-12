@@ -297,19 +297,6 @@ class _ChannelAutoReject(BaseAutoReject):
         return self
 
 
-def _pick_exclusive_channels(info, ch_type):
-    """Pick one and only one type."""
-    if ch_type == 'eeg':
-        picks = mne.pick_types(info, meg=False, eeg=True)
-    elif ch_type == 'eog':
-        picks = mne.pick_types(info, meg=False, eog=True)
-    elif ch_type == 'meg':
-        picks = mne.pick_types(info, meg=True)
-    elif ch_type == 'grad' or ch_type == 'mag':
-        picks = mne.pick_types(info, meg=ch_type)
-    return picks
-
-
 def _compute_thresh(this_data, method='bayesian_optimization',
                     cv=10, y=None, random_state=None):
     """Compute the rejection threshold for one channel.
