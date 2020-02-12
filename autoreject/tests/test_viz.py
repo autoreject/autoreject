@@ -9,6 +9,7 @@ from mne.datasets import sample
 from mne import io
 
 import autoreject
+from autoreject.utils import set_matplotlib_defaults
 
 import matplotlib
 matplotlib.use('Agg')
@@ -23,6 +24,8 @@ raw.info['projs'] = list()
 def test_viz():
     """Test viz."""
     import matplotlib.pyplot as plt
+
+    set_matplotlib_defaults(plt)
 
     events = mne.find_events(raw)
     picks = mne.pick_channels(raw.info['ch_names'],

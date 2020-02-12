@@ -50,7 +50,7 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
     best_f = y[np.argmin(y)]
     gp = gaussian_process.GaussianProcessRegressor(random_state=random_state)
 
-    if debug:
+    if debug:  # pragma: no cover
         print("iter", -1, "best_x", best_x, best_f)
 
     for i in range(max_iter):
@@ -64,10 +64,10 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
                 best_f = new_f
                 best_x = new_x
 
-        if debug:
+        if debug:  # pragma: no cover
             print("iter", i, "best_x", best_x, best_f)
 
-    if debug:
+    if debug:  # pragma: no cover
         import matplotlib.pyplot as plt
         scale = 1e6
         sort_idx = np.argsort(X)
