@@ -154,7 +154,7 @@ def test_autoreject():
     epochs_nochs.info['chs'][1]['loc'][:] = np.nan
     pytest.raises(RuntimeError, ar.fit, epochs_nochs)
     for ch in epochs_nochs.info['chs']:
-        ch['loc'] = np.zeros(9)
+        ch['loc'] = np.zeros_like(ch['loc'])
     pytest.raises(RuntimeError, ar.fit, epochs_nochs)
     ar2 = AutoReject(cv=3, picks=picks, random_state=42,
                      n_interpolate=[1, 2], consensus=[0.5, 1],

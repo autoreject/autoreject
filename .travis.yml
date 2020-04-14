@@ -1,7 +1,15 @@
 language: python
 
 env:
-  - PYTHON_VERSION=3.5
+    global: PYTHON_VERSION=3.7
+
+matrix:
+    include:
+        - os: linux
+          env: MNE_VERSION=stable
+
+        - os: linux
+          env: MNE_VERSION=master
 
 before_install:
   - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -15,7 +23,11 @@ install:
   - conda install --yes --quiet numpy scipy scikit-learn matplotlib joblib
   - pip install pytest pytest-cov pytest-sugar coverage
   - pip install -q flake8 check-manifest h5py
-  - pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
+  - if [ "${MNE_VERSION}" == "stable" ]; then
+      pip install mne;
+    else
+      pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master;
+    fi;
   - python setup.py install
 script:
   - coverage run -m pytest ./autoreject/tests --cov=./autoreject --cov-report=xml --cov-config=.coveragerc --verbose
