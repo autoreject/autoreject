@@ -21,7 +21,7 @@ install:
   - conda create -n testenv --yes pip python=${PYTHON_VERSION}
   - source activate testenv
   - conda install --yes --quiet numpy scipy scikit-learn matplotlib joblib
-  - pip install pytest!=4.6.0,<5.4 pytest-cov pytest-sugar coverage
+  - pip install pytest==5.3.5 pytest-cov pytest-sugar coverage
   - pip install -q flake8 check-manifest h5py
   - if [ "${MNE_VERSION}" == "stable" ]; then
       pip install mne;
