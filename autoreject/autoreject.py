@@ -230,6 +230,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             picks = pick_types(epochs.info, meg=False, eog=True)
         elif ch_type == 'grad':
             picks = pick_types(epochs.info, meg='grad', eeg=False)
+        elif ch_type in ['hbo', 'hbr']:
+            picks = pick_types(epochs.info, meg=False, fnirs=ch_type)
 
         X = epochs.get_data()[:, picks, :]
         n_epochs, n_channels, n_times = X.shape
