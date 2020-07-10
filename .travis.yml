@@ -30,8 +30,8 @@ install:
     fi;
   - python setup.py install
 script:
-  - pytest autoreject --cov=./autoreject --cov-report=xml --cov-config=.coveragerc --verbose
+  - python -m pytest autoreject --cov=./autoreject --cov-report=xml --cov-config=.coveragerc --verbose
   - flake8 --count .
-  - check-manifest --ignore .circleci*,doc
+  - check-manifest --ignore .circleci/*,doc
 after_success:
   - bash <(curl -s https://codecov.io/bash)

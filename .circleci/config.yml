@@ -19,7 +19,7 @@ jobs:
                 name: Setup Python environment
                 command: |
                     conda update --yes --quiet conda
-                    conda create -n testenv --yes python=3.5
+                    conda create -n testenv --yes python=3.7
                     source activate testenv
                     conda install --yes --quiet numpy matplotlib scipy scikit-learn joblib
                     conda install --yes --quiet cython pillow
