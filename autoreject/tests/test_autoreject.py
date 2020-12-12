@@ -3,6 +3,7 @@
 # License: BSD (3-clause)
 
 import os.path as op
+import pickle
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -282,19 +283,31 @@ def test_io():
     ar = AutoReject(cv=2, random_state=42, n_interpolate=[1],
                     consensus=[0.5], verbose=False)
     ar.save(fname)  # save without fitting
+    pkl_ar = pickle.dumps(ar)  # also, pickle without fitting
 
-    # check that fit after saving is the same as fit
-    # without saving
+    # check that fit after saving is the same as fit without saving/pickling
     ar2 = read_auto_reject(fname)
+    ar3 = pickle.loads(pkl_ar)
     ar.fit(epochs)
     ar2.fit(epochs)
+    ar3.fit(epochs)
     assert np.sum([ar.threshes_[k] - ar2.threshes_[k]
+                   for k in ar.threshes_.keys()]) == 0.
+    assert np.sum([ar.threshes_[k] - ar3.threshes_[k]
                    for k in ar.threshes_.keys()]) == 0.
 
     pytest.raises(ValueError, ar.save, fname)
     ar.save(fname, overwrite=True)
-    ar3 = read_auto_reject(fname)
+    pkl_ar2 = pickle.dumps(ar)
+
+    ar4 = read_auto_reject(fname)
+    ar5 = pickle.loads(pkl_ar2)
+
     epochs_clean1, reject_log1 = ar.transform(epochs, return_log=True)
-    epochs_clean2, reject_log2 = ar3.transform(epochs, return_log=True)
+    epochs_clean2, reject_log2 = ar4.transform(epochs, return_log=True)
+    epochs_clean3, reject_log3 = ar5.transform(epochs, return_log=True)
+
     assert_array_equal(epochs_clean1.get_data(), epochs_clean2.get_data())
+    assert_array_equal(epochs_clean1.get_data(), epochs_clean3.get_data())
     assert_array_equal(reject_log1.labels, reject_log2.labels)
+    assert_array_equal(reject_log1.labels, reject_log3.labels)
