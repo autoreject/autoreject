@@ -1,0 +1,106 @@
+name: build
+
+on:
+  push:
+    branches:
+      - '**'
+  create:
+    branches:
+      - 'master'
+    tags:
+      - '**'
+
+jobs:
+  linux:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7]
+        MNE_VERSION: [stable, master]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest "pytest-cov<2.6" codecov
+        pip install -q h5py
+    - name: Install MNE
+      run: |
+        if [ "${MNE_VERSION}" == "stable" ]; then
+          pip install mne;
+        else
+          pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master;
+        fi;
+    - name: Lint with flake8
+      run: |
+        flake8 autoreject examples
+    - name: Install
+      run: |
+        pip install -e .
+    - name: Run tests
+      run: |
+        pytest -v --cov=autoreject --pyargs autoreject
+        check-manifest --ignore .circleci/*,doc
+    - name: Upload codecov
+      run: |
+        codecov
+
+  macos:
+     runs-on: macOS-latest
+     strategy:
+       max-parallel: 4
+       matrix:
+         python-version: [3.7]
+
+     steps:
+     - uses: actions/checkout@v1
+     - name: Set up Python ${{ matrix.python-version }}
+       uses: actions/setup-python@v1
+       with:
+         python-version: ${{ matrix.python-version }}
+     - name: Install dependencies
+       run: |
+         python -m pip install --upgrade pip
+         pip install -q h5py mne
+         pip install pytest "pytest-cov<2.6"
+     - name: Install
+       run: |
+         pip install -e .
+     - name: Run tests
+       run: |
+         pytest -v --cov=autoreject --pyargs autoreject
+         check-manifest --ignore .circleci/*,doc
+
+
+  windows:
+    runs-on: windows-2019
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -q h5py mne
+        pip install pytest "pytest-cov<2.6"
+    - name: Install
+      run: |
+        pip install -e .
+    - name: Run tests
+      run: |
+        pytest -v --cov=autoreject --pyargs autoreject
+        check-manifest --ignore .circleci/*,doc
