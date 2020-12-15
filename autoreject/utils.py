@@ -164,6 +164,7 @@ def _pprint(params, offset=0, printer=repr):
 
 def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
 
+    verbose = False if verbose == 0 else verbose
     if verbose is not False and \
             verbose not in ['progressbar', 'tqdm', 'tqdm_notebook']:
         raise ValueError('verbose must be one of {progressbar,'
