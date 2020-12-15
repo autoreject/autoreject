@@ -1292,7 +1292,7 @@ class RejectLog(object):
                              % (bad_epochs_idx.max(),
                                 len(epochs.events)))
 
-        color_map = {0: None, 1: 'r', 2: (0.6, 0.6, 0.6, 1.0)}
+        color_map = {0: 'k', 1: 'r', 2: (0.6, 0.6, 0.6, 1.0)}
         epoch_colors = list()
         for epoch_idx, label_epoch in enumerate(labels):
             if self.bad_epochs[epoch_idx]:
