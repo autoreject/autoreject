@@ -185,7 +185,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     ch_types : str | list of str | None
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
-        will have keys ['mag', 'grad', 'eeg', 'eog'].
+        will have keys ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr'].
     cv : int
         The number of folds used. Defaults to 5.
     verbose : bool
@@ -208,7 +208,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
                          'or str. Got %s' % type(ch_types))
 
     if ch_types is None:
-        ch_types = ['mag', 'grad', 'eeg', 'eog']
+        ch_types = ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr']
     elif isinstance(ch_types, str):
         ch_types = [ch_types]
 
@@ -229,6 +229,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             picks = pick_types(epochs.info, meg=False, eog=True)
         elif ch_type == 'grad':
             picks = pick_types(epochs.info, meg='grad', eeg=False)
+        elif ch_type in ['hbo', 'hbr']:
+            picks = pick_types(epochs.info, meg=False, fnirs=ch_type)
 
         X = epochs.get_data()[:, picks, :]
         n_epochs, n_channels, n_times = X.shape
