@@ -20,7 +20,7 @@ from mne.viz import plot_epochs as plot_mne_epochs
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import KFold, StratifiedShuffleSplit
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, check_cv
 
 from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,
@@ -186,8 +186,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
         will have keys ['mag', 'grad', 'eeg', 'eog'].
-    cv : int
-        The number of folds used. Defaults to 5.
+    cv : a scikit-learn cross-validation object
+        Defaults to cv=5
     verbose : bool
         If False, suppress all output messages.
 
@@ -215,10 +215,9 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     if decim > 1:
         epochs = epochs.copy()
         epochs.decimate(decim=decim)
-    
-    if isinstance(cv, int):
-        cv = KFold(n_splits=cv, random_state=random_state)
-    
+
+    cv = check_cv(cv)
+
     for ch_type in ch_types:
         if ch_type not in epochs:
             continue
