@@ -215,8 +215,10 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     if decim > 1:
         epochs = epochs.copy()
         epochs.decimate(decim=decim)
-
-    cv = KFold(n_splits=cv, random_state=random_state)
+    
+    if isinstance(cv, int):
+        cv = KFold(n_splits=cv, random_state=random_state)
+    
     for ch_type in ch_types:
         if ch_type not in epochs:
             continue
@@ -258,7 +260,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         best_thresh, _ = bayes_opt(func, initial_x,
                                    all_threshes,
                                    expected_improvement,
-                                   max_iter=10, debug=False,
+                                   max_iter=15, debug=False,
                                    random_state=random_state)
         reject[ch_type] = best_thresh
 
@@ -720,7 +722,10 @@ class _AutoReject(BaseAutoReject):
 
 def _interpolate_bad_epochs(
         epochs, interp_channels, picks, dots=None, verbose='progressbar'):
-    """Actually do the interpolation."""
+    """Actually do the interpolation.
+    Apply interpolation to each epoch separately.
+    param: interp_channels is list of channel names
+    """
     assert len(epochs) == len(interp_channels)
     pos = 2
 
@@ -947,7 +952,7 @@ class AutoReject(object):
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
         self.cv_ = self.cv
         if isinstance(self.cv_, int):
-            self.cv_ = KFold(n_splits=self.cv_)
+            self.cv_ = KFold(n_splits=self.cv_,shuffle=True)
 
         # XXX : maybe use an mne function in pick.py ?
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
