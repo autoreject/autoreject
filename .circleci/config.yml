@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 jobs:
     build:
         docker:
@@ -12,9 +12,9 @@ jobs:
             - run:
                 name: Setup Python environment
                 command: |
-                    python -m pip install --upgrade pip
-                    python -m pip install -e .[full]
-                    python -m pip install -e .[doc]
+                    python -m pip install --upgrade pip --progress-bar off
+                    python -m pip install -e .[full] --progress-bar off
+                    python -m pip install -e .[doc] --progress-bar off
             - run:
                 name: Build the documentation
                 command: |
