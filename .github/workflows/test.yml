@@ -123,7 +123,7 @@ jobs:
       run: |
         python -m pytest . --cov=autoreject autoreject/tests/ --cov-report=xml --cov-config=setup.cfg --verbose
     - name: Upload coverage stats to codecov
-      if: "matrix.os == 'ubuntu-latest'"
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && matrix.mne-version == 'stable' }}
       uses: codecov/codecov-action@v1
       with:
         file: ./coverage.xml

@@ -1,5 +1,5 @@
-Auto Reject
-===========
+autoreject
+==========
 
 |CircleCI|_ |GitHub Actions|_ |Codecov|_
 

@@ -46,7 +46,7 @@ master_doc = 'index'
 author = 'Mainak Jas'
 project = 'autoreject'
 td = date.today()
-copyright = f'2016-{td.year}, {author}. Last updated on f{td.isoformat()}'
+copyright = f'2016-{td.year}, {author}. Last updated on {td.isoformat()}'
 
 # The short X.Y version.
 version = autoreject.__version__
