@@ -1,13 +1,13 @@
 Auto Reject
 ===========
 
-|CircleCI|_ |Travis|_ |Codecov|_
+|CircleCI|_ |GitHub Actions|_ |Codecov|_
 
 .. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/autoreject/autoreject
 
-.. |Travis| image:: https://api.travis-ci.org/autoreject/autoreject.svg?branch=master
-.. _Travis: https://travis-ci.org/autoreject/autoreject
+.. |GitHub Actions| image:: https://github.com/autoreject/autoreject/actions/workflows/test.yml/badge.svg
+.. _GitHub Actions: https://github.com/autoreject/autoreject/actions/workflows/test.yml
 
 .. |Codecov| image:: http://codecov.io/github/autoreject/autoreject/coverage.svg?branch=master
 .. _Codecov: http://codecov.io/github/autoreject/autoreject?branch=master
@@ -25,17 +25,20 @@ The documentation can be found under the following links:
 Dependencies
 ------------
 
-These are the dependencies to use autoreject:
+These are the dependencies to use ``autoreject``:
 
-* Python (>=3.5)
-* numpy (>=1.8)
-* matplotlib (>=1.3)
-* scipy (>=0.16)
-* mne-python (>=0.14)
-* scikit-learn (>=0.18)
-* joblib
+* ``Python`` (>=3.6)
+* ``numpy`` (>=1.8)
+* ``matplotlib`` (>=1.3)
+* ``scipy`` (>=0.16)
+* ``mne`` (>=0.14)
+* ``scikit-learn`` (>=0.18)
+* ``joblib``
 
-Two optional dependencies are `tqdm` (for nice progressbars) and `h5py` (for IO).
+Two optional dependencies are:
+
+* ``tqdm`` (for nice progressbars)
+* ``h5py`` (for IO)
 
 Cite
 ----
