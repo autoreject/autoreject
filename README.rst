@@ -28,12 +28,12 @@ Dependencies
 These are the dependencies to use ``autoreject``:
 
 * ``Python`` (>=3.6)
-* ``numpy`` (>=1.8)
-* ``matplotlib`` (>=1.3)
-* ``scipy`` (>=0.16)
 * ``mne`` (>=0.14)
+* ``numpy`` (>=1.8)
+* ``scipy`` (>=0.16)
 * ``scikit-learn`` (>=0.18)
 * ``joblib``
+* ``matplotlib`` (>=1.3)
 
 Two optional dependencies are:
 

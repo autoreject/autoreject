@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """Setup autoreject."""
 import os
 from setuptools import setup, find_packages
@@ -50,9 +49,32 @@ if __name__ == "__main__":
           platforms='any',
           keywords=('electroencephalography eeg magnetoencephalography '
                     'meg preprocessing analysis'),
+          python_requires='~=3.6',
+          install_requires=[
+              'numpy >= 1.8',
+              'scipy >= 0.16',
+              'mne >= 0.14',
+              'scikit-learn >= 0.18',
+              'joblib',
+              'matplotlib',
+          ],
+          extras_require={
+              'full': [
+                  'tqdm',
+                  'h5py'
+              ],
+              'test': [
+                  'pytest',
+                  'pytest-cov',
+                  'pytest-sugar',
+                  'check-manifest',
+                  'flake8',
+              ]
+          },
           packages=find_packages(),
-          project_urls={'Documentation': 'http://autoreject.github.io/',
-                        'Bug Reports': 'https://github.com/autoreject/autoreject/issues',  # noqa: E501
-                        'Source': 'https://github.com/autoreject/autoreject'
-                        }
+          project_urls={
+              'Documentation': 'http://autoreject.github.io/',
+              'Bug Reports': 'https://github.com/autoreject/autoreject/issues',
+              'Source': 'https://github.com/autoreject/autoreject'
+          }
           )
