@@ -23,7 +23,7 @@ jobs:
                 name: Build the documentation
                 command: |
                     make -C doc html
-                no_output_timeout: 2h
+                no_output_timeout: 4h
             - store_artifacts:
                 path: doc/_build/html/
                 destination: html
