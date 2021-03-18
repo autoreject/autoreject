@@ -48,7 +48,7 @@ def test_global_autoreject():
     reject1 = get_rejection_threshold(epochs, decim=1, random_state=42)
     reject2 = get_rejection_threshold(epochs, decim=1, random_state=42)
     reject3 = get_rejection_threshold(epochs, decim=2, random_state=42)
-    tols = dict(eeg=5e-6, eog=5e-6, grad=10e-12, mag=5e-15)
+    tols = dict(eeg=9e-5, eog=9e-5, grad=10e-12, mag=5e-15)
     assert reject1, isinstance(reject1, dict)
     for key, value in list(reject1.items()):
         assert reject1[key] == reject2[key]
