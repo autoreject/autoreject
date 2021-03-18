@@ -28,8 +28,8 @@ extensions = [
     'numpydoc',
 ]
 
-# generate autosummary even if no references
-autosummary_generate = True
+autosummary_generate = True  # generate autosummary even if no references
+numpydoc_show_class_members = False  # noqa:E501  https://stackoverflow.com/a/34604043/5201771
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
