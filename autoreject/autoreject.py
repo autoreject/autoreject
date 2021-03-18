@@ -196,8 +196,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     reject : dict
         The rejection dictionary with keys as specified by ch_types.
 
-    Note
-    ----
+    Notes
+    -----
     Sensors marked as bad by user will be excluded when estimating the
     rejection dictionary.
     """
