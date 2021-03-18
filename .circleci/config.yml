@@ -2,37 +2,23 @@ version: 2
 jobs:
     build:
         docker:
-            - image: circleci/python:3.7.3-stretch
+            - image: cimg/python:3.8
         steps:
             - checkout
             - restore_cache:
                 keys:
-                  - data-cache-{{ checksum "./autoreject/__init__.py" }}  # restore cache from last build. Unless __init__.py has changed since then
-            - run:
-                name: Install miniconda
-                command: |
-                  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh;
-                  chmod +x ~/miniconda.sh;
-                  ~/miniconda.sh -b -p ~/miniconda;
-                  echo "export PATH=~/miniconda/bin:$PATH" >> $BASH_ENV;
+                  # restore cache from last build. Unless __init__.py has changed since then
+                  - data-cache-{{ checksum "./autoreject/__init__.py" }}
             - run:
                 name: Setup Python environment
                 command: |
-                    conda update --yes --quiet conda
-                    conda create -n testenv --yes python=3.7
-                    source activate testenv
-                    conda install --yes --quiet numpy matplotlib scipy scikit-learn joblib
-                    conda install --yes --quiet cython pillow
-                    pip install --upgrade pip
-                    pip install tqdm
-                    pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master
-                    pip install sphinx sphinx-gallery sphinx_bootstrap_theme numpydoc
-                    pip install -e .
+                    python -m pip install --upgrade pip
+                    python -m pip install -e .[full]
+                    python -m pip install -e .[doc]
             - run:
                 name: Build the documentation
                 command: |
-                    source activate testenv
-                    cd doc && make html
+                    make -C doc html
             - store_artifacts:
                 path: doc/_build/html/
                 destination: html

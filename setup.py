@@ -69,6 +69,14 @@ if __name__ == "__main__":
                   'pytest-sugar',
                   'check-manifest',
                   'flake8',
+              ],
+              'doc': [
+                  'sphinx',
+                  'sphinx-gallery',
+                  'sphinx_bootstrap_theme',
+                  'numpydoc',
+                  'cython',
+                  'pillow',
               ]
           },
           packages=find_packages(),

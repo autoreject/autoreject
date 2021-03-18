@@ -63,8 +63,6 @@ jobs:
       run: rm -rf ./*
     - name: Try importing autoreject
       run: python -c 'import autoreject; print(autoreject.__version__)'
-    - name: Try cli autoreject
-      run: autoreject --version
     - name: Remove sdist install
       run: pip uninstall -y autoreject
 
@@ -77,8 +75,6 @@ jobs:
       run: rm -rf ./*
     - name: Try importing autoreject
       run: python -c 'import autoreject; print(autoreject.__version__)'
-    - name: Try cli autoreject
-      run: autoreject --version
     - name: Remove wheel install
       run: pip uninstall -y autoreject
 
