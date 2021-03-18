@@ -1,3 +1,4 @@
+"""Setup autoreject."""
 __version__ = '0.3.dev0'
 
 from .autoreject import _GlobalAutoReject, _AutoReject, AutoReject
