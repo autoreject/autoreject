@@ -29,8 +29,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest "pytest-cov<2.6" codecov
-        pip install -q h5py
+        pip install -q h5py mne scikit-learn joblib matplotlib
+        pip install pytest pytest-cov pytest-sugar check-manifest flake8
     - name: Install MNE
       run: |
         if [ "${MNE_VERSION}" == "stable" ]; then
@@ -68,8 +68,8 @@ jobs:
      - name: Install dependencies
        run: |
          python -m pip install --upgrade pip
-         pip install -q h5py mne
-         pip install pytest "pytest-cov<2.6"
+         pip install -q h5py mne scikit-learn joblib matplotlib
+         pip install pytest pytest-cov pytest-sugar check-manifest flake8
      - name: Install
        run: |
          pip install -e .
@@ -95,8 +95,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -q h5py mne
-        pip install pytest "pytest-cov<2.6"
+        pip install -q h5py mne scikit-learn joblib matplotlib
+        pip install pytest pytest-cov pytest-sugar check-manifest flake8
     - name: Install
       run: |
         pip install -e .
