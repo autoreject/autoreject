@@ -397,7 +397,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     --------
     For example, we can compute the channel-level thresholds for all the
     EEG sensors this way:
-        >>> compute_thresholds(epochs)
+
+    >>> compute_thresholds(epochs)
     """
     return _compute_thresholds(epochs, method=method,
                                random_state=random_state, picks=picks,
