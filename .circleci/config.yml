@@ -12,9 +12,9 @@ jobs:
             - run:
                 name: Setup Python environment
                 command: |
-                    python -m pip install --upgrade pip --progress-bar off
-                    python -m pip install -e .[full] --progress-bar off
-                    python -m pip install -e .[doc] --progress-bar off
+                    python -m pip install --user --upgrade --progress-bar off pip
+                    python -m pip install --user --progress-bar off -e .[full]
+                    python -m pip install --user --progress-bar off -e .[doc]
             - run:
                 name: Build the documentation
                 command: |
