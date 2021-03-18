@@ -110,12 +110,8 @@ jobs:
         pip install -e .[full]
         pip install -e .[test]
     - name: Install mne (master|stable)
-      run: |
-        if [ "${mne-version}" == "main" ]; then
-          pip install https://api.github.com/repos/mne-tools/mne-python/zipball/main;
-        else
-         echo "using MNE stable"
-        fi;
+      if: "matrix.os == 'ubuntu-latest'"
+      run: pip install https://api.github.com/repos/mne-tools/mne-python/zipball/main;
     - name: Display versions and environment information
       run: |
         echo $TZ
