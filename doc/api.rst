@@ -6,12 +6,16 @@
 API Documentation
 =================
 
-.. currentmodule:: autoreject
-
 Epochs rejection
 ================
 
-Classes
+.. automodule:: autoreject
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: autoreject
+
+Classes:
 
 .. autosummary::
    :toctree: generated/
@@ -20,7 +24,7 @@ Classes
    RejectLog
    Ransac
 
-Functions
+Functions:
 
 .. autosummary::
    :toctree: generated/
@@ -32,9 +36,13 @@ Functions
 Utilities
 =========
 
-Functions
+.. automodule:: autoreject.utils
+   :no-members:
+   :no-inherited-members:
 
 .. currentmodule:: autoreject.utils
+
+Functions:
 
 .. autosummary::
    :toctree: generated/
