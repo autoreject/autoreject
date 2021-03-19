@@ -6,7 +6,7 @@ This is a library to automatically reject bad trials and repair bad sensors in m
 Installation
 ============
 
-We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_
+We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
 and a **Python version >=3.6**. To install ``autoreject``, you first need to
 install its dependencies::
 
