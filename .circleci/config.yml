@@ -8,7 +8,7 @@ jobs:
             - restore_cache:
                 keys:
                   # restore cache from last build. Unless __init__.py has changed since then
-                  - data-cache-{{ checksum "./autoreject/__init__.py" }}
+                  - data-cache-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
             - run:
                 name: Setup Python environment
                 command: |
@@ -23,12 +23,12 @@ jobs:
                 name: Build the documentation
                 command: |
                     make -C doc html
-                no_output_timeout: 4h
+                no_output_timeout: 2h
             - store_artifacts:
                 path: doc/_build/html/
                 destination: html
             - save_cache:
-                key: data-cache-{{ checksum "./autoreject/__init__.py" }}
+                key: data-cache-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
