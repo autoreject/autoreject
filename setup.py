@@ -56,7 +56,7 @@ if __name__ == "__main__":
               'mne >= 0.14',
               'scikit-learn >= 0.18',
               'joblib',
-              'matplotlib',
+              'matplotlib >= 1.3',
           ],
           extras_require={
               'full': [
