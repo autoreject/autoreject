@@ -1,8 +1,3 @@
-.. autoreject documentation master file, created by
-   sphinx-quickstart on Mon May 23 16:22:52 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 autoreject
 ==========
 
@@ -11,8 +6,8 @@ This is a library to automatically reject bad trials and repair bad sensors in m
 Installation
 ============
 
-We recommend the `Anaconda Python distribution <https://www.continuum.io/downloads>`_
-and a **Python version >=3.5** To install ``autoreject``, you first need to
+We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
+and a **Python version >=3.6**. To install ``autoreject``, you first need to
 install its dependencies::
 
 	$ conda install numpy matplotlib scipy scikit-learn joblib
