@@ -29,6 +29,9 @@ extensions = [
 ]
 
 autosummary_generate = True  # generate autosummary even if no references
+
+# configure numpydoc
+numpydoc_xref_param_type = True
 numpydoc_show_class_members = False  # noqa:E501  https://stackoverflow.com/a/34604043/5201771
 
 # Add any paths that contain templates here, relative to this directory.
@@ -55,19 +58,27 @@ release = version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output ----------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
+# see: https://sphinx-bootstrap-theme.readthedocs.io/en/latest/README.html
+# Clean up sidebar: Do not show "Source" link
+html_show_sourcelink = False
+
 html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    'navbar_sidebarrel': False,
+    'navbar_title': 'autoreject',
+    'bootswatch_theme': "united",
+    'navbar_sidebarrel': False,  # no "previous / next" navigation
+    'navbar_pagenav': False,  # no "Page" navigation in sidebar
+    'bootstrap_version': '3',
     'navbar_links': [
         ("Examples", "auto_examples/index"),
         ("Explanation", "explanation"),
@@ -76,11 +87,8 @@ html_theme_options = {
         ("What's new", "whats_new"),
         ("GitHub", "https://github.com/autoreject/autoreject", True)
     ],
-    'bootswatch_theme': "united"
-}
 
-# Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+}
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
