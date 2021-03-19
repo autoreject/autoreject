@@ -1,7 +1,7 @@
 autoreject
 ==========
 
-|CircleCI|_ |GitHub Actions|_ |Codecov|_
+|CircleCI|_ |GitHub Actions|_ |Codecov|_ |PyPI|_
 
 .. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/autoreject/autoreject
@@ -11,6 +11,9 @@ autoreject
 
 .. |Codecov| image:: http://codecov.io/github/autoreject/autoreject/coverage.svg?branch=master
 .. _Codecov: http://codecov.io/github/autoreject/autoreject?branch=master
+
+.. |PyPI| image:: https://badge.fury.io/py/autoreject.svg
+.. _PyPI: https://badge.fury.io/py/autoreject
 
 This repository hosts code to automatically reject trials and repair sensors for M/EEG data.
 
