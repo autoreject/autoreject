@@ -15,10 +15,11 @@ visualize the bad sensors in each trial
 
 # %%
 # First, we download the data from OpenfMRI which is hosted on OpenNeuro.
-# We will do this using ``openneuro-py``.
+# We will do this using ``openneuro-py`` which can be installed using pip
+# (``pip install openneuro-py``).
 
 import os
-import openneuro as on
+import openneuro
 import autoreject
 
 dataset = 'ds000117'  # The id code on OpenNeuro for this example dataset
@@ -29,8 +30,8 @@ target_dir = os.path.join(
 if not os.path.isdir(target_dir):
     os.makedirs(target_dir)
 
-on.download(dataset=dataset, target_dir=target_dir,
-            include=[f'sub-{subject_id}/ses-meg/'])
+openneuro.download(dataset=dataset, target_dir=target_dir,
+                   include=[f'sub-{subject_id}/ses-meg/'])
 
 # %%
 # We will create epochs with data starting 200 ms before trigger onset

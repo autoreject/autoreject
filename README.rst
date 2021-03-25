@@ -38,10 +38,11 @@ These are the dependencies to use ``autoreject``:
 * ``joblib``
 * ``matplotlib`` (>=1.3)
 
-Two optional dependencies are:
+Optional dependencies are:
 
 * ``tqdm`` (for nice progressbars)
 * ``h5py`` (for IO)
+* ``openneuro-py`` (for fetching data from OpenNeuro.org)
 
 Cite
 ----

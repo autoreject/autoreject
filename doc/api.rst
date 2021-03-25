@@ -47,5 +47,4 @@ Functions:
 .. autosummary::
    :toctree: generated/
 
-   fetch_file
    set_matplotlib_defaults
