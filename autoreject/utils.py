@@ -252,25 +252,6 @@ def _clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
     return inst_interp
 
 
-def fetch_file(url, file_name, resume=True, timeout=10.):
-    """Load requested file, downloading it if needed or requested.
-
-    Parameters
-    ----------
-    url: string
-        The url of file to be downloaded.
-    file_name: string
-        Name, along with the path, of where downloaded file will be saved.
-    resume: bool, optional
-        If true, try to resume partially downloaded files.
-    timeout : float
-        The URL open timeout.
-    """
-    from mne.utils import _fetch_file
-    _fetch_file(url=url, file_name=file_name, print_destination=True,
-                resume=resume, hash_=None, timeout=timeout)
-
-
 def interpolate_bads(inst, picks, dots=None, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels."""
     import mne

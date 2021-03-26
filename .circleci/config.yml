@@ -32,4 +32,4 @@ jobs:
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
-                  - $CIRCLE_WORKING_DIRECTORY/examples/ds117
+                  - $CIRCLE_WORKING_DIRECTORY/examples/ds000117
