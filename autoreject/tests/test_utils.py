@@ -36,7 +36,9 @@ def test_utils():
                         reject=None, preload=True)
 
     this_epoch = epochs.copy()
+    assert this_epoch.info['bads'] == ['MEG 2443']
     epochs_clean = clean_by_interp(this_epoch)
+    assert this_epoch.info['bads'] == ['MEG 2443']
     assert_array_equal(this_epoch.get_data(), epochs.get_data())
     pytest.raises(AssertionError, assert_array_equal, epochs_clean.get_data(),
                   this_epoch.get_data())
