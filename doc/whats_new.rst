@@ -20,6 +20,8 @@ Changelog
 Bug
 ~~~
 
+- Don't reset `epochs.info['bads']` within :func:`autoreject.compute_thresholds` by `Mainak Jas`_ in `#203 <https://github.com/autoreject/autoreject/pull/203>`_
+
 API
 ~~~
 

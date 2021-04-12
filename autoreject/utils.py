@@ -249,6 +249,7 @@ def _clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
         else:
             raise ValueError('Unrecognized type for inst')
         inst._data[:, pick_interp] = data_orig.copy()
+    inst.info['bads'] = inst_interp.info['bads'].copy()
     return inst_interp
 
 
