@@ -18,25 +18,26 @@ visualize the bad sensors in each trial
 # We will do this using ``openneuro-py`` which can be installed using pip
 # (``pip install openneuro-py``).
 
-import os
+import numpy as np
+import os.path as op
 import openneuro
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+import mne
 import autoreject
 
 dataset = 'ds000117'  # The id code on OpenNeuro for this example dataset
 subject_id = 16  # OpenfMRI format of subject numbering
 run = 3  # the run number to use for this example
 
-target_dir = os.path.join(
-    os.path.dirname(autoreject.__file__), '..', 'examples', dataset)
-if not os.path.isdir(target_dir):
-    os.makedirs(target_dir)
-
-run_fname = os.path.join(f'sub-{subject_id}', 'ses-meg', 'meg',
-                         f'sub-{subject_id}_ses-meg_task-facerecognition'
-                         '_run-{:02d}_meg.fif'.format(run))
+target_dir = mne.utils._TempDir()
+run_fname = op.join(f'sub-{subject_id}', 'ses-meg', 'meg',
+                    f'sub-{subject_id}_ses-meg_task-facerecognition'
+                    '_run-{:02d}_meg.fif'.format(run))
 openneuro.download(dataset=dataset, target_dir=target_dir, include=[run_fname])
 
-# %%
+###############################################################################
 # We will create epochs with data starting 200 ms before trigger onset
 # and continuing up to 800 ms after that. The data contains visual stimuli for
 # famous faces, unfamiliar faces, as well as scrambled faces.
@@ -44,12 +45,9 @@ openneuro.download(dataset=dataset, target_dir=target_dir, include=[run_fname])
 tmin, tmax = -0.2, 0.8
 events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 
-# %%
 # Let us now load all the epochs into memory and concatenate them
 
-import mne  # noqa
-
-raw = mne.io.read_raw_fif(os.path.join(target_dir, run_fname), preload=True)
+raw = mne.io.read_raw_fif(op.join(target_dir, run_fname), preload=True)
 raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
 raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
 
@@ -67,43 +65,36 @@ mne.io.set_eeg_reference(raw)
 epochs = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
                     baseline=None, preload=False, reject=None, decim=4)
 
-# %%
+###############################################################################
 # Now, we apply autoreject
 
-from autoreject import AutoReject, compute_thresholds  # noqa
-
-this_epoch = epochs['famous']
+this_epoch = epochs['famous'][:20]
 this_epoch.load_data()
 exclude = []  # don't exclude any bad channels so we can reject them
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
-# %%
+###############################################################################
 # Note that :class:`autoreject.AutoReject` by design supports multiple
 # channels. If no picks are passed separate solutions will be computed for each
 # channel type and internally combines. This then readily supports cleaning
 # unseen epochs from the different channel types used during fit.
 # Here we only use a subset of channels to save time.
 
-# %%
 # Also note that once the parameters are learned, any data can be repaired
 # that contains channels that were used during fit. This also means that time
 # may be saved by fitting :class:`autoreject.AutoReject` on a
 # representative subsample of the data.
 
-ar = AutoReject(picks=picks, random_state=42, n_jobs=1, verbose='tqdm')
+ar = autoreject.AutoReject(picks=picks, random_state=42,
+                           n_jobs=1, verbose='tqdm')
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
-# %%
+###############################################################################
 # We can visualize the cross validation curve over two variables
 
-import numpy as np  # noqa
-import matplotlib.pyplot as plt  # noqa
-import matplotlib.patches as patches  # noqa
-from autoreject import set_matplotlib_defaults  # noqa
-
-set_matplotlib_defaults(plt, style='seaborn-white')
+autoreject.set_matplotlib_defaults(plt, style='seaborn-white')
 loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
 plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
@@ -123,7 +114,7 @@ plt.title('Mean cross validation error (x 1e6)')
 plt.colorbar()
 plt.show()
 
-# %%
+###############################################################################
 # ... and visualize the bad epochs and sensors. Bad sensors which have been
 # interpolated are in blue. Bad sensors which are not interpolated are in red.
 # Bad trials are also in red.
@@ -131,17 +122,17 @@ plt.show()
 scalings = dict(eeg=40e-6)
 reject_log.plot_epochs(this_epoch, scalings=scalings)
 
-# %%
+###############################################################################
 # ... and the epochs after cleaning with autoreject
 
 epochs_ar.plot(scalings=scalings)
 
-# %%
+###############################################################################
 # The epochs dropped by autoreject are also stored in epochs.drop_log
 
 epochs_ar.plot_drop_log()
 
-# %%
+###############################################################################
 # Finally, the evoked before and after autoreject, for sanity check. We use
 # the ``spatial_colors`` argument from MNE as it allows us to see that
 # the eyeblinks have not yet been cleaned but the bad channels have been

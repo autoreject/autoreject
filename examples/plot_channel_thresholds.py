@@ -13,19 +13,24 @@ channel-wise thresholds.
 ###############################################################################
 # Let us first load the `raw` data using :func:`mne.io.read_raw_fif`.
 
+import numpy as np
+import os.path as op
+import matplotlib.pyplot as plt
+
 import mne
 from mne import io
 from mne.datasets import sample
+import autoreject
 
 data_path = sample.data_path()
-raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+sample_dir = op.join(data_path, 'MEG', 'sample')
+raw_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw.fif')
 raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
 # We can extract the events (or triggers) for epoching our signal.
 
-event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
-                           'eve.fif')
+event_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw-eve.fif')
 event_id = {'Auditory/Left': 1}
 tmin, tmax = -0.2, 0.5
 events = mne.read_events(event_fname)
@@ -47,21 +52,16 @@ picks = mne.pick_types(epochs.info, meg='grad', eeg=False, stim=False,
 # :func:`autoreject.compute_thresholds`. The `method` parameter will determine
 # how we will search for thresholds over a range of potential candidates.
 
-import numpy as np  # noqa
-from autoreject import compute_thresholds  # noqa
-
 # Get a dictionary of rejection thresholds
-threshes = compute_thresholds(epochs, picks=picks, method='random_search',
-                              random_state=42, augment=False,
-                              verbose='progressbar')
+threshes = autoreject.compute_thresholds(
+    epochs, picks=picks, method='random_search', random_state=42,
+    augment=False, verbose='progressbar')
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify
 # that the thresholds are indeed different for different sensors.
 
-import matplotlib.pyplot as plt  # noqa
-from autoreject import set_matplotlib_defaults  # noqa
-set_matplotlib_defaults(plt)
+autoreject.set_matplotlib_defaults(plt)
 
 unit = r'fT/cm'
 scaling = 1e13

@@ -25,23 +25,27 @@ References
 # For the purposes of this example, we shall use the MNE sample dataset.
 # Therefore, let us make some MNE related imports.
 
+import os.path as op
+import matplotlib.pyplot as plt
+
 import mne
 from mne import io
 from mne import Epochs
 from mne.datasets import sample
+import autoreject
 
 ###############################################################################
 # Let us now read in the raw `fif` file for MNE sample dataset.
 
 data_path = sample.data_path()
-raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+sample_dir = op.join(data_path, 'MEG', 'sample')
+raw_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw.fif')
 raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
 # We can then read in the events
 
-event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
-                           'eve.fif')
+event_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw-eve.fif')
 event_id = {'Auditory/Left': 1}
 tmin, tmax = -0.2, 0.5
 
@@ -68,11 +72,9 @@ picks = mne.pick_types(epochs.info, meg='grad', eeg=False,
 
 
 ###############################################################################
-# We import ``Ransac`` and run the familiar ``fit_transform`` method.
-from autoreject import Ransac  # noqa
-from autoreject.utils import interpolate_bads  # noqa
+# We run ``Ransac`` and the familiar ``fit_transform`` method.
 
-ransac = Ransac(verbose='progressbar', picks=picks, n_jobs=1)
+ransac = autoreject.Ransac(verbose='progressbar', picks=picks, n_jobs=1)
 epochs_clean = ransac.fit_transform(epochs)
 
 ###############################################################################
@@ -95,9 +97,7 @@ evoked_clean.info['bads'] = ['MEG 2443']
 ###############################################################################
 # Let us plot the results.
 
-from autoreject.utils import set_matplotlib_defaults  # noqa
-import matplotlib.pyplot as plt  # noqa
-set_matplotlib_defaults(plt)
+autoreject.set_matplotlib_defaults(plt)
 
 fig, axes = plt.subplots(2, 1, figsize=(6, 6))
 

@@ -14,17 +14,22 @@ global rejection thresholds.
 ###############################################################################
 # Let us import the data using MNE-Python and epoch it.
 
+import numpy as np
+import os.path as op
+import matplotlib.pyplot as plt
+
 import mne
 from mne import io
 from mne.datasets import sample
+import autoreject
 
 event_id = {'Visual/Left': 3}
 tmin, tmax = -0.2, 0.5
 
 data_path = sample.data_path()
-raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
-                           'eve.fif')
+sample_dir = op.join(data_path, 'MEG', 'sample')
+raw_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw.fif')
+event_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw-eve.fif')
 
 raw = io.read_raw_fif(raw_fname, preload=True)
 events = mne.read_events(event_fname)
@@ -40,7 +45,6 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 # Let us define a range of candidate thresholds which we would like to try.
 # In this particular case, we try from :math:`40{\mu}V` to :math:`200{\mu}V`
 
-import numpy as np  # noqa
 param_range = np.linspace(40e-6, 200e-6, 30)
 
 ###############################################################################
@@ -49,10 +53,7 @@ param_range = np.linspace(40e-6, 200e-6, 30)
 # using  :class:`autoreject._GlobalAutoReject` to find global (i.e., for all
 # channels) peak-to-peak thresholds.
 
-from autoreject import validation_curve  # noqa
-from autoreject import get_rejection_threshold  # noqa
-
-_, test_scores, param_range = validation_curve(
+_, test_scores, param_range = autoreject.validation_curve(
     epochs, param_range=param_range, cv=5, return_param_range=True, n_jobs=1)
 
 test_scores = -test_scores.mean(axis=1)
@@ -61,14 +62,12 @@ best_thresh = param_range[np.argmin(test_scores)]
 ###############################################################################
 # We can also get the best threshold more efficiently using Bayesian
 # optimization
-reject2 = get_rejection_threshold(epochs, random_state=0, cv=5)
+reject2 = autoreject.get_rejection_threshold(epochs, random_state=0, cv=5)
 
 ###############################################################################
 # Now let us plot the RMSE values against the candidate thresholds.
 
-import matplotlib.pyplot as plt  # noqa
-from autoreject import set_matplotlib_defaults  # noqa
-set_matplotlib_defaults(plt)
+autoreject.set_matplotlib_defaults(plt)
 
 human_thresh = 80e-6  # this is a threshold determined visually by a human
 unit = r'$\mu$V'
