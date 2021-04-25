@@ -74,6 +74,8 @@ raw.info['projs'] = list()  # remove proj, don't proj while interpolating
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     baseline=(None, 0), reject=None, picks=picks,
                     verbose=False, detrend=0, preload=True)
+epochs = epochs.pick_channels(np.array(epochs.ch_names)[np.arange(
+    0, len(epochs.ch_names), 11)])  # decimate to save computation time
 
 ###############################################################################
 # :class:`autoreject.AutoReject` internally does cross-validation to
@@ -115,10 +117,8 @@ for ax in axes:
     ax.tick_params(axis='y', which='both', left='off', right='off')
 
 ylim = dict(grad=(-170, 200))
-evoked.pick_types(meg='grad', exclude=[])
 evoked.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
 axes[0].set_title('Before autoreject')
-evoked_clean.pick_types(meg='grad', exclude=[])
 evoked_clean.plot(exclude=[], axes=axes[1], ylim=ylim)
 axes[1].set_title('After autoreject')
 plt.tight_layout()
@@ -129,4 +129,5 @@ plt.tight_layout()
 
 fig = ar.get_reject_log(epochs['Auditory/Left']).plot('vertical')
 # too many channel names, skip every other one
-fig.gca().set_xticks(np.arange(0, len(epochs.ch_names), 2))
+fig.gca().set_xticks(np.arange(0, len(epochs.ch_names), 3))
+fig.tight_layout()

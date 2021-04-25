@@ -1267,7 +1267,7 @@ class RejectLog(object):
         plt.setp(ax.get_yticklabels(), rotation=0)
         plt.setp(ax.get_xticklabels(), rotation=90)
         ax.tick_params(axis=u'both', which=u'both', length=0)
-        plt.tight_layout(rect=[None, None, None, 1.1])
+        figure.tight_layout()
         if show:
             plt.show()
         return figure
