@@ -25,6 +25,7 @@ References
 # For the purposes of this example, we shall use the MNE sample dataset.
 # Therefore, let us make some MNE related imports.
 
+import numpy as np
 import os.path as op
 import matplotlib.pyplot as plt
 
@@ -63,18 +64,19 @@ raw.info['bads'] = []
 # :class:`mne.Epochs`.
 
 raw.info['projs'] = list()  # remove proj, don't proj while interpolating
-epochs = Epochs(raw, events, event_id, tmin, tmax,
-                baseline=(None, 0), reject=None,
-                verbose=False, detrend=0, preload=True)
-picks = mne.pick_types(epochs.info, meg='grad', eeg=False,
-                       stim=False, eog=False,
+picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
+epochs = Epochs(raw, events, event_id, tmin, tmax,
+                baseline=(None, 0), reject=None, picks=picks,
+                verbose=False, detrend=0, preload=True)
+epochs = epochs.pick_channels(np.array(epochs.ch_names)[np.arange(
+    0, len(epochs.ch_names), 11)])  # decimate to save computation time
 
 
 ###############################################################################
 # We run ``Ransac`` and the familiar ``fit_transform`` method.
 
-ransac = autoreject.Ransac(verbose='progressbar', picks=picks, n_jobs=1)
+ransac = autoreject.Ransac(verbose='progressbar', n_jobs=1)
 epochs_clean = ransac.fit_transform(epochs)
 
 ###############################################################################
@@ -106,10 +108,8 @@ for ax in axes:
     ax.tick_params(axis='y', which='both', left='off', right='off')
 
 ylim = dict(grad=(-170, 200))
-evoked.pick_types(meg='grad', exclude=[])
 evoked.plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
 axes[0].set_title('Before RANSAC')
-evoked_clean.pick_types(meg='grad', exclude=[])
 evoked_clean.plot(exclude=[], axes=axes[1], ylim=ylim)
 axes[1].set_title('After RANSAC')
 fig.tight_layout()
@@ -118,17 +118,5 @@ fig.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
-ch_names = [epochs.ch_names[ii] for ii in ransac.picks][7::10]
-fig, ax = plt.subplots(1, 1, figsize=(12, 6))
-ax.imshow(ransac.bad_log, cmap='Reds',
-          interpolation='nearest')
-ax.grid(False)
-ax.set_xlabel('Sensors')
-ax.set_ylabel('Trials')
-plt.setp(ax, xticks=range(7, len(ransac.picks), 10),
-         xticklabels=ch_names)
-plt.setp(ax.get_yticklabels(), rotation=0)
-plt.setp(ax.get_xticklabels(), rotation=90)
-ax.tick_params(axis=u'both', which=u'both', length=0)
-fig.tight_layout(rect=[None, None, None, 1.1])
-plt.show()
+bad_epochs = [False] * len(epochs)  # ransac just does channels not bad epochs
+autoreject.RejectLog(bad_epochs, ransac.bad_log, epochs.ch_names).plot()

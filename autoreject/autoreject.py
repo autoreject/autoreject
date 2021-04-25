@@ -1227,7 +1227,7 @@ class RejectLog(object):
 
         if orientation == 'horizontal':
             img = ax.imshow(self.labels.T / 2, cmap='RdYlGn_r',
-                            interpolation='nearest')
+                            vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
             plt.setp(ax, yticks=range(self.labels.shape[1]),
@@ -1240,7 +1240,7 @@ class RejectLog(object):
                     edgecolor='r', facecolor='none'))
         elif orientation == 'vertical':
             img = ax.imshow(self.labels / 2, cmap='RdYlGn_r',
-                            interpolation='nearest')
+                            vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
             plt.setp(ax, xticks=range(self.labels.shape[1]),
