@@ -1203,7 +1203,7 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, orientation='vertical', show=True):
+    def plot(self, orientation='horizontal', show=True):
         """Plot.
 
         Parameters
@@ -1245,6 +1245,7 @@ class RejectLog(object):
             ax.set_ylabel('Epochs')
             plt.setp(ax, xticks=range(self.labels.shape[1]),
                      xticklabels=self.ch_names)
+            plt.setp(ax.get_xticklabels(), fontsize=8, rotation='vertical')
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
                 ax.add_patch(patches.Rectangle(

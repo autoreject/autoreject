@@ -68,7 +68,7 @@ epochs = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
 ###############################################################################
 # Now, we apply autoreject
 
-this_epoch = epochs['famous'][:20]
+this_epoch = epochs['famous']
 this_epoch.load_data()
 exclude = []  # don't exclude any bad channels so we can reject them
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,

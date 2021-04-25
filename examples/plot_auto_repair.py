@@ -72,7 +72,7 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
 # :class:`mne.Epochs`.
 raw.info['projs'] = list()  # remove proj, don't proj while interpolating
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                    baseline=(None, 0), reject=None,
+                    baseline=(None, 0), reject=None, picks=picks,
                     verbose=False, detrend=0, preload=True)
 
 ###############################################################################
@@ -87,12 +87,12 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 # unseen epochs from the different channel types used during fit.
 # Here we only use a subset of channels to save time.
 
-ar = autoreject.AutoReject(n_interpolates, consensus_percs, picks=picks,
+ar = autoreject.AutoReject(n_interpolates, consensus_percs,
                            thresh_method='random_search', random_state=42)
 
 # Note that fitting and transforming can be done on different compatible
 # portions of data if needed.
-ar.fit(epochs['Auditory/Left'][:20])
+ar.fit(epochs['Auditory/Left'])
 epochs_clean = ar.transform(epochs['Auditory/Left'])
 evoked_clean = epochs_clean.average()
 evoked = epochs['Auditory/Left'].average()
@@ -127,4 +127,6 @@ plt.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
-ar.get_reject_log(epochs['Auditory/Left']).plot()
+fig = ar.get_reject_log(epochs['Auditory/Left']).plot('vertical')
+# too many channel names, skip every other one
+fig.gca().set_xticks(np.arange(0, len(epochs.ch_names), 2))

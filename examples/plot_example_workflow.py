@@ -215,13 +215,11 @@ for idx in bad_epoch_idx[[1, 4, 7]]:
     fig.suptitle(f'Epoch {idx}')
     axes = axes.flatten()
     for i, ch in enumerate(ch_over_thresh):
-        ch_data = epochs[idx].get_data([ch]).squeeze()
-        bad_min, bad_max = ch_data.argmin(), ch_data.argmax()
-        bad_spot = sorted([bad_min, bad_max])
-        bad_spot[1] += 1  # 0 indexed, include last point
-        bad_spot = slice(*bad_spot)
-        axes[i].plot(epochs.times, ch_data)
-        axes[i].plot(epochs.times[bad_spot], ch_data[bad_spot], color='r')
+        axes[i].plot(epochs.times, epochs[idx].get_data([ch]).squeeze())
+        axes[i].plot(epochs.times, [ar.threshes_[ch] / 2] * epochs.times.size,
+                     color='r')
+        axes[i].plot(epochs.times, [-ar.threshes_[ch] / 2] * epochs.times.size,
+                     color='r')
         axes[i].set_ylim(ylim)
         axes[i].set_title(ch)
         axes[i].set_ylabel('V') if i % dim2 == 0 else \
