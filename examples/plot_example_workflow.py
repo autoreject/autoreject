@@ -119,10 +119,6 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
 #
 # We can see in the plots below that ICA effectively removed eyeblink
 # artifact, and, in doing so, reduced the number of epochs that were dropped.
-#
-# These are the basic steps for a workflow with decisions that must be
-# made based on what the data is being used for. Following this may help
-# you optimize your use of ``autoreject`` in preprocessing.
 
 # find global rejection threshold
 reject = autoreject.get_rejection_threshold(epochs)
@@ -144,6 +140,19 @@ ica.exclude = [0,  # blinks
 ica.plot_overlay(epochs.average(), exclude=ica.exclude)
 ica.apply(epochs, exclude=ica.exclude)
 
+###############################################################################
+# We can see in this section that preprocessing, especially ICA, can be made
+# to do a lot of the heavy lifting. There isn't a huge difference when viewing
+# the averaged data (the evoked) because the ICA effectively limited the number
+# of epochs that had to be dropped. However, there are still artifacts such as
+# non-stereotypical blinks that weren't able to be removed by ICA, channel
+# "pops" (sharp transients with exponential RC decay), muscle artifact such as
+# jaw clenches and gross movement artifact that could still impact analyses.
+#
+# These are the basic steps for a workflow with decisions that must be
+# made based on what the data is being used for. Following this may help
+# you optimize your use of ``autoreject`` in preprocessing.
+
 # compute channel-level rejections
 ar = autoreject.AutoReject(n_interpolate=[1, 2, 3, 4], random_state=11,
                            n_jobs=1, verbose='tqdm')
@@ -161,48 +170,30 @@ axes[1].set_title('After autoreject')
 fig.tight_layout()
 
 ###############################################################################
-# We saw in the last section that preprocessing, especially ICA, can be made
-# to do a lot of the heavy lifting. There isn't a huge difference when viewing
-# the averaged data (the evoked) because the ICA effectively limited the number
-# of epochs that had to be dropped. However, there are still artifacts such as
-# non-stereotypical blinks that weren't able to be removed by ICA, channel
-# "pops" (sharp transients with exponential RC decay), muscle artifact such as
-# jaw clenches and gross movement artifact that could still impact analyses.
-# Removing these bad epochs is especially important if your analyses will
-# include trial-level statistics such as looking for bursting activity. We'll
-# lastly visualize why autoreject excluded these epochs and the effect that
-# including these bad epochs would have on the data.
+# We will do a few more visualizations to see that removing the bad epochs
+# found by ``autoreject`` is still important even with preprocessing first.
+# This is especially important if your analyses include trial-level statistics
+# such as looking for bursting activity. We'll visualize why autoreject
+# excluded these epochs and the effect that including these bad epochs would
+# have on the data.
 #
-# As we can see in the plots below, there are some channels such as Fp1 and
+# As we can see in the plot below, there are some channels such as Fp1 and
 # FC6 that could be dropped which might save the bad epochs. If you have many
 # channels, it might be worth dropping those channels that have a greater rate
 # of artifacts as long as you can do so without spatially biasing your coverage
 # (i.e. dropping all the frontal channels would bias your data).
-#
-# We can also see that eyeblinks and muscle artifacts are still present in the
-# example of plots of channels exceeding their peak-to-peak threshold. We could
-# exclude more ICA components to try and remove these but keep in mind that the
-# more ICA components that are removed, the more brain data is removed as
-# collateral damage in the process.
-#
-# Finally, we can clearly see in the power spectral density plot, that we have
-# had a positive impact by removing abberant data from some channels which
-# manifested in the power spectrum as low-frequency artifact.
-#
-# The data could be even further examined by looking at time-frequency plots
-# using :func:`mne.mne.time_frequency.tfr_morlet`, for example. Depending on
-# the value/rarity of your data, you may want to spend every effort in
-# preprocessing it to recover as much usable data as possible. Ideally, though,
-# you would look at the results of ``autoreject`` carefully like in this
-# example but be able to afford to exclude the data that is contaminated
-# by large artifacts rather than try to go to extremes to fix it as it is
-# much easier and less error-prone to collect quality data in the first place.
 
 # plot reject log
 bad_epoch_idx = np.where(reject_log.bad_epochs)[0]
 fig = reject_log.plot('horizontal')
 
-# plot events that exceeded the threshold
+###############################################################################
+# We can also see in this plot that eyeblinks and muscle artifacts are still
+# present in the example of plots of channels exceeding their peak-to-peak
+# threshold. We could exclude more ICA components to try and remove these but
+# keep in mind that the more ICA components that are removed, the more brain
+# data is removed as collateral damage in the process.
+
 np.random.seed(11)
 ylim = (-3e-4, 3e-4)
 for idx in bad_epoch_idx[[1, 4, 7]]:
@@ -230,10 +221,25 @@ for idx in bad_epoch_idx[[1, 4, 7]]:
         ax.axis('off')
     fig.tight_layout()
 
-# plot change in psd
+###############################################################################
+# Finally, we can clearly see in the power spectral density plot, that we have
+# had a positive impact by removing abberant data from some channels which
+# manifested in the power spectrum as low-frequency artifact.
+
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 4))
 epochs.plot_psd(fmax=100, ax=ax1)
 ax1.set_title('Before autoreject')
 epochs_ar.plot_psd(fmax=100, ax=ax2)
 ax2.set_title('After autoreject')
 fig.tight_layout()
+
+###############################################################################
+# The data could be even further examined by looking at time-frequency plots
+# using :func:`mne.mne.time_frequency.tfr_morlet`, for example. Depending on
+# the value/rarity of your data, you may want to spend every effort in
+# preprocessing it to recover as much usable data as possible. Ideally, though,
+# you would look at the results of ``autoreject`` carefully like in this
+# example but you would be able to afford to exclude the data that is
+# contaminated by large artifacts rather than try to go to extremes to fix it
+# because it is much easier and less error-prone to collect quality data
+# in the first place than to fix data through preprocessing.
