@@ -180,9 +180,9 @@ fig.tight_layout()
 # (i.e. dropping all the frontal channels would bias your data).
 #
 # We can also see that eyeblinks and muscle artifacts are still present in the
-# example of plots of channels exceeding their threshold. We could exclude more
-# ICA components to try and remove these but keep in mind that the more ICA
-# components that are removed, the more brain data that is removed as
+# example of plots of channels exceeding their peak-to-peak threshold. We could
+# exclude more ICA components to try and remove these but keep in mind that the
+# more ICA components that are removed, the more brain data is removed as
 # collateral damage in the process.
 #
 # Finally, we can clearly see in the power spectral density plot, that we have
@@ -205,21 +205,32 @@ fig = reject_log.plot('horizontal')
 # plot events that exceeded the threshold
 np.random.seed(11)
 ylim = (-3e-4, 3e-4)
-for idx in bad_epoch_idx:
-    ch_over_thresh = [ch for ch in epochs.ch_names
-                      if epochs[idx].get_data([ch]).max() > ar.threshes_[ch]]
-    if len(ch_over_thresh) > 0 and len(ch_over_thresh) < 7:
-        fig, axes = plt.subplots(len(ch_over_thresh), 1, figsize=(4, 8))
-        axes = [axes] if len(ch_over_thresh) == 1 else axes
-        for i, ch in enumerate(ch_over_thresh):
-            axes[i].plot(epochs.times, epochs[idx].get_data([ch]).squeeze())
-            axes[i].plot(epochs.times, [ar.threshes_[ch]] * epochs.times.size)
-            axes[i].set_ylim(ylim)
-            axes[i].set_title(f'epoch {idx}\n' * (i == 0) + ch)
-            axes[i].set_ylabel('V')
-            axes[i].set_xlabel('time (s)') if i == len(ch_over_thresh) - 1 \
-                else axes[i].set_xticklabels([])
-        fig.tight_layout()
+for idx in bad_epoch_idx[(0, 4)]:
+    ch_over_thresh = \
+        [ch for ch in epochs.ch_names
+         if np.ptp(epochs[idx].get_data([ch])).max() > ar.threshes_[ch]]
+    dim1 = np.sqrt(len(ch_over_thresh)).astype(int) + 1
+    dim2 = len(ch_over_thresh) // dim1 + 1
+    fig, axes = plt.subplots(dim1, dim2, figsize=(8, 8))
+    fig.suptitle(f'Epoch {idx}')
+    axes = axes.flatten()
+    for i, ch in enumerate(ch_over_thresh):
+        ch_data = epochs[idx].get_data([ch]).squeeze()
+        bad_min, bad_max = ch_data.argmin(), ch_data.argmax()
+        bad_spot = sorted([bad_min, bad_max])
+        bad_spot[1] += 1  # 0 indexed, include last point
+        bad_spot = slice(*bad_spot)
+        axes[i].plot(epochs.times, ch_data)
+        axes[i].plot(epochs.times[bad_spot], ch_data[bad_spot], color='r')
+        axes[i].set_ylim(ylim)
+        axes[i].set_title(ch)
+        axes[i].set_ylabel('V') if i % dim2 == 0 else \
+            axes[i].set_yticklabels([])
+        axes[i].set_xlabel('time (s)') if i // dim1 == dim2 - 1 \
+            else axes[i].set_xticklabels([])
+    for ax in axes[len(ch_over_thresh):]:
+        ax.axis('off')
+    fig.tight_layout()
 
 # plot change in psd
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 4))

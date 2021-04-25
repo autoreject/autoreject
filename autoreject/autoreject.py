@@ -1256,9 +1256,9 @@ class RejectLog(object):
             raise ValueError(msg)
 
         # add legend
-        colors = [img.cmap(img.norm(value)) for value in (0, 1, 2)]
-        handles = [patches.Patch(color=colors[i], label=label) for i, label
-                   in {0: 'good', 1: 'bad', 2: 'interpolated'}.items()]
+        handles = [patches.Patch(color=img.cmap(img.norm(i / 2)), label=label)
+                   for i, label in
+                   {0: 'good', 1: 'bad', 2: 'interpolated'}.items()]
         ax.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc=2,
                   borderaxespad=0.)
 
