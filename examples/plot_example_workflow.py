@@ -205,7 +205,7 @@ fig = reject_log.plot('horizontal')
 # plot events that exceeded the threshold
 np.random.seed(11)
 ylim = (-3e-4, 3e-4)
-for idx in bad_epoch_idx[(0, 4)]:
+for idx in bad_epoch_idx[[1, 4, 7]]:
     ch_over_thresh = \
         [ch for ch in epochs.ch_names
          if np.ptp(epochs[idx].get_data([ch])).max() > ar.threshes_[ch]]
