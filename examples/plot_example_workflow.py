@@ -172,13 +172,72 @@ fig.tight_layout()
 # include trial-level statistics such as looking for bursting activity. We'll
 # lastly visualize why autoreject excluded these epochs and the effect that
 # including these bad epochs would have on the data.
+#
+# As we can see in the plots below, there are some channels such as Fp1 and
+# FC6 that could be dropped which might save the bad epochs. If you have many
+# channels, it might be worth dropping those channels that have a greater rate
+# of artifacts as long as you can do so without spatially biasing your coverage
+# (i.e. dropping all the frontal channels would bias your data).
+#
+# We can also see that eyeblinks and muscle artifacts are still present in the
+# example of plots of channels exceeding their threshold. We could exclude more
+# ICA components to try and remove these but keep in mind that the more ICA
+# components that are removed, the more brain data that is removed as
+# collateral damage in the process.
+#
+# Finally, we can clearly see in the power spectral density plot, that we have
+# had a positive impact by removing abberant data from some channels which
+# manifested in the power spectrum as low-frequency artifact.
+#
+# The data could be even further examined by looking at time-frequency plots
+# using :func:`mne.mne.time_frequency.tfr_morlet`, for example. Depending on
+# the value/rarity of your data, you may want to spend every effort in
+# preprocessing it to recover as much usable data as possible. Ideally, though,
+# you would look at the results of ``autoreject`` carefully like in this
+# example but be able to afford to exclude the data that is contaminated
+# by large artifacts rather than try to go to extremes to fix it as it is
+# much easier and less error-prone to collect quality data in the first place.
 
+# plot channels that exceeded the threshold for the bad epochs
+bad_epoch_idx = np.where(reject_log.bad_epochs)[0]
 drop_image = np.zeros((len(epochs.ch_names), reject_log.bad_epochs.sum()))
-for i, idx in enumerate(np.where(reject_log.bad_epochs)[0]):
+for i, idx in enumerate(bad_epoch_idx):
     for j, ch in enumerate(epochs.ch_names):
         drop_image[j, i] = epochs[idx].get_data([ch]).max() > ar.threshes_[ch]
 fig, ax = plt.subplots(figsize=(5, 5))
 ax.imshow(drop_image, aspect='auto', cmap='RdYlGn_r')
+ax.set_xlabel('Bad epoch index')
 ax.invert_yaxis()
 ax.set_yticks(np.arange(len(epochs.ch_names)))
 ax.set_yticklabels(epochs.ch_names)
+ax.set_title('Channels over Threshold in\nDropped Epochs')
+
+# plot example events that exceeded the threshold
+np.random.seed(11)
+ylim = (-3e-4, 3e-4)
+ch_over_thresh = {idx: [ch for ch in epochs.ch_names
+                        if epochs[idx].get_data([ch]).max() > ar.threshes_[ch]]
+                  for idx in bad_epoch_idx}
+
+fig, axes = plt.subplots(3, 3, figsize=(8, 8))
+fig.suptitle('Example channels above threshold')
+for i, idx in enumerate(np.random.choice(bad_epoch_idx,
+                                         replace=False, size=3)):
+    for j, ch in enumerate(np.random.choice(ch_over_thresh[idx],
+                                            replace=False, size=3)):
+        axes[j, i].plot(epochs.times, epochs[idx].get_data([ch]).squeeze())
+        axes[j, i].plot(epochs.times, [ar.threshes_[ch]] * epochs.times.size)
+        axes[j, i].set_ylim(ylim)
+        axes[j, i].set_title(f'epoch {idx}\n' * (j == 0) + ch)
+        axes[j, i].set_ylabel('V') if i == 0 else \
+            axes[j, i].set_yticklabels([])
+        axes[j, i].set_xlabel('time (s)') if j == 2 else \
+            axes[j, i].set_xticklabels([])
+
+# plot change in psd
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 4))
+epochs.plot_psd(fmax=100, ax=ax1)
+ax1.set_title('Before autoreject')
+epochs_ar.plot_psd(fmax=100, ax=ax2)
+ax2.set_title('After autoreject')
+fig.tight_layout()
