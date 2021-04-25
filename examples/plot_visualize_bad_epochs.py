@@ -24,14 +24,17 @@ import autoreject
 
 dataset = 'ds000117'  # The id code on OpenNeuro for this example dataset
 subject_id = 16  # OpenfMRI format of subject numbering
+run = 3  # the run number to use for this example
 
 target_dir = os.path.join(
     os.path.dirname(autoreject.__file__), '..', 'examples', dataset)
 if not os.path.isdir(target_dir):
     os.makedirs(target_dir)
 
-openneuro.download(dataset=dataset, target_dir=target_dir,
-                   include=[f'sub-{subject_id}/ses-meg/'])
+run_fname = os.path.join(f'sub-{subject_id}', 'ses-meg', 'meg',
+                         f'sub-{subject_id}_ses-meg_task-facerecognition'
+                         '_run-{:02d}_meg.fif'.format(run))
+openneuro.download(dataset=dataset, target_dir=target_dir, include=[run_fname])
 
 # %%
 # We will create epochs with data starting 200 ms before trigger onset
@@ -46,43 +49,32 @@ events_id = {'famous/first': 5, 'famous/immediate': 6, 'famous/long': 7}
 
 import mne  # noqa
 
-epochs = list()
-for run in range(3, 7):
-    run_fname = os.path.join(target_dir, f'sub-{subject_id}', 'ses-meg', 'meg',
-                             f'sub-{subject_id}_ses-meg_task-facerecognition'
-                             '_run-{:02d}_meg.fif'.format(run))
-    raw = mne.io.read_raw_fif(run_fname, preload=True)
-    raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
-    raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
+raw = mne.io.read_raw_fif(os.path.join(target_dir, run_fname), preload=True)
+raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
+raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
 
-    raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
-                           'EEG063': 'ecg', 'EEG064': 'misc'})
-    raw.rename_channels({'EEG061': 'EOG061', 'EEG062': 'EOG062',
-                         'EEG063': 'ECG063', 'EEG064': 'MISC'})
+raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
+                       'EEG063': 'ecg', 'EEG064': 'misc'})
+raw.rename_channels({'EEG061': 'EOG061', 'EEG062': 'EOG062',
+                     'EEG063': 'ECG063', 'EEG064': 'MISC'})
 
-    events = mne.find_events(raw, stim_channel='STI101',
-                             consecutive='increasing',
-                             min_duration=0.003, verbose=True)
-    # Read epochs
-    mne.io.set_eeg_reference(raw)
+events = mne.find_events(raw, stim_channel='STI101',
+                         consecutive='increasing',
+                         min_duration=0.003, verbose=True)
+# Read epochs
+mne.io.set_eeg_reference(raw)
 
-    epoch = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
-                       baseline=None,
-                       preload=False, reject=None, decim=4)
-    epochs.append(epoch)
+epochs = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
+                    baseline=None, preload=False, reject=None, decim=4)
 
-    # Same `dev_head_t` for all runs so that we can concatenate them.
-    epoch.info['dev_head_t'] = epochs[0].info['dev_head_t']
-
-
-epochs = mne.epochs.concatenate_epochs(epochs)
 # %%
 # Now, we apply autoreject
 
 from autoreject import AutoReject, compute_thresholds  # noqa
 
 this_epoch = epochs['famous']
-exclude = []  # XXX
+this_epoch.load_data()
+exclude = []  # don't exclude any bad channels so we can reject them
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
