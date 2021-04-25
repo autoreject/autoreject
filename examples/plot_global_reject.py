@@ -8,7 +8,7 @@ plot the cross-validation curve that is used to estimate the
 global rejection thresholds.
 """
 
-# Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+# Author: Mainak Jas <mjas@mgh.harvard.edu>
 # License: BSD (3-clause)
 
 ###############################################################################

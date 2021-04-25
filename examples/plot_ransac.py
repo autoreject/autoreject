@@ -18,7 +18,7 @@ References
        NeuroImage, 159, 417-429.
 """
 
-# Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+# Author: Mainak Jas <mjas@mgh.harvard.edu>
 # License: BSD (3-clause)
 
 ###############################################################################

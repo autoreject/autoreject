@@ -7,7 +7,7 @@ This example demonstrates how to use :mod:`autoreject` to find
 channel-wise thresholds.
 """
 
-# Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+# Author: Mainak Jas <mjas@mgh.harvard.edu>
 # License: BSD (3-clause)
 
 ###############################################################################

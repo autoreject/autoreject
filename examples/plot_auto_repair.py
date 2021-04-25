@@ -7,7 +7,7 @@ This example demonstrates how to use :mod:`autoreject` to automatically
 repair epochs.
 """
 
-# Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
+# Author: Mainak Jas <mjas@mgh.harvard.edu>
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 

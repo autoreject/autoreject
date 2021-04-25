@@ -1,7 +1,7 @@
 """
-===============================
-Example ``autoreject`` workflow
-===============================
+===========================================================
+Example ``autoreject`` preprocessing workflow including ICA
+===========================================================
 
 This example demonstrates how to visualize data when preprocessing
 with :mod:`autoreject` and discusses decisions about when and which
@@ -9,7 +9,7 @@ other preprocessing steps to use in combination.
 """
 
 # Author: Alex Rockhill <aprockhill@mailbox.org>
-#         Mainak Jas <mainak.jas@telecom-paristech.fr>
+#         Mainak Jas <mjas@mgh.harvard.edu>
 #         Apoorva Karekal <apoorvak@uoregon.edu>
 #
 # License: BSD (3-clause)
@@ -111,7 +111,7 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
 # eyeblinks from the data. If our analysis were to be very dependent on
 # sensors at the front of the head or frequency components near the
 # frequency of eyeblink potentials or if we wanted to be extra careful
-# or if we had lots of dataand didn't want to go through the trouble,
+# or if we had lots of data and didn't want to go through the trouble,
 # we could skip ICA and use the previous result. However, ICA can increase
 # the amount of usable data and is one of the most commonly used methods
 # in EEG analyses.
@@ -126,12 +126,15 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
 # you optimize your use of ``autoreject`` in preprocessing.
 
 ica = mne.preprocessing.ICA(random_state=99)
-ica.fit(epochs)
-# plot with and without eyeblink component
-ica.plot_overlay(epochs.average(), exclude=[0])
-ica.apply(epochs, exclude=[0])
+reject = autoreject.get_rejection_threshold(epochs)
+ica.fit(epochs, reject=reject)
+# get the rejected components
 
-# run ``autoreject`` on more time
+# plot with and without eyeblink component
+ica.plot_overlay(epochs.average(), exclude=ica.exclude)
+ica.apply(epochs, exclude=ica.exclude)
+
+# run ``autoreject`` one more time
 ar = autoreject.AutoReject(n_interpolate=[1, 2, 3, 4], random_state=11,
                            n_jobs=1, verbose='tqdm')
 ar.fit(epochs[:20])  # fit on the first 20 epochs to save time
