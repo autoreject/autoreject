@@ -76,6 +76,7 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 
 # visualize the dropped epochs
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
+reject_log.plot('horizontal')
 
 ###############################################################################
 # The data may be very valuable and the time for the experiment
@@ -102,6 +103,7 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 
 # visualize the dropped epochs
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
+reject_log.plot('horizontal')
 
 ###############################################################################
 # Finally, we can apply independent components analysis (ICA) to remove
@@ -184,8 +186,7 @@ fig.tight_layout()
 # (i.e. dropping all the frontal channels would bias your data).
 
 # plot reject log
-bad_epoch_idx = np.where(reject_log.bad_epochs)[0]
-fig = reject_log.plot('horizontal')
+reject_log.plot('horizontal')
 
 ###############################################################################
 # We can also see in this plot that eyeblinks and muscle artifacts are still
@@ -196,6 +197,7 @@ fig = reject_log.plot('horizontal')
 
 np.random.seed(11)
 ylim = (-3e-4, 3e-4)
+bad_epoch_idx = np.where(reject_log.bad_epochs)[0]
 for idx in bad_epoch_idx[[1, 4, 7]]:
     ch_over_thresh = \
         [ch for ch in epochs.ch_names
