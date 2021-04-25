@@ -92,7 +92,7 @@ ar = autoreject.AutoReject(n_interpolates, consensus_percs, picks=picks,
 
 # Note that fitting and transforming can be done on different compatible
 # portions of data if needed.
-ar.fit(epochs['Auditory/Left'])
+ar.fit(epochs['Auditory/Left'][:20])
 epochs_clean = ar.transform(epochs['Auditory/Left'])
 evoked_clean = epochs_clean.average()
 evoked = epochs['Auditory/Left'].average()
