@@ -1220,29 +1220,47 @@ class RejectLog(object):
         figure : Instance of matplotlib.figure.Figure
         """
         import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
 
         figure, ax = plt.subplots(figsize=(12, 6))
         ax.grid(False)
-        ch_names_ = self.ch_names[7::10]
 
         if orientation == 'horizontal':
-            ax.imshow(self.labels.T, cmap='Reds',
-                      interpolation='nearest')
+            img = ax.imshow(self.labels.T / 2, cmap='RdYlGn_r',
+                            interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
-            plt.setp(ax, yticks=range(7, self.labels.shape[1], 10),
-                     yticklabels=ch_names_)
+            plt.setp(ax, yticks=range(self.labels.shape[1]),
+                     yticklabels=self.ch_names)
+            plt.setp(ax.get_yticklabels(), fontsize=8)
+            # add red box around rejected epochs
+            for idx in np.where(self.bad_epochs)[0]:
+                ax.add_patch(patches.Rectangle(
+                    (idx + 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
+                    edgecolor='r', facecolor='none'))
         elif orientation == 'vertical':
-            ax.imshow(self.labels, cmap='Reds',
-                      interpolation='nearest')
+            img = ax.imshow(self.labels / 2, cmap='RdYlGn_r',
+                            interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
-            plt.setp(ax, xticks=range(7, self.labels.shape[1], 10),
-                     xticklabels=ch_names_)
+            plt.setp(ax, xticks=range(self.labels.shape[1]),
+                     xticklabels=self.ch_names)
+            # add red box around rejected epochs
+            for idx in np.where(self.bad_epochs)[0]:
+                ax.add_patch(patches.Rectangle(
+                    (-0.5, idx + 0.5), len(self.ch_names), 1, linewidth=1,
+                    edgecolor='r', facecolor='none'))
         else:
             msg = """orientation can be only \
                   'horizontal' or 'vertical'. Got %s""" % orientation
             raise ValueError(msg)
+
+        # add legend
+        colors = [img.cmap(img.norm(value)) for value in (0, 1, 2)]
+        handles = [patches.Patch(color=colors[i], label=label) for i, label
+                   in {0: 'good', 1: 'bad', 2: 'interpolated'}.items()]
+        ax.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc=2,
+                  borderaxespad=0.)
 
         # XXX to be fixed
         plt.setp(ax.get_yticklabels(), rotation=0)

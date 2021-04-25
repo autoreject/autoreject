@@ -198,41 +198,28 @@ fig.tight_layout()
 # by large artifacts rather than try to go to extremes to fix it as it is
 # much easier and less error-prone to collect quality data in the first place.
 
-# plot channels that exceeded the threshold for the bad epochs
+# plot reject log
 bad_epoch_idx = np.where(reject_log.bad_epochs)[0]
-drop_image = np.zeros((len(epochs.ch_names), reject_log.bad_epochs.sum()))
-for i, idx in enumerate(bad_epoch_idx):
-    for j, ch in enumerate(epochs.ch_names):
-        drop_image[j, i] = epochs[idx].get_data([ch]).max() > ar.threshes_[ch]
-fig, ax = plt.subplots(figsize=(5, 5))
-ax.imshow(drop_image, aspect='auto', cmap='RdYlGn_r')
-ax.set_xlabel('Bad epoch index')
-ax.invert_yaxis()
-ax.set_yticks(np.arange(len(epochs.ch_names)))
-ax.set_yticklabels(epochs.ch_names)
-ax.set_title('Channels over Threshold in\nDropped Epochs')
+fig = reject_log.plot('horizontal')
 
-# plot example events that exceeded the threshold
+# plot events that exceeded the threshold
 np.random.seed(11)
 ylim = (-3e-4, 3e-4)
-ch_over_thresh = {idx: [ch for ch in epochs.ch_names
-                        if epochs[idx].get_data([ch]).max() > ar.threshes_[ch]]
-                  for idx in bad_epoch_idx}
-
-fig, axes = plt.subplots(3, 3, figsize=(8, 8))
-fig.suptitle('Example channels above threshold')
-for i, idx in enumerate(np.random.choice(bad_epoch_idx,
-                                         replace=False, size=3)):
-    for j, ch in enumerate(np.random.choice(ch_over_thresh[idx],
-                                            replace=False, size=3)):
-        axes[j, i].plot(epochs.times, epochs[idx].get_data([ch]).squeeze())
-        axes[j, i].plot(epochs.times, [ar.threshes_[ch]] * epochs.times.size)
-        axes[j, i].set_ylim(ylim)
-        axes[j, i].set_title(f'epoch {idx}\n' * (j == 0) + ch)
-        axes[j, i].set_ylabel('V') if i == 0 else \
-            axes[j, i].set_yticklabels([])
-        axes[j, i].set_xlabel('time (s)') if j == 2 else \
-            axes[j, i].set_xticklabels([])
+for idx in bad_epoch_idx:
+    ch_over_thresh = [ch for ch in epochs.ch_names
+                      if epochs[idx].get_data([ch]).max() > ar.threshes_[ch]]
+    if len(ch_over_thresh) > 0 and len(ch_over_thresh) < 7:
+        fig, axes = plt.subplots(len(ch_over_thresh), 1, figsize=(4, 8))
+        axes = [axes] if len(ch_over_thresh) == 1 else axes
+        for i, ch in enumerate(ch_over_thresh):
+            axes[i].plot(epochs.times, epochs[idx].get_data([ch]).squeeze())
+            axes[i].plot(epochs.times, [ar.threshes_[ch]] * epochs.times.size)
+            axes[i].set_ylim(ylim)
+            axes[i].set_title(f'epoch {idx}\n' * (i == 0) + ch)
+            axes[i].set_ylabel('V')
+            axes[i].set_xlabel('time (s)') if i == len(ch_over_thresh) - 1 \
+                else axes[i].set_xticklabels([])
+        fig.tight_layout()
 
 # plot change in psd
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 4))
