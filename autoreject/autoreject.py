@@ -1236,7 +1236,7 @@ class RejectLog(object):
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
                 ax.add_patch(patches.Rectangle(
-                    (idx + 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
+                    (idx - 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
                     edgecolor='r', facecolor='none'))
         elif orientation == 'vertical':
             img = ax.imshow(self.labels / 2, cmap='RdYlGn_r',
@@ -1249,7 +1249,7 @@ class RejectLog(object):
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
                 ax.add_patch(patches.Rectangle(
-                    (-0.5, idx + 0.5), len(self.ch_names), 1, linewidth=1,
+                    (-0.5, idx - 0.5), len(self.ch_names), 1, linewidth=1,
                     edgecolor='r', facecolor='none'))
         else:
             msg = """orientation can be only \
