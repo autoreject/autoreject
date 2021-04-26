@@ -51,7 +51,7 @@ from autoreject import (AutoReject, set_matplotlib_defaults)  # noqa
 
 import os.path as op  # noqa
 
-mne.utils.check_random_state(42)
+check_random_state(42)
 
 data_path = sample.data_path()
 sample_dir = op.join(data_path, 'MEG', 'sample')
@@ -138,4 +138,4 @@ plt.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
-fig = ar.get_reject_log(epochs['Auditory/Left']).plot('vertical')
+ar.get_reject_log(epochs['Auditory/Left']).plot()
