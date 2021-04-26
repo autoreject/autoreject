@@ -14,7 +14,7 @@ other preprocessing steps to use in combination.
 #
 # License: BSD (3-clause)
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 9
 
 ###############################################################################
 # First, we download resting-state EEG data from a Parkinson's patient
