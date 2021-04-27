@@ -1204,7 +1204,7 @@ class RejectLog(object):
         assert len(ch_names) == labels.shape[1]
 
     def plot(self, orientation='horizontal', show=True):
-        """Plot.
+        """Plot an image of good, bad and interpolated channels for each epoch.
 
         Parameters
         ----------
@@ -1214,7 +1214,6 @@ class RejectLog(object):
             on y-axis.
         show : bool
             If True, display the figure immediately.
-
         Returns
         -------
         figure : Instance of matplotlib.figure.Figure
@@ -1225,8 +1224,12 @@ class RejectLog(object):
         figure, ax = plt.subplots(figsize=(12, 6))
         ax.grid(False)
 
+        labels = self.labels.copy()
+        labels[labels == 2] = 0.5  # move interp to 0.5
+        labels[labels == 0] = 0.25  # lighten up the green
+
         if orientation == 'horizontal':
-            img = ax.imshow(self.labels.T / 2, cmap='RdYlGn_r',
+            img = ax.imshow(labels, cmap='RdYlGn_r',
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
@@ -1239,7 +1242,7 @@ class RejectLog(object):
                     (idx - 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
                     edgecolor='r', facecolor='none'))
         elif orientation == 'vertical':
-            img = ax.imshow(self.labels / 2, cmap='RdYlGn_r',
+            img = ax.imshow(labels, cmap='RdYlGn_r',
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
@@ -1257,9 +1260,9 @@ class RejectLog(object):
             raise ValueError(msg)
 
         # add legend
-        handles = [patches.Patch(color=img.cmap(img.norm(i / 2)), label=label)
+        handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
                    for i, label in
-                   {0: 'good', 1: 'bad', 2: 'interpolated'}.items()]
+                   {0: 'good', 1: 'bad', 0.5: 'interpolated'}.items()]
         ax.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc=2,
                   borderaxespad=0.)
 
