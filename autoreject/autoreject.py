@@ -1226,6 +1226,7 @@ class RejectLog(object):
 
         labels = self.labels.copy()
         labels[labels > 0] = 1 / labels[labels > 0]  # move interp to 0.5
+        labels[labels == 0] += 0.25  # lighten up the green
 
         if orientation == 'horizontal':
             img = ax.imshow(labels, cmap='RdYlGn_r',
