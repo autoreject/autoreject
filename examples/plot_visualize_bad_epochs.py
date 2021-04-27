@@ -59,7 +59,7 @@ events = mne.find_events(raw, stim_channel='STI101',
 mne.io.set_eeg_reference(raw)
 
 epochs = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
-                    baseline=None, preload=False, reject=None, decim=4)
+                    baseline=None, preload=True, reject=None, decim=4)
 
 ###############################################################################
 # Now, we apply autoreject
