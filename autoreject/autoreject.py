@@ -1229,7 +1229,7 @@ class RejectLog(object):
         labels[labels == 0] = 0.25  # lighten up the green
 
         if orientation == 'horizontal':
-            img = ax.imshow(labels, cmap='RdYlGn_r',
+            img = ax.imshow(labels.T, cmap='RdYlGn_r',
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
