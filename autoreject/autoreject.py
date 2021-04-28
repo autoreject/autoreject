@@ -1224,12 +1224,12 @@ class RejectLog(object):
         figure, ax = plt.subplots(figsize=(12, 6))
         ax.grid(False)
 
-        labels = self.labels.copy()
-        labels[labels == 2] = 0.5  # move interp to 0.5
-        labels[labels == 0] = 0.25  # lighten up the green
+        image = self.labels.copy()
+        image[image == 2] = 0.65  # move interp to 0.5
+        image[image == 0] = 0.4  # lighten up the green
 
         if orientation == 'horizontal':
-            img = ax.imshow(labels.T, cmap='RdYlGn_r',
+            img = ax.imshow(image.T, cmap='RdYlGn_r',
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
@@ -1242,7 +1242,7 @@ class RejectLog(object):
                     (idx - 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
                     edgecolor='r', facecolor='none'))
         elif orientation == 'vertical':
-            img = ax.imshow(labels, cmap='RdYlGn_r',
+            img = ax.imshow(image, cmap='RdYlGn_r',
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
@@ -1262,7 +1262,7 @@ class RejectLog(object):
         # add legend
         handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
                    for i, label in
-                   {0: 'good', 1: 'bad', 0.5: 'interpolated'}.items()]
+                   {0.4: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
         ax.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc=2,
                   borderaxespad=0.)
 
