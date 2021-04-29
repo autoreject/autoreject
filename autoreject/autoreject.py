@@ -1226,7 +1226,7 @@ class RejectLog(object):
 
         image = self.labels.copy()
         image[image == 2] = 0.65  # move interp to 0.5
-        image[image == 0] = np.nan  # no color for good channels
+        image[image == 0] = 0.15  # no color for good channels
 
         if orientation == 'horizontal':
             img = ax.imshow(image.T, cmap='RdYlGn_r',
@@ -1262,7 +1262,7 @@ class RejectLog(object):
         # add legend
         handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
                    for i, label in
-                   {np.nan: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
+                   {0.15: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
         ax.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc=2,
                   borderaxespad=0.)
 
