@@ -1203,7 +1203,7 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, orientation='horizontal', show=True):
+    def plot(self, orientation='vertical', show_names='auto', show=True):
         """Plot an image of good, bad and interpolated channels for each epoch.
 
         Parameters
@@ -1212,6 +1212,9 @@ class RejectLog(object):
             If `'vertical'`, will plot sensors on x-axis and epochs on y-axis.
             If `'horizontal'`, will plot epochs on x-axis and sensors
             on y-axis.
+        show_names : 'auto' | int
+            If 'auto', show all channel names if fewer than 25 entries. Otherwise
+            it shows every 5 entries. If int, show every show_names entries.
         show : bool
             If True, display the figure immediately.
         Returns
@@ -1222,20 +1225,25 @@ class RejectLog(object):
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
+        if show_names == 'auto':
+            show_names = 1 if len(self.ch_names) < 25 else 5
+
         figure, ax = plt.subplots(figsize=(12, 6))
         ax.grid(False)
+        ch_names_ = self.ch_names[::show_names]
 
         image = self.labels.copy()
         image[image == 2] = 0.5  # move interp to 0.5
         # good, interp, bad
+        legend_label = {0: 'good', 0.5: 'interpolated', 1: 'bad'}
         cmap = mpl.colors.ListedColormap(['lightgreen', 'green', 'red'])
         if orientation == 'horizontal':
             img = ax.imshow(image.T, cmap=cmap,
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
-            plt.setp(ax, yticks=range(self.labels.shape[1]),
-                     yticklabels=self.ch_names)
+            plt.setp(ax, yticks=range(0, self.labels.shape[1], show_names),
+                     yticklabels=ch_names_)
             plt.setp(ax.get_yticklabels(), fontsize=8)
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
@@ -1245,8 +1253,7 @@ class RejectLog(object):
 
             # add legend
             handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
-                        for i, label in
-                        {0.15: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
+                        for i, label in legend_label.items()]
             ax.legend(handles=handles, bbox_to_anchor=(3.5, 0.5), ncol=1,
                     borderaxespad=0.)
 
@@ -1255,8 +1262,8 @@ class RejectLog(object):
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
-            plt.setp(ax, xticks=range(self.labels.shape[1]),
-                     xticklabels=self.ch_names)
+            plt.setp(ax, xticks=range(0, self.labels.shape[1], show_names),
+                     xticklabels=ch_names_)
             plt.setp(ax.get_xticklabels(), fontsize=8, rotation='vertical')
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
@@ -1266,8 +1273,7 @@ class RejectLog(object):
 
             # add legend
             handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
-                        for i, label in
-                        {0.15: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
+                       for i, label in legend_label.items()]
             ax.legend(handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3,
                     borderaxespad=0.)
 
