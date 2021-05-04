@@ -30,7 +30,7 @@ Dependencies
 
 These are the dependencies to use ``autoreject``:
 
-* ``Python`` (>=3.6)
+* ``Python`` (>=3.7)
 * ``mne`` (>=0.14)
 * ``numpy`` (>=1.8)
 * ``scipy`` (>=0.16)

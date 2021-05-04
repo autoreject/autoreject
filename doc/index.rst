@@ -7,7 +7,7 @@ Installation
 ============
 
 We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
-and a **Python version >=3.6**. To install ``autoreject``, you first need to
+and a **Python version >=3.7**. To install ``autoreject``, you first need to
 install its dependencies::
 
 	$ conda install numpy matplotlib scipy scikit-learn joblib
