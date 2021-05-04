@@ -1236,7 +1236,7 @@ class RejectLog(object):
         image[image == 2] = 0.5  # move interp to 0.5
         # good, interp, bad
         legend_label = {0: 'good', 0.5: 'interpolated', 1: 'bad'}
-        cmap = mpl.colors.ListedColormap(['lightgreen', 'green', 'red'])
+        cmap = mpl.colors.ListedColormap(['lightgreen', 'blue', 'red'])
         if orientation == 'horizontal':
             img = ax.imshow(image.T, cmap=cmap,
                             vmin=0, vmax=1, interpolation='nearest')
