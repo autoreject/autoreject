@@ -405,7 +405,7 @@ def _compute_dots(info, mode='fast'):
     coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
                               templates)
     my_origin = _check_origin((0., 0., 0.04), info)
-    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils, 'meg')
+    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, info, coils, 'meg')
     self_dots = _do_self_dots(int_rad, False, coils, my_origin, 'meg',
                               lut_fun, n_fact, n_jobs=1)
     cross_dots = _do_cross_dots(int_rad, False, coils, coils,
@@ -441,7 +441,8 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     coils_from = _create_meg_coils(info_from['chs'], 'normal',
                                    info_from['dev_head_t'], templates)
     my_origin = _check_origin((0., 0., 0.04), info_from)
-    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils_from, 'meg')
+    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, info_from, coils_from,
+                                                  'meg')
 
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
