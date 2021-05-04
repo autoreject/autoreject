@@ -1218,6 +1218,7 @@ class RejectLog(object):
         -------
         figure : Instance of matplotlib.figure.Figure
         """
+        import matplotlib as mpl
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
@@ -1225,11 +1226,11 @@ class RejectLog(object):
         ax.grid(False)
 
         image = self.labels.copy()
-        image[image == 2] = 0.65  # move interp to 0.5
-        image[image == 0] = 0.15  # no color for good channels
-
+        image[image == 2] = 0.5  # move interp to 0.5
+        # good, interp, bad
+        cmap = mpl.colors.ListedColormap(['lightgreen', 'green', 'red'])
         if orientation == 'horizontal':
-            img = ax.imshow(image.T, cmap='RdYlGn_r',
+            img = ax.imshow(image.T, cmap=cmap,
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
@@ -1241,8 +1242,16 @@ class RejectLog(object):
                 ax.add_patch(patches.Rectangle(
                     (idx - 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
                     edgecolor='r', facecolor='none'))
+
+            # add legend
+            handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
+                        for i, label in
+                        {0.15: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
+            ax.legend(handles=handles, bbox_to_anchor=(3.5, 0.5), ncol=1,
+                    borderaxespad=0.)
+
         elif orientation == 'vertical':
-            img = ax.imshow(image, cmap='RdYlGn_r',
+            img = ax.imshow(image, cmap=cmap,
                             vmin=0, vmax=1, interpolation='nearest')
             ax.set_xlabel('Channels')
             ax.set_ylabel('Epochs')
@@ -1254,17 +1263,18 @@ class RejectLog(object):
                 ax.add_patch(patches.Rectangle(
                     (-0.5, idx - 0.5), len(self.ch_names), 1, linewidth=1,
                     edgecolor='r', facecolor='none'))
+
+            # add legend
+            handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
+                        for i, label in
+                        {0.15: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
+            ax.legend(handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3,
+                    borderaxespad=0.)
+
         else:
             msg = """orientation can be only \
                   'horizontal' or 'vertical'. Got %s""" % orientation
             raise ValueError(msg)
-
-        # add legend
-        handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
-                   for i, label in
-                   {0.15: 'good', 1: 'bad', 0.65: 'interpolated'}.items()]
-        ax.legend(handles=handles, bbox_to_anchor=(1.05, 1), loc=2,
-                  borderaxespad=0.)
 
         # XXX to be fixed
         plt.setp(ax.get_yticklabels(), rotation=0)
