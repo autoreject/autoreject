@@ -1217,6 +1217,7 @@ class RejectLog(object):
             it shows every 5 entries. If int, show every show_names entries.
         show : bool
             If True, display the figure immediately.
+
         Returns
         -------
         figure : Instance of matplotlib.figure.Figure
