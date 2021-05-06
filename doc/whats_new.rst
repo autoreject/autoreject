@@ -22,6 +22,8 @@ Bug
 
 - Don't reset `epochs.info['bads']` within :func:`autoreject.compute_thresholds` by `Mainak Jas`_ in `#203 <https://github.com/autoreject/autoreject/pull/203>`_
 
+- Adjust usage of a private MNE method used for interpolation that failed for newer MNE versions, by `Adina Wagner`_ in `#212 <https://github.com/autoreject/autoreject/pull/212>`_.
+
 API
 ~~~
 
@@ -64,3 +66,4 @@ API
 .. _Alex Gramfort: http://alexandre.gramfort.net
 .. _Marcin Koculak: https://mkoculak.github.io/
 .. _Hubert Banville: https://hubertjb.github.io/
+.. _Adina Wagner: https://www.adina-wagner.com/
