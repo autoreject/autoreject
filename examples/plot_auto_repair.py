@@ -136,4 +136,5 @@ plt.tight_layout()
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
-ar.get_reject_log(epochs['Auditory/Left']).plot()
+fig = ar.get_reject_log(epochs['Auditory/Left']).plot('vertical')
+fig.gca().set_xticks(range(0, len(epochs.ch_names), 10))
