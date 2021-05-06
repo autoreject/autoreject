@@ -17,6 +17,8 @@ Changelog
 
 - Make plotting of reject log more flexible by allowing to change the orientation of plot, option to supress the immediate display of the plot and returning the plot figure for further modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in `#152 <https://github.com/autoreject/autoreject/pull/152>`_
 
+- Adjust usage of an internal method to a parametrization change in mne, by `Adina Wagner`_ in `#212 <https://github.com/autoreject/autoreject/pull/212>`_.
+
 Bug
 ~~~
 
@@ -64,3 +66,4 @@ API
 .. _Alex Gramfort: http://alexandre.gramfort.net
 .. _Marcin Koculak: https://mkoculak.github.io/
 .. _Hubert Banville: https://hubertjb.github.io/
+.. _Adina Wagner: https://www.adina-wagner.com/
