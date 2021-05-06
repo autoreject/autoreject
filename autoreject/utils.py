@@ -464,9 +464,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
 
 
 def _patch_setup_dots(mode, info, coils, ch):
-    """
-    Monkey patcher for MNE's _setup_dots (changed parametrization in v0.24).
-    """
+    """Monkey patch _setup_dots for MNE-Python >= v0.24."""
     from mne.forward._field_interpolation import _setup_dots
     from mne.utils import check_version
     if not check_version('mne', '0.24'):
