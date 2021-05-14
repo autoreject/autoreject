@@ -1213,8 +1213,9 @@ class RejectLog(object):
             If `'horizontal'`, will plot epochs on x-axis and sensors
             on y-axis.
         show_names : 'auto' | int
-            If 'auto', show all channel names if fewer than 25 entries. Otherwise
-            it shows every 5 entries. If int, show every show_names entries.
+            If 'auto', show all channel names if fewer than 25 entries.
+            Otherwise it shows every 5 entries. If int, show every
+            show_names entries.
         show : bool
             If True, display the figure immediately.
 
@@ -1254,9 +1255,9 @@ class RejectLog(object):
 
             # add legend
             handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
-                        for i, label in legend_label.items()]
+                       for i, label in legend_label.items()]
             ax.legend(handles=handles, bbox_to_anchor=(3.5, 0.5), ncol=1,
-                    borderaxespad=0.)
+                      borderaxespad=0.)
 
         elif orientation == 'vertical':
             img = ax.imshow(image, cmap=cmap,
@@ -1276,7 +1277,7 @@ class RejectLog(object):
             handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
                        for i, label in legend_label.items()]
             ax.legend(handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3,
-                    borderaxespad=0.)
+                      borderaxespad=0.)
 
         else:
             msg = """orientation can be only \
