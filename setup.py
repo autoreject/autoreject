@@ -77,7 +77,7 @@ if __name__ == "__main__":
                   'numpydoc',
                   'cython',
                   'pillow',
-                  'openneuro-py'
+                  'openneuro-py @ git+https://github.com/hoechenberger/openneuro-py.git'
               ]
           },
           packages=find_packages(),
