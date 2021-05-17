@@ -76,8 +76,7 @@ if __name__ == "__main__":
                   'sphinx_bootstrap_theme',
                   'numpydoc',
                   'cython',
-                  'pillow',
-                  'openneuro-py @ git+https://github.com/hoechenberger/openneuro-py.git'
+                  'pillow'
               ]
           },
           packages=find_packages(),

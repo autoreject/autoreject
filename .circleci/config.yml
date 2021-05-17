@@ -15,6 +15,7 @@ jobs:
                     python -m pip install --user --upgrade --progress-bar off pip
                     python -m pip install --user --progress-bar off -e .[full]
                     python -m pip install --user --progress-bar off -e .[doc]
+                    python -m pip install --user --progress-bar off git+https://github.com/hoechenberger/openneuro-py.git#egg=openneuro-py
             - run:
                 name: Download MNE sample data
                 command: |
