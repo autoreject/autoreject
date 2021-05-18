@@ -76,7 +76,8 @@ if __name__ == "__main__":
                   'sphinx_bootstrap_theme',
                   'numpydoc',
                   'cython',
-                  'pillow'
+                  'pillow',
+                  'openneuro-py >= 2021.3'
               ]
           },
           packages=find_packages(),
