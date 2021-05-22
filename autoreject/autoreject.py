@@ -42,6 +42,19 @@ def _slicemean(obj, this_slice, axis):
     return mean
 
 
+def _sanitize_thresholds(all_threshes, est, cv, X, y=None):
+    """Remove thresholds which give NaN as obj."""
+    del_idx = list()
+    for idx, thresh in enumerate(all_threshes):
+        obj = -np.mean(cross_val_score(est, X, cv=cv, y=y))
+        if not np.isfinite(obj):
+            del_idx.append(idx)
+        else:
+            break  # higher thresholds don't give NaN
+    all_threshes = np.delete(all_threshes, del_idx)
+    return all_threshes
+
+
 def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
                      cv=None, return_param_range=False, n_jobs=1):
     """Validation curve on epochs for global autoreject.
@@ -240,6 +253,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             print('Estimating rejection dictionary for %s' % ch_type)
         cache = dict()
         est = _GlobalAutoReject(n_channels=n_channels, n_times=n_times)
+        all_threshes = _sanitize_thresholds(all_threshes, est, cv, X)
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
@@ -323,6 +337,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
     """
     est = _ChannelAutoReject()
     all_threshes = np.sort(np.ptp(this_data, axis=1))
+    all_threshes = _sanitize_thresholds(all_threshes, est, cv, this_data, y=y)
 
     if method == 'random_search':
         param_dist = dict(thresh=uniform(all_threshes[0],
