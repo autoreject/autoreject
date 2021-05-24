@@ -77,7 +77,7 @@ if __name__ == "__main__":
                   'numpydoc',
                   'cython',
                   'pillow',
-                  'openneuro-py'
+                  'openneuro-py >= 2021.7'
               ]
           },
           packages=find_packages(),
