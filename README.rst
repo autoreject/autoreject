@@ -35,24 +35,24 @@ Installation
 
 We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
 and a **Python version >= 3.7**.
-To obtain the stable release of ``autoreject``. you can use ``pip``:
+To obtain the stable release of ``autoreject``. you can use ``pip``::
 
-    $ pip install -U autoreject
+    pip install -U autoreject
 
-Or ``conda``:
+Or ``conda``::
 
-    $ conda install -c conda-forge autoreject
+    conda install -c conda-forge autoreject
 
-If you want the latest (development) version of ``autoreject``, use:
+If you want the latest (development) version of ``autoreject``, use::
 
-    $ pip install https://api.github.com/repos/autoreject/autoreject/zipball/master
+    pip install https://api.github.com/repos/autoreject/autoreject/zipball/master
 
 If you do not have admin privileges on the computer, use the ``--user`` flag
 with `pip`.
 
 To check if everything worked fine, you can do::
 
-    $ python -c 'import autoreject'
+    python -c 'import autoreject'
 
 and it should not give any error messages.
 
