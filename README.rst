@@ -101,7 +101,8 @@ The API is the same:
 	>>> rsc = Ransac()
 	>>> epochs_clean = rsc.fit_transform(epochs)  # doctest: +SKIP
 
-For more details check out the :ref:`example to automatically detect and repair bad epochs <sphx_glr_auto_examples_plot_auto_repair.py>`.
+For more details check out the example to
+`automatically detect and repair bad epochs <https://circleci.com/api/v1.1/project/github/autoreject/autoreject/latest/artifacts/0/html/auto_examples/plot_auto_repair.html#sphx-glr-auto-examples-plot-auto-repair-py?branch=master>`_.
 
 Bug reports
 ===========
