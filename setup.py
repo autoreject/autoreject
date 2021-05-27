@@ -49,7 +49,7 @@ if __name__ == "__main__":
           platforms='any',
           keywords=('electroencephalography eeg magnetoencephalography '
                     'meg preprocessing analysis'),
-          python_requires='~=3.6',
+          python_requires='~=3.7',
           install_requires=[
               'numpy >= 1.8',
               'scipy >= 0.16',
