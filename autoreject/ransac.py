@@ -195,8 +195,10 @@ class Ransac(object):
         if self.verbose is not False and self.n_jobs > 1:
             print('Iterating epochs ...')
         verbose = False if self.n_jobs > 1 else self.verbose
+        rng = check_random_state(self.random_state)
+        base_random_state = rng.randint(np.iinfo(np.int16).max)
         self.ch_subsets_ = [self._get_random_subsets(
-                            epochs.info, self.random_state + random_state)
+                            epochs.info, base_random_state + random_state)
                             for random_state in np.arange(0, n_epochs, n_jobs)]
         epoch_idxs = np.array_split(np.arange(n_epochs), n_jobs)
         corrs = parallel(my_iterator(self, epochs, idxs, chs, verbose)
