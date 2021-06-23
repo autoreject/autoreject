@@ -3,6 +3,7 @@
 
 import pytest
 
+import numpy as np
 import mne
 from mne.datasets import sample
 from mne import io
@@ -32,7 +33,7 @@ def test_ransac():
     picks = mne.pick_types(epochs.info, meg='mag', eeg=False, stim=False,
                            eog=False, exclude=[])
 
-    ransac = Ransac(picks=picks)
+    ransac = Ransac(picks=picks, random_state=np.random.RandomState(42))
     epochs_clean = ransac.fit_transform(epochs)
     assert len(epochs_clean) == len(epochs)
     # Pass numpy instead of epochs
