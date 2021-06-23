@@ -78,8 +78,8 @@ class Ransac(object):
             predictability.
         n_jobs : int
             Number of parallel jobs.
-        random_state : None | int
-            To seed or not the random number generator.
+        random_state : None | int | np.random.RandomState
+            The seed of the pseudo random number generator to use.
         picks : ndarray, shape(n_channels) | None
             The channels to be considered for autoreject. If None, defaults
             to data channels {'meg', 'eeg'}.
