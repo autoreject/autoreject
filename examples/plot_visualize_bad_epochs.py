@@ -37,7 +37,7 @@ run_fname = op.join(f'sub-{subject_id}', 'ses-meg', 'meg',
                     '_run-{:02d}_meg.fif'.format(run))
 openneuro.download(dataset=dataset, target_dir=target_dir, include=[run_fname])
 
-###############################################################################
+# %%
 # We will create epochs with data starting 200 ms before trigger onset
 # and continuing up to 800 ms after that. The data contains visual stimuli for
 # famous faces, unfamiliar faces, as well as scrambled faces.
@@ -65,7 +65,7 @@ mne.io.set_eeg_reference(raw)
 epochs = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
                     baseline=None, preload=False, reject=None, decim=4)
 
-###############################################################################
+# %%
 # Now, we apply autoreject
 
 this_epoch = epochs['famous']
@@ -74,7 +74,7 @@ exclude = []  # don't exclude any bad channels so we can reject them
 picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
                        eog=False, exclude=exclude)
 
-###############################################################################
+# %%
 # Note that :class:`autoreject.AutoReject` by design supports multiple
 # channels. If no picks are passed separate solutions will be computed for each
 # channel type and internally combines. This then readily supports cleaning
@@ -91,7 +91,7 @@ ar = autoreject.AutoReject(picks=picks, random_state=42,
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
-###############################################################################
+# %%
 # We can visualize the cross validation curve over two variables
 
 autoreject.set_matplotlib_defaults(plt, style='seaborn-white')
@@ -114,7 +114,7 @@ plt.title('Mean cross validation error (x 1e6)')
 plt.colorbar()
 plt.show()
 
-###############################################################################
+# %%
 # ... and visualize the bad epochs and sensors. Bad sensors which have been
 # interpolated are in blue. Bad sensors which are not interpolated are in red.
 # Bad trials are also in red.
@@ -122,17 +122,17 @@ plt.show()
 scalings = dict(eeg=40e-6)
 reject_log.plot_epochs(this_epoch, scalings=scalings)
 
-###############################################################################
+# %%
 # ... and the epochs after cleaning with autoreject
 
 epochs_ar.plot(scalings=scalings)
 
-###############################################################################
+# %%
 # The epochs dropped by autoreject are also stored in epochs.drop_log
 
 epochs_ar.plot_drop_log()
 
-###############################################################################
+# %%
 # Finally, the evoked before and after autoreject, for sanity check. We use
 # the ``spatial_colors`` argument from MNE as it allows us to see that
 # the eyeblinks have not yet been cleaned but the bad channels have been
