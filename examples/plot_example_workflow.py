@@ -16,7 +16,7 @@ other preprocessing steps to use in combination.
 
 # sphinx_gallery_thumbnail_number = 9
 
-###############################################################################
+# %%
 # First, we download resting-state EEG data from a Parkinson's patient
 # from OpenNeuro. We will do this using ``openneuro-py`` which can be
 # installed with the command ``pip install openneuro-py``.
@@ -36,7 +36,7 @@ target_dir = mne.utils._TempDir()
 openneuro.download(dataset=dataset, target_dir=target_dir,
                    include=[f'sub-{subject_id}/ses-off'])
 
-###############################################################################
+# %%
 # We will now load in the raw data from the bdf file downloaded from OpenNeuro
 # and, since this is resting-state data without any events, make regularly
 # spaced events with which to epoch the raw data. In evoked plot (the plot of
@@ -59,7 +59,7 @@ epochs = mne.make_fixed_length_epochs(raw, duration=3, preload=True)
 # plot the data
 epochs.average().detrend().plot_joint()
 
-###############################################################################
+# %%
 # Now, we'll naively apply autoreject as our first preprocessing step.
 #
 # As we can see in the plot of the rejected epochs, there are many eyeblinks
@@ -78,7 +78,7 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
 reject_log.plot('horizontal')
 
-###############################################################################
+# %%
 # The data may be very valuable and the time for the experiment
 # limited and so we may want to take steps to reduce the number of
 # epochs dropped by first using other steps to preprocess the data.
@@ -105,7 +105,7 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=1e-4))
 reject_log.plot('horizontal')
 
-###############################################################################
+# %%
 # Finally, we can apply independent components analysis (ICA) to remove
 # eyeblinks from the data. If our analysis were to be very dependent on
 # sensors at the front of the head or frequency components near the
@@ -142,7 +142,7 @@ ica.exclude = [0,  # blinks
 ica.plot_overlay(epochs.average(), exclude=ica.exclude)
 ica.apply(epochs, exclude=ica.exclude)
 
-###############################################################################
+# %%
 # We can see in this section that preprocessing, especially ICA, can be made
 # to do a lot of the heavy lifting. There isn't a huge difference when viewing
 # the averaged data (the evoked) because the ICA effectively limited the number
@@ -171,7 +171,7 @@ epochs_ar.average().plot(exclude=[], axes=axes[1], ylim=ylim)
 axes[1].set_title('After autoreject')
 fig.tight_layout()
 
-###############################################################################
+# %%
 # We will do a few more visualizations to see that removing the bad epochs
 # found by ``autoreject`` is still important even with preprocessing first.
 # This is especially important if your analyses include trial-level statistics
@@ -188,7 +188,7 @@ fig.tight_layout()
 # plot reject log
 reject_log.plot('horizontal')
 
-###############################################################################
+# %%
 # We can also see in this plot that eyeblinks and muscle artifacts are still
 # present in the example of plots of channels exceeding their peak-to-peak
 # threshold. We could exclude more ICA components to try and remove these but
@@ -223,7 +223,7 @@ for idx in bad_epoch_idx[[1, 4, 7]]:
         ax.axis('off')
     fig.tight_layout()
 
-###############################################################################
+# %%
 # Finally, we can clearly see in the power spectral density plot, that we have
 # had a positive impact by removing abberant data from some channels which
 # manifested in the power spectrum as low-frequency artifact.
@@ -235,7 +235,7 @@ epochs_ar.plot_psd(fmax=100, ax=ax2)
 ax2.set_title('After autoreject')
 fig.tight_layout()
 
-###############################################################################
+# %%
 # The data could be even further examined by looking at time-frequency plots
 # using :func:`mne.mne.time_frequency.tfr_morlet`, for example. Depending on
 # the value/rarity of your data, you may want to spend every effort in
