@@ -1203,7 +1203,6 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-
     def plot(self, orientation='horizontal', show_names='auto', show=True):
         """Plot an image of good, bad and interpolated channels for each epoch.
 
@@ -1219,6 +1218,7 @@ class RejectLog(object):
             show_names entries.
         show : bool
             If True, display the figure immediately.
+
         Returns
         -------
         figure : Instance of matplotlib.figure.Figure
@@ -1232,10 +1232,10 @@ class RejectLog(object):
 
         figure, ax = plt.subplots(figsize=(12, 6))
         ax.grid(False)
-        
+
         labels = self.labels.copy()
         labels[labels == 2] = 0.5  # move interp to 0.5
-        labels[labels == 0] = 0.25  # lighten up the green        
+        labels[labels == 0] = 0.25  # lighten up the green
 
         image = self.labels.copy()
         image[image == 2] = 0.5  # move interp to 0.5
@@ -1269,7 +1269,6 @@ class RejectLog(object):
             ax.set_ylabel('Epochs')
             plt.setp(ax, xticks=range(0, self.labels.shape[1], show_names),
                      xticklabels=self.ch_names)
-
             plt.setp(ax.get_xticklabels(), fontsize=8, rotation='vertical')
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
