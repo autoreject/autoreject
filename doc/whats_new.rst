@@ -17,10 +17,14 @@ Changelog
 
 - Make plotting of reject log more flexible by allowing to change the orientation of plot, option to supress the immediate display of the plot and returning the plot figure for further modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in `#152 <https://github.com/autoreject/autoreject/pull/152>`_
 
+- Add `show_names` option to `:func:autoreject.RejectLog.plot` by `Mainak Jas`_ in `#322 <https://github.com/autoreject/autoreject/pull/322>`_
+
 Bug
 ~~~
 
 - Don't reset `epochs.info['bads']` within :func:`autoreject.compute_thresholds` by `Mainak Jas`_ in `#203 <https://github.com/autoreject/autoreject/pull/203>`_
+
+- Adjust usage of a private MNE method used for interpolation that failed for newer MNE versions, by `Adina Wagner`_ in `#212 <https://github.com/autoreject/autoreject/pull/212>`_.
 
 API
 ~~~
@@ -64,3 +68,4 @@ API
 .. _Alex Gramfort: http://alexandre.gramfort.net
 .. _Marcin Koculak: https://mkoculak.github.io/
 .. _Hubert Banville: https://hubertjb.github.io/
+.. _Adina Wagner: https://www.adina-wagner.com/

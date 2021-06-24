@@ -396,7 +396,6 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
 
 def _compute_dots(info, mode='fast'):
     """Compute all-to-all dots."""
-    from mne.forward._field_interpolation import _setup_dots
     from mne.forward._lead_dots import _do_self_dots, _do_cross_dots
     from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
     from mne.bem import _check_origin
@@ -405,7 +404,8 @@ def _compute_dots(info, mode='fast'):
     coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
                               templates)
     my_origin = _check_origin((0., 0., 0.04), info)
-    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils, 'meg')
+    int_rad, noise, lut_fun, n_fact = _patch_setup_dots(mode, info,
+                                                        coils, 'meg')
     self_dots = _do_self_dots(int_rad, False, coils, my_origin, 'meg',
                               lut_fun, n_fact, n_jobs=1)
     cross_dots = _do_cross_dots(int_rad, False, coils, coils,
@@ -425,7 +425,6 @@ def _pick_dots(dots, pick_from, pick_to):
 def _fast_map_meg_channels(info, pick_from, pick_to,
                            dots=None, mode='fast'):
     from mne.io.pick import pick_info
-    from mne.forward._field_interpolation import _setup_dots
     from mne.forward._field_interpolation import _compute_mapping_matrix
     from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
     from mne.bem import _check_origin
@@ -441,7 +440,8 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     coils_from = _create_meg_coils(info_from['chs'], 'normal',
                                    info_from['dev_head_t'], templates)
     my_origin = _check_origin((0., 0., 0.04), info_from)
-    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, coils_from, 'meg')
+    int_rad, noise, lut_fun, n_fact = _patch_setup_dots(mode, info_from,
+                                                        coils_from, 'meg')
 
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
@@ -461,3 +461,13 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     mne.set_log_level(verbose)
 
     return fmd['data']
+
+
+def _patch_setup_dots(mode, info, coils, ch):
+    """Monkey patch _setup_dots for MNE-Python >= v0.24."""
+    from mne.forward._field_interpolation import _setup_dots
+    from mne.utils import check_version
+    if not check_version('mne', '0.24'):
+        return _setup_dots(mode, coils, ch)
+    else:
+        return _setup_dots(mode, info, coils, ch)
