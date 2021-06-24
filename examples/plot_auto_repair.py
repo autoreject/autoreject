@@ -11,7 +11,7 @@ repair epochs.
 #         Denis A. Engemann <denis.engemann@gmail.com>
 # License: BSD (3-clause)
 
-###############################################################################
+# %%
 # Let us first define the parameters. `n_interpolates` are the :math:`\rho`
 # values that we would like :mod:`autoreject` to try and `consensus_percs`
 # are the :math:`\kappa` values that :mod:`autoreject` will try (see the
@@ -39,7 +39,7 @@ import autoreject
 n_interpolates = np.array([1, 4, 32])
 consensus_percs = np.linspace(0, 1.0, 11)
 
-###############################################################################
+# %%
 # Let us now read in the raw `fif` file for MNE sample dataset.
 
 mne.utils.check_random_state(42)
@@ -49,7 +49,7 @@ sample_dir = op.join(data_path, 'MEG', 'sample')
 raw_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw.fif')
 raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
-###############################################################################
+# %%
 # We can then read in the events
 
 event_fname = op.join(sample_dir, 'sample_audvis_filt-0-40_raw-eve.fif')
@@ -58,7 +58,7 @@ tmin, tmax = -0.2, 0.5
 
 events = mne.read_events(event_fname)
 
-###############################################################################
+# %%
 # And pick MEG channels for repairing. Currently, :mod:`autoreject` can repair
 # only one channel type at a time.
 
@@ -66,7 +66,7 @@ raw.info['bads'] = []
 picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
                        include=[], exclude=[])
 
-###############################################################################
+# %%
 # Now, we can create epochs. The ``reject`` params will be set to ``None``
 # because we do not want epochs to be dropped when instantiating
 # :class:`mne.Epochs`.
@@ -77,11 +77,11 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
 epochs = epochs.pick_channels(np.array(epochs.ch_names)[np.arange(
     0, len(epochs.ch_names), 11)])  # decimate to save computation time
 
-###############################################################################
+# %%
 # :class:`autoreject.AutoReject` internally does cross-validation to
 # determine the optimal values :math:`\rho^{*}` and :math:`\kappa^{*}`
 
-###############################################################################
+# %%
 # Note that :class:`autoreject.AutoReject` by design supports
 # multiple channels.
 # If no picks are passed, separate solutions will be computed for each channel
@@ -99,13 +99,13 @@ epochs_clean = ar.transform(epochs['Auditory/Left'])
 evoked_clean = epochs_clean.average()
 evoked = epochs['Auditory/Left'].average()
 
-###############################################################################
+# %%
 # Now, we will manually mark the bad channels just for plotting.
 
 evoked.info['bads'] = ['MEG 2443']
 evoked_clean.info['bads'] = ['MEG 2443']
 
-###############################################################################
+# %%
 # Let us plot the results.
 
 autoreject.set_matplotlib_defaults(plt)
@@ -123,7 +123,7 @@ evoked_clean.plot(exclude=[], axes=axes[1], ylim=ylim)
 axes[1].set_title('After autoreject')
 plt.tight_layout()
 
-###############################################################################
+# %%
 # To top things up, we can also visualize the bad sensors for each trial using
 # a heatmap.
 
