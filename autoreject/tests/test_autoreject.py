@@ -8,6 +8,7 @@
 import os.path as op
 import pickle
 import platform
+import os
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -318,3 +319,33 @@ def test_io():
     assert_array_equal(epochs_clean1.get_data(), epochs_clean3.get_data())
     assert_array_equal(reject_log1.labels, reject_log2.labels)
     assert_array_equal(reject_log1.labels, reject_log3.labels)
+
+
+def test_fnirs():
+    # Test that autoreject runs on fNIRS data.
+    raw = mne.io.read_raw_nirx(os.path.join(
+        mne.datasets.fnirs_motor.data_path(), 'Participant-1'))
+    raw.crop(tmax=1200)
+    raw = mne.preprocessing.nirs.optical_density(raw)
+    raw = mne.preprocessing.nirs.beer_lambert_law(raw)
+    events, _ = mne.events_from_annotations(raw, event_id={'1.0': 1,
+                                                           '2.0': 2,
+                                                           '3.0': 3})
+    event_dict = {'Control': 1, 'Tapping/Left': 2, 'Tapping/Right': 3}
+    epochs = mne.Epochs(raw, events, event_id=event_dict,
+                        tmin=-5, tmax=15,
+                        proj=True, baseline=(None, 0), preload=True,
+                        detrend=None, verbose=True)
+    # Test autoreject
+    ar = AutoReject()
+    assert len(epochs) == 37
+    epochs_clean = ar.fit_transform(epochs)
+    assert len(epochs_clean) < len(epochs)
+    # Test threshold extraction
+    reject = get_rejection_threshold(epochs)
+    print(reject)
+    assert "hbo" in reject.keys()
+    assert "hbr" in reject.keys()
+    assert reject["hbo"] < 0.001  # This is a very high value as sanity check
+    assert reject["hbr"] < 0.001
+    assert reject["hbr"] > 0.0
