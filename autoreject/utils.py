@@ -48,11 +48,13 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
 
     # XXX : ch_constraint -> allow_many_types=True | False
     if ch_constraint == 'data_channels':
-        if not all(ch in ('mag', 'grad', 'eeg', 'hbo', 'hbr') for ch in ch_types_picked):
+        if not all(ch in ('mag', 'grad', 'eeg', 'hbo', 'hbr')
+                   for ch in ch_types_picked):
             raise ValueError('AutoReject only supports mag, grad, and eeg '
                              'at this point.')
     elif ch_constraint == 'single_channel_type':
-        if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg', 'hbo', 'hbr')) > 1:
+        if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg',
+                                                'hbo', 'hbr')) > 1:
             raise ValueError('AutoReject only supports mag, grad, and eeg '
                              'at this point.')  # XXX: to check
     else:
@@ -69,8 +71,8 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
 def _handle_picks(info, picks):
     """Pick the data channls or return picks."""
     if picks is None:
-        out = mne.pick_types(
-            info, meg=True, eeg=True, ref_meg=False, fnirs=True, exclude='bads')
+        out = mne.pick_types(info, meg=True, eeg=True, ref_meg=False,
+                             fnirs=True, exclude='bads')
     else:
         out = picks
     return out
