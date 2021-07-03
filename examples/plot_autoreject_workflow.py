@@ -5,6 +5,10 @@ Preprocessing workflow with ``autoreject`` and ICA
 This example demonstrates how to visualize data when preprocessing
 with :mod:`autoreject` and discusses decisions about when and which
 other preprocessing steps to use in combination.
+
+**tldr**: We recommend that you first highpass filter the data,
+then estimate the global rejection threshold and supply it to the ICA
+algorithm for a robust fit, and finally run autoreject (local).
 """
 
 # Author: Alex Rockhill <aprockhill@mailbox.org>
@@ -16,14 +20,16 @@ other preprocessing steps to use in combination.
 # sphinx_gallery_thumbnail_number = 9
 
 # %%
-# .. toctree::
+# .. contents:: Table of Contents
+#    :local:
 #
 # First, we download resting-state EEG data from a Parkinson's patient
 # from OpenNeuro. We will do this using ``openneuro-py`` which can be
 # installed with the command ``pip install openneuro-py``.
 
-import numpy as np
 import os.path as op
+
+import numpy as np
 import matplotlib.pyplot as plt
 import openneuro
 
@@ -33,15 +39,15 @@ import autoreject
 dataset = 'ds002778'  # The id code on OpenNeuro for this example dataset
 subject_id = 'pd14'
 
-target_dir = mne.utils._TempDir()
+target_dir = op.join(op.dirname(autoreject.__file__), '..', 'examples')
 openneuro.download(dataset=dataset, target_dir=target_dir,
                    include=[f'sub-{subject_id}/ses-off'])
 
 # %%
 # We will now load in the raw data from the bdf file downloaded from OpenNeuro
 # and, since this is resting-state data without any events, make regularly
-# spaced events with which to epoch the raw data. In evoked plot (the plot of
-# the average of the epochs) we can see that there may be some eyeblink
+# spaced events with which to epoch the raw data. In the averaged plot, 
+# we can see that there may be some eyeblink
 # artifact contamination but, overall, the data is typical of
 # resting-state EEG.
 
@@ -58,8 +64,8 @@ epochs = mne.make_fixed_length_epochs(raw, duration=3, preload=True)
 epochs.average().detrend().plot_joint()
 
 # %%
-# Autoreject first pass
-# ---------------------
+# Autoreject without any other preprocessing
+# ------------------------------------------
 # Now, we'll naively apply autoreject as our first preprocessing step.
 #
 # As we can see in the plot of the rejected epochs, there are many eyeblinks
@@ -83,14 +89,13 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 reject_log.plot('horizontal')
 
 # %%
-# Highpass filter
-# ---------------
+# Autoreject with Highpass filter
+# -------------------------------
 # The data may be very valuable and the time for the experiment
 # limited and so we may want to take steps to reduce the number of
 # epochs dropped by first using other steps to preprocess the data.
 # We will use a highpass filter first to remove slow drift that could
-# cause epochs to be dropped. As we can see in the plot, this reduced
-# the number of epochs marked as bad by autoreject substantially.
+# cause epochs to be dropped.
 #
 # When making this decision to filter the data, we do want to be careful
 # because filtering can spread sharp, high-frequency transients and
@@ -111,7 +116,8 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 
 # %%
-# and the reject log
+# and the reject log. As we can see in the plot, highpass filtering reduced
+# the number of epochs marked as bad by autoreject substantially.
 reject_log.plot('horizontal')
 
 # %%
@@ -120,12 +126,9 @@ reject_log.plot('horizontal')
 # Finally, we can apply independent components analysis (ICA) to remove
 # eyeblinks from the data. If our analysis were to be very dependent on
 # sensors at the front of the head, we could skip ICA and use the previous
-# result. However, ICA can increase the amount of usable data and is one
-# of the most commonly used methods in EEG analyses.
-#
-# We first find the global rejection threshold and only then run ICA, and then
-# finally run the local rejection threshold for each channel. This sequence
-# is recommended.
+# result. However, ICA can increase the amount of usable data by applying
+# a spatial filter that downscales the data in sensors most affected by eyeblink
+# artifacts.
 #
 # We can see in the plots below that ICA effectively removed eyeblink
 # artifact, and, in doing so, reduced the number of epochs that were dropped.
@@ -152,11 +155,11 @@ ica.plot_overlay(epochs.average(), exclude=ica.exclude)
 ica.apply(epochs, exclude=ica.exclude)
 
 # %%
-# Autoreject final pass
-# ---------------------
+# Autoreject with highpass filter and ICA
+# ---------------------------------------
 # We can see in this section that preprocessing, especially ICA, can be made
 # to do a lot of the heavy lifting. There isn't a huge difference when viewing
-# the averaged data (the evoked) because the ICA effectively limited the number
+# the averaged data because the ICA effectively limited the number
 # of epochs that had to be dropped. However, there are still artifacts such as
 # non-stereotypical blinks that weren't able to be removed by ICA, channel
 # "pops" (sharp transients with exponential RC decay), muscle artifact such as
@@ -185,11 +188,21 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 reject_log.plot('horizontal')
 
 # %%
-# Next, we will visualize the average data
-fig, axes = plt.subplots(2, 1, figsize=(6, 6))
-ylim = dict(eeg=(-5, 5))
-epochs.average().plot(exclude=[], axes=axes[0], ylim=ylim, show=False)
-axes[0].set_title('Before autoreject')
-epochs_ar.average().plot(exclude=[], axes=axes[1], ylim=ylim)
-axes[1].set_title('After autoreject')
-fig.tight_layout()
+# Next, we will visualize the cleaned average data and compare it against
+# the bad segments.
+evoked_bad = epochs[reject_log.bad_epochs].average()
+plt.plot(evoked_bad.times, evoked_bad.data.T * 1e6, 'r', zorder=-1)
+epochs_ar.average().plot(axes=plt.gca())
+
+# %%
+# Finally, don't forget that we are working with resting state data
+# here. Here we used long epochs of 3 seconds so that frequency-domain
+# analysis was possible with the epochs. However, this could also lead
+# to longer segments of the data being rejected. If you want more
+# fine-grained control over the artifacts, you can
+# construct shorter epochs and use the autoreject log to mark
+# annotations in MNE that can be used to reject the data during doing
+# time-frequency analysis. We want to emphasize that there
+# is no subsitute for visual inspection. Irrespective of the rejection
+# method used, we highly recommend users to inspect their preprocessed
+# data before further analyses.
