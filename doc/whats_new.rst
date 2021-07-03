@@ -19,6 +19,9 @@ Changelog
 
 - Add `show_names` option to `:func:autoreject.RejectLog.plot` by `Mainak Jas`_ in `#322 <https://github.com/autoreject/autoreject/pull/322>`_
 
+- Enable support for fNIRS data types by `Robert Luke`_ in `#177 <https://github.com/autoreject/autoreject/pull/177>`_
+
+
 Bug
 ~~~
 
@@ -69,3 +72,4 @@ API
 .. _Marcin Koculak: https://mkoculak.github.io/
 .. _Hubert Banville: https://hubertjb.github.io/
 .. _Adina Wagner: https://www.adina-wagner.com/
+.. _Robert Luke: https://github.com/rob-luke/
