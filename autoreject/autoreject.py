@@ -186,8 +186,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
         will have keys ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr'].
-    cv : int
-        The number of folds used. Defaults to 5.
+    cv : a scikit-learn cross-validation object
+        Defaults to cv=5
     verbose : bool
         If False, suppress all output messages.
 
