@@ -322,7 +322,7 @@ def test_io():
 
 
 def test_fnirs():
-    # Test that autoreject runs on fNIRS data.
+    """Test that autoreject runs on fNIRS data."""
     raw = mne.io.read_raw_nirx(os.path.join(
         mne.datasets.fnirs_motor.data_path(), 'Participant-1'))
     raw.crop(tmax=1200)
