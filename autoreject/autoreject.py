@@ -1258,7 +1258,7 @@ class RejectLog(object):
             # add legend
             handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
                        for i, label in legend_label.items()]
-            ax.legend(handles=handles, bbox_to_anchor=(3.5, 0.5), ncol=1,
+            ax.legend(handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3,
                       borderaxespad=0.)
 
         elif orientation == 'vertical':
