@@ -89,12 +89,12 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 reject_log.plot('horizontal')
 
 # %%
-# Autoreject with Highpass filter
+# Autoreject with high-pass filter
 # -------------------------------
 # The data may be very valuable and the time for the experiment
 # limited and so we may want to take steps to reduce the number of
 # epochs dropped by first using other steps to preprocess the data.
-# We will use a highpass filter first to remove slow drift that could
+# We will use a high-pass filter first to remove slow drift that could
 # cause epochs to be dropped.
 #
 # When making this decision to filter the data, we do want to be careful
@@ -116,7 +116,7 @@ epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 
 # %%
-# and the reject log. As we can see in the plot, highpass filtering reduced
+# and the reject log. As we can see in the plot, high-pass filtering reduced
 # the number of epochs marked as bad by autoreject substantially.
 reject_log.plot('horizontal')
 
