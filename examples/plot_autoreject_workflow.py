@@ -130,24 +130,24 @@ reject_log.plot('horizontal')
 # a spatial filter that downscales the data in sensors most affected by eyeblink
 # artifacts.
 #
-# We can see in the plots below that ICA effectively removed eyeblink
-# artifact, and, in doing so, reduced the number of epochs that were dropped.
-
-# find global rejection threshold
-reject = autoreject.get_rejection_threshold(epochs)
+# Note that ICA works best if bad segments of the data are removed
+# Hence, we will remove the bad segments from the
+# previous run of autoreject for the benefit of the ICA algorithm.
 
 # compute ICA
 ica = mne.preprocessing.ICA(random_state=99)
-ica.fit(epochs, reject=reject)
+ica.fit(epochs[~reject_log.bad_epochs])
 
 # %%
+# We can see in the plots below that ICA effectively removed eyeblink
+# artifact.
+#
 # plot source components to see which is made up of blinks
-ica.plot_sources(epochs)
-
-# exclude components with eyeblink artifact
-ica.exclude = [0,  # blinks
-               1  # saccades
-               ]
+exclude = [0,  # blinks
+           2  # saccades
+           ]
+ica.plot_components(exclude)
+ica.exclude = exclude
 
 # %%
 # plot with and without eyeblink component
@@ -191,6 +191,7 @@ reject_log.plot('horizontal')
 # Next, we will visualize the cleaned average data and compare it against
 # the bad segments.
 evoked_bad = epochs[reject_log.bad_epochs].average()
+plt.figure()
 plt.plot(evoked_bad.times, evoked_bad.data.T * 1e6, 'r', zorder=-1)
 epochs_ar.average().plot(axes=plt.gca())
 
