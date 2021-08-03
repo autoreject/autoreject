@@ -35,7 +35,7 @@ Installation
 
 We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
 and a **Python version >= 3.7**.
-To obtain the stable release of ``autoreject``. you can use ``pip``::
+To obtain the stable release of ``autoreject``, you can use ``pip``::
 
     pip install -U autoreject
 
@@ -56,7 +56,7 @@ To check if everything worked fine, you can do::
 
 and it should not give any error messages.
 
-Below we list the dependencies for ``autoreject``.
+Below, we list the dependencies for ``autoreject``.
 All required dependencies are installed automatically when you install ``autoreject``.
 
 * ``mne`` (>=0.14)
@@ -68,7 +68,7 @@ All required dependencies are installed automatically when you install ``autorej
 
 Optional dependencies are:
 
-* ``tqdm`` (for nice progressbars when setting ``verbose=tqdm``)
+* ``tqdm`` (for nice progress-bars when setting ``verbose=tqdm``)
 * ``h5py`` (for writing ``autoreject`` objects using the HDF5 format)
 * ``openneuro-py`` (>= 2021.7, for fetching data from OpenNeuro.org)
 
