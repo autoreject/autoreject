@@ -36,16 +36,23 @@ def test_ransac():
     ransac = Ransac(picks=picks, random_state=np.random.RandomState(42))
     epochs_clean = ransac.fit_transform(epochs)
     assert len(epochs_clean) == len(epochs)
+
+    # Pass string instead of array of idx
+    picks = 'eeg'
+    ransac = Ransac(picks=picks, random_state=np.random.RandomState(42))
+    epochs_clean = ransac.fit_transform(epochs)
+    assert len(epochs_clean) == len(epochs)
+
     # Pass numpy instead of epochs
     X = epochs.get_data()
     pytest.raises(AttributeError, ransac.fit, X)
-    #
+
     # should not contain both channel types
     picks = mne.pick_types(epochs.info, meg=True, eeg=False, stim=False,
                            eog=False, exclude=[])
     ransac = Ransac(picks=picks)
     pytest.raises(ValueError, ransac.fit, epochs)
-    #
+
     # should not contain other channel types.
     picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
                            eog=False, exclude=[])
