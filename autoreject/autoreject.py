@@ -947,7 +947,7 @@ class AutoReject(object):
         self : instance of AutoReject
             The instance.
         """
-        self.picks_ = _handle_picks(picks=self.picks, info=epochs.info)
+        self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
         self.cv_ = self.cv
         if isinstance(self.cv_, int):

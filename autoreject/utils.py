@@ -10,6 +10,7 @@ import numpy as np
 
 import mne
 from mne import pick_types, pick_info
+from mne.io.pick import _picks_to_idx
 from mne.channels.interpolation import _do_interp_dots
 
 
@@ -74,7 +75,7 @@ def _handle_picks(info, picks):
         out = mne.pick_types(info, meg=True, eeg=True, ref_meg=False,
                              fnirs=True, exclude='bads')
     else:
-        out = picks
+        out = _picks_to_idx(info, picks, exclude='bads')
     return out
 
 
