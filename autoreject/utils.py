@@ -211,9 +211,15 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
     ----------
     inst : instance of mne.Evoked or mne.Epochs
         The evoked or epochs object.
-    picks : ndarray, shape(n_channels,) | None
-        The channels to be considered for autoreject. If None, defaults
-        to data channels {'meg', 'eeg'}.
+    picks : str | list | slice | None
+        Channels to include. Slices and lists of integers will be interpreted
+        as channel indices. In lists, channel *type* strings (e.g.,
+        ``['meg', 'eeg']``) will pick channels of those types, channel *name*
+        strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
+        Can also be the string values ``'all'`` to pick all channels, or
+        ``'data'`` to pick data channels. None (default) will pick data
+        channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
+        be included* if their names or indices are explicitly provided.
     verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
         The verbosity of progress messages.
         If `'progressbar'`, use `mne.utils.ProgressBar`.
@@ -306,8 +312,6 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=None):
 
     bads_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
     goods_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
-
-    inst.info._check_consistency()
     bads_idx[picks] = [inst.ch_names[ch] in inst.info['bads'] for ch in picks]
 
     if len(picks) == 0 or bads_idx.sum() == 0:
