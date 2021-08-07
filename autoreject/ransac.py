@@ -80,9 +80,13 @@ class Ransac(object):
             Number of parallel jobs.
         random_state : None | int | np.random.RandomState
             The seed of the pseudo random number generator to use.
-        picks : ndarray, shape(n_channels) | None
-            The channels to be considered for autoreject. If None, defaults
-            to data channels {'meg', 'eeg'}.
+        picks : str | list | slice | None
+            Channels to include. Slices and lists of integers will be
+            interpreted as channel indices. In lists, channel *name* strings
+            (e.g., ``['MEG0111', 'MEG2623']``) will pick the given channels.
+            None (default) will pick data channels {'meg', 'eeg'}. Note that
+            channels in ``info['bads']`` *will be included* if their names or
+            indices are explicitly provided.
         verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
             The verbosity of progress messages.
             If `'progressbar'`, use `mne.utils.ProgressBar`.
