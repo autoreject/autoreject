@@ -852,11 +852,17 @@ class AutoReject(object):
         This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
-    picks : ndarray, shape(n_channels) | None
-        The channels to be considered for autoreject. If None, defaults
-        to data channels {'meg', 'eeg'}, which will lead fitting and combining
-        autoreject solutions across these channel types. Note that, if picks is
-        None, autoreject ignores channels marked bad in epochs.info['bads'].
+    picks : str | list | slice | None
+        Channels to include. Slices and lists of integers will be interpreted
+        as channel indices. In lists, channel *type* strings (e.g.,
+        ``['meg', 'eeg']``) will pick channels of those types, channel *name*
+        strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
+        Can also be the string values ``'all'`` to pick all channels, or
+        ``'data'`` to pick data channels. None (default) will pick data
+        channels {'meg', 'eeg'}, which will lead fitting and combining
+        autoreject solutions across these channel types. Note that channels in
+        ``info['bads']`` *will be included* if their names or indices are
+        explicitly provided.
     thresh_method : str
         'bayesian_optimization' or 'random_search'
     n_jobs : int
