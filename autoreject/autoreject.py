@@ -904,7 +904,7 @@ class AutoReject(object):
         self.thresh_method = thresh_method
         self.cv = cv
         self.verbose = verbose
-        self.picks = picks  # XXX : should maybe be ch_types?
+        self.picks = picks
         self.n_jobs = n_jobs
         self.random_state = random_state
 
