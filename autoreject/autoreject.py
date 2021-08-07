@@ -615,16 +615,24 @@ class _AutoReject(BaseAutoReject):
         ----------
         epochs : instance of mne.Epochs
             The epochs from which to get the drop logs.
-        picks : np.ndarray, shape(n_channels, ) | list | None
-            The channel indices to be used. If None, the .picks attribute
-            will be used.
+        picks : str | list | slice | None
+            Channels to include. Slices and lists of integers will be
+            interpreted as channel indices. In lists, channel *type* strings
+            (e.g., ``['meg', 'eeg']``) will pick channels of those types,
+            channel *name* strings (e.g., ``['MEG0111', 'MEG2623']`` will pick
+            the given channels. Can also be the string values ``'all'`` to pick
+            all channels, or ``'data'`` to pick data channels. None (default)
+            will use the .picks attribute. Note that channels in
+            ``info['bads']`` *will be included* if their names or indices are
+            explicitly provided.
 
         Returns
         -------
         reject_log : instance of autoreject.RejectLog
             The rejection log.
         """
-        picks = (self.picks_ if picks is None else picks)
+        picks = (self.picks_ if picks is None else
+                 _handle_picks(epochs.info, picks))
         picks_by_type = _get_picks_by_type(picks=picks, info=epochs.info)
         assert len(picks_by_type) == 1
         ch_type, this_picks = picks_by_type[0]
