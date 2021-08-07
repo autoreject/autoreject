@@ -21,6 +21,7 @@ Changelog
 
 - Enable support for fNIRS data types by `Robert Luke`_ in `#177 <https://github.com/autoreject/autoreject/pull/177>`_
 
+- Add additional type support for argument `picks` by `Mathieu Scheltienne`_ in `#225 <https://github.com/autoreject/autoreject/pull/225>`_
 
 Bug
 ~~~
@@ -73,3 +74,4 @@ API
 .. _Hubert Banville: https://hubertjb.github.io/
 .. _Adina Wagner: https://www.adina-wagner.com/
 .. _Robert Luke: https://github.com/rob-luke/
+.. _Mathieu Scheltienne: https://github.com/mscheltienne
