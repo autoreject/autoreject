@@ -298,8 +298,13 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=None):
     ----------
     inst : mne.io.Raw, mne.Epochs or mne.Evoked
         The data to interpolate. Must be preloaded.
-    picks: np.ndarray, shape(n_channels, ) | list | None
-        The channel indices to be used for interpolation.
+    picks : str | list | slice | None
+        Channels to include for interpolation. Slices and lists of integers
+        will be interpreted as channel indices. In lists, channel *name*
+        strings (e.g., ``['EEG 01', 'EEG 02']``) will pick the given channels.
+        None (default) will pick all EEG channels. Note that channels in
+        ``info['bads']`` *will be included* if their names or indices are
+        explicitly provided.
     """
     from mne.bem import _fit_sphere
     from mne.utils import logger, warn
@@ -307,8 +312,11 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=None):
     from mne.channels.interpolation import _make_interpolation_matrix
     import numpy as np
 
+    inst.info._check_consistency()
     if picks is None:
         picks = pick_types(inst.info, meg=False, eeg=True, exclude=[])
+    else:
+        picks = _handle_picks(inst.info, picks)
 
     bads_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
     goods_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
