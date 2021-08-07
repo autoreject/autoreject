@@ -1050,9 +1050,16 @@ class AutoReject(object):
         ----------
         epochs : instance of mne.Epochs
             The epoched data for which the reject log is computed.
-        picks : np.ndarray, shape(n_channels, ) | list | None
-            The channel indices to be used. If None, the .picks attribute
-            will be used.
+        picks : str | list | slice | None
+            Channels to include. Slices and lists of integers will be
+            interpreted as channel indices. In lists, channel *type* strings
+            (e.g., ``['meg', 'eeg']``) will pick channels of those types,
+            channel *name* strings (e.g., ``['MEG0111', 'MEG2623']`` will pick
+            the given channels. Can also be the string values ``'all'`` to pick
+            all channels, or ``'data'`` to pick data channels. None (default)
+            will use the .picks attribute. Note that channels in
+            ``info['bads']`` *will be included* if their names or indices are
+            explicitly provided.
 
         Returns
         -------
