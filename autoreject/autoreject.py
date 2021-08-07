@@ -375,9 +375,15 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         'bayesian_optimization' or 'random_search'
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use
-    picks : ndarray, shape(n_channels,) | None
-        The channels to be considered for autoreject. If None, defaults
-        to data channels {'meg', 'eeg'}.
+    picks : str | list | slice | None
+        Channels to include. Slices and lists of integers will be interpreted
+        as channel indices. In lists, channel *type* strings (e.g.,
+        ``['meg', 'eeg']``) will pick channels of those types, channel *name*
+        strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
+        Can also be the string values ``'all'`` to pick all channels, or
+        ``'data'`` to pick data channels. None (default) will pick data
+        channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
+        be included* if their names or indices are explicitly provided.
     augment : boolean
         Whether to augment the data or not. By default it is True, but
         set it to False, if the channel locations are not available.
