@@ -38,7 +38,7 @@ def test_ransac():
 
     # Pass string instead of array of idx
     picks = 'eeg'
-    ransac = Ransac(picks=picks, random_state=np.random.RandomState(42))
+    ransac = Ransac(picks=picks)
     epochs = ransac.fit(epochs[:2])
     assert len(epochs_clean[:2]) == len(epochs[:2])
     expected = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
