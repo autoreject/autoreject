@@ -173,24 +173,19 @@ def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
         raise ValueError('verbose must be one of {progressbar,'
                          'tqdm, tqdm_notebook, False}. Got %s' % verbose)
 
-    try:
-        from tqdm import tqdm
-        verbose = 'tqdm'
-    except ImportError:
-        pass
-
     if verbose == 'progressbar':
         from mne.utils import ProgressBar
         pbar = ProgressBar(iterable, mesg=desc)
     # XXX: remove the tqdm option after a few releases of MNE since it
     # natively supported by the MNE progressbar
     elif verbose == 'tqdm':
+        from tqdm import tqdm
         pbar = tqdm(iterable, desc=desc, leave=leave, position=position,
                     dynamic_ncols=True)
     elif verbose == 'tqdm_notebook':
-        from tqdm import tqdm_notebook
-        pbar = tqdm_notebook(iterable, desc=desc, leave=leave,
-                             position=position, dynamic_ncols=True)
+        from tqdm.notebook import tqdm
+        pbar = tqdm(iterable, desc=desc, leave=leave,
+                position=position, dynamic_ncols=True)
     elif verbose is False:
         pbar = iterable
     return pbar
