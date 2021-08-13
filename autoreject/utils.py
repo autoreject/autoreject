@@ -185,7 +185,7 @@ def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
     elif verbose == 'tqdm_notebook':
         from tqdm.notebook import tqdm
         pbar = tqdm(iterable, desc=desc, leave=leave,
-                position=position, dynamic_ncols=True)
+                    position=position, dynamic_ncols=True)
     elif verbose is False:
         pbar = iterable
     return pbar
