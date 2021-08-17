@@ -29,7 +29,7 @@ def _check_ch_locs(chs):
 
 
 def _check_data(epochs, picks, ch_constraint='data_channels',
-                verbose='progressbar'):
+                verbose=True):
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
         raise ValueError('Only accepts MNE epochs objects.')
@@ -191,7 +191,7 @@ def _get_epochs_type():
     return BaseEpochs
 
 
-def clean_by_interp(inst, picks=None, verbose='progressbar'):
+def clean_by_interp(inst, picks=None, verbose=True):
     """Clean epochs/evoked by LOOCV.
 
     Parameters
@@ -207,11 +207,8 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
         ``'data'`` to pick data channels. None (default) will pick data
         channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
         be included* if their names or indices are explicitly provided.
-    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+    verbose : boolean
         The verbosity of progress messages.
-        If `'progressbar'`, use `mne.utils.ProgressBar`.
-        If `'tqdm'`, use `tqdm.tqdm`.
-        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
 
     Returns
@@ -222,7 +219,7 @@ def clean_by_interp(inst, picks=None, verbose='progressbar'):
     return _clean_by_interp(inst, picks=picks, verbose=verbose)
 
 
-def _clean_by_interp(inst, picks=None, dots=None, verbose='progressbar'):
+def _clean_by_interp(inst, picks=None, dots=None, verbose=True):
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
     picks = _handle_picks(info=inst_interp.info, picks=picks)
@@ -276,7 +273,7 @@ def interpolate_bads(inst, picks, dots=None, reset_bads=True, mode='accurate'):
     return inst
 
 
-def _interpolate_bads_eeg(inst, picks=None, verbose=None):
+def _interpolate_bads_eeg(inst, picks=None, verbose=False):
     """ Interpolate bad EEG channels.
 
     Operates in place.
@@ -341,7 +338,7 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=None):
 
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
-                               dots=None, verbose=None):
+                               dots=None, verbose=False):
     """Interpolate bad channels from data in good channels."""
     # We can have pre-picked instances or not.
     # And we need to handle it.

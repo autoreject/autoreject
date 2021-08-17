@@ -62,7 +62,7 @@ class Ransac(object):
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
                  unbroken_time=0.4, n_jobs=1,
                  random_state=435656, picks=None,
-                 verbose='progressbar'):
+                 verbose=True):
         """Implements RAndom SAmple Consensus (RANSAC) method to detect bad sensors.
 
         Parameters
@@ -87,11 +87,8 @@ class Ransac(object):
             None (default) will pick data channels {'meg', 'eeg'}. Note that
             channels in ``info['bads']`` *will be included* if their names or
             indices are explicitly provided.
-        verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+        verbose : boolean
             The verbosity of progress messages.
-            If `'progressbar'`, use `mne.utils.ProgressBar`.
-            If `'tqdm'`, use `tqdm.tqdm`.
-            If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
             If False, suppress all output messages.
 
         Notes
@@ -194,7 +191,7 @@ class Ransac(object):
         n_epochs = len(epochs)
 
         n_jobs = check_n_jobs(self.n_jobs)
-        parallel = Parallel(n_jobs, verbose=10)
+        parallel = Parallel(n_jobs, verbose=True)
         my_iterator = delayed(_iterate_epochs)
         if self.verbose is not False and self.n_jobs > 1:
             print('Iterating epochs ...')
