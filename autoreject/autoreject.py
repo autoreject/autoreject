@@ -188,7 +188,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         will have keys ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr'].
     cv : a scikit-learn cross-validation object
         Defaults to cv=5
-    verbose : bool
+    verbose : boolean
+        The verbosity of progress messages.
         If False, suppress all output messages.
 
     Returns
@@ -364,7 +365,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
 def compute_thresholds(epochs, method='bayesian_optimization',
                        random_state=None, picks=None, augment=True,
-                       verbose='progressbar', n_jobs=1):
+                       verbose=True, n_jobs=1):
     """Compute thresholds for each channel.
 
     Parameters
@@ -387,11 +388,8 @@ def compute_thresholds(epochs, method='bayesian_optimization',
     augment : boolean
         Whether to augment the data or not. By default it is True, but
         set it to False, if the channel locations are not available.
-    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+    verbose : boolean
         The verbosity of progress messages.
-        If `'progressbar'`, use `mne.utils.ProgressBar`.
-        If `'tqdm'`, use `tqdm.tqdm`.
-        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
     n_jobs : int
         Number of jobs to run in parallel
@@ -415,7 +413,7 @@ def compute_thresholds(epochs, method='bayesian_optimization',
 
 def _compute_thresholds(epochs, method='bayesian_optimization',
                         random_state=None, picks=None, augment=True,
-                        dots=None, verbose='progressbar', n_jobs=1):
+                        dots=None, verbose=True, n_jobs=1):
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
     picks = _handle_picks(info=epochs.info, picks=picks)
@@ -446,7 +444,7 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
         ch_names = epochs.ch_names
 
         my_thresh = delayed(_compute_thresh)
-        parallel = Parallel(n_jobs=n_jobs, verbose=0)
+        parallel = Parallel(n_jobs=n_jobs, verbose=False)
         desc = 'Computing thresholds ...'
         threshes = parallel(
             my_thresh(data[:, pick], cv=cv, method=method, y=y,
@@ -479,11 +477,8 @@ class _AutoReject(BaseAutoReject):
         Can also be the string values ``'all'`` to pick all channels, or
         ``'data'`` to pick data channels. None (default) will pick data
         channels {'meg', 'eeg'}. Note that channels in ``info['bads']``
-    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+    verbose : boolean
         The verbosity of progress messages.
-        If `'progressbar'`, use `mne.utils.ProgressBar`.
-        If `'tqdm'`, use `tqdm.tqdm`.
-        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
 
     Attributes
@@ -507,7 +502,7 @@ class _AutoReject(BaseAutoReject):
                  n_interpolate=0, thresh_func=None,
                  method='bayesian_optimization',
                  picks=None, dots=None,
-                 verbose='progressbar'):
+                 verbose=True):
         """Init it."""
         if thresh_func is None:
             thresh_func = _compute_thresholds
@@ -557,7 +552,7 @@ class _AutoReject(BaseAutoReject):
 
     def _get_epochs_interpolation(self, epochs, labels,
                                   picks, n_interpolate,
-                                  verbose='progressbar'):
+                                  verbose=True):
         """Interpolate the bad epochs."""
         # 1: bad segment, # 2: interpolated
         assert labels.shape[0] == len(epochs)
@@ -742,7 +737,7 @@ class _AutoReject(BaseAutoReject):
 
 
 def _interpolate_bad_epochs(
-        epochs, interp_channels, picks, dots=None, verbose='progressbar'):
+        epochs, interp_channels, picks, dots=None, verbose=True):
     """Actually do the interpolation."""
     assert len(epochs) == len(interp_channels)
     pos = 2
@@ -869,11 +864,8 @@ class AutoReject(object):
         The number of jobs.
     random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
-    verbose : 'tqdm', 'tqdm_notebook', 'progressbar' or False
+    verbose : boolean
         The verbosity of progress messages.
-        If `'progressbar'`, use `mne.utils.ProgressBar`.
-        If `'tqdm'`, use `tqdm.tqdm`.
-        If `'tqdm_notebook'`, use `tqdm.tqdm_notebook`.
         If False, suppress all output messages.
 
     Attributes
@@ -897,7 +889,7 @@ class AutoReject(object):
     def __init__(self, n_interpolate=None, consensus=None,
                  thresh_func=None, cv=10, picks=None,
                  thresh_method='bayesian_optimization',
-                 n_jobs=1, random_state=None, verbose='progressbar'):
+                 n_jobs=1, random_state=None, verbose=True):
         """Init it."""
         self.n_interpolate = n_interpolate
         self.consensus = consensus
