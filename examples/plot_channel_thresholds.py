@@ -53,7 +53,7 @@ from autoreject import compute_thresholds  # noqa
 # Get a dictionary of rejection thresholds
 threshes = compute_thresholds(epochs, picks=picks, method='random_search',
                               random_state=42, augment=False,
-                              verbose='progressbar')
+                              verbose=True)
 
 ###############################################################################
 # Finally, let us plot a histogram of the channel-level thresholds to verify

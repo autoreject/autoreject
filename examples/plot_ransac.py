@@ -72,7 +72,7 @@ picks = mne.pick_types(epochs.info, meg='grad', eeg=False,
 from autoreject import Ransac  # noqa
 from autoreject.utils import interpolate_bads  # noqa
 
-ransac = Ransac(verbose='progressbar', picks=picks, n_jobs=1)
+ransac = Ransac(verbose=True, picks=picks, n_jobs=1)
 epochs_clean = ransac.fit_transform(epochs)
 
 ###############################################################################

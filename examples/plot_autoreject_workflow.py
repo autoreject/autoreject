@@ -76,7 +76,7 @@ epochs.average().detrend().plot_joint()
 # more than a few sensors since we only have 32 to start, so the
 # number of channels to interpolate was set to check some low numbers
 ar = autoreject.AutoReject(n_interpolate=[1, 2, 3, 4], random_state=11,
-                           n_jobs=1, verbose='tqdm')
+                           n_jobs=1, verbose=True)
 ar.fit(epochs[:20])  # fit on a few epochs to save time
 epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 
@@ -107,7 +107,7 @@ reject_log.plot('horizontal')
 raw.filter(l_freq=1, h_freq=None)
 epochs = mne.make_fixed_length_epochs(raw, duration=3, preload=True)
 ar = autoreject.AutoReject(n_interpolate=[1, 2, 3, 4], random_state=11,
-                           n_jobs=1, verbose='tqdm')
+                           n_jobs=1, verbose=True)
 ar.fit(epochs[:20])  # fit on a few epochs to save time
 epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 
@@ -171,7 +171,7 @@ ica.apply(epochs, exclude=ica.exclude)
 
 # compute channel-level rejections
 ar = autoreject.AutoReject(n_interpolate=[1, 2, 3, 4], random_state=11,
-                           n_jobs=1, verbose='tqdm')
+                           n_jobs=1, verbose=True)
 ar.fit(epochs[:20])  # fit on the first 20 epochs to save time
 epochs_ar, reject_log = ar.transform(epochs, return_log=True)
 epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))

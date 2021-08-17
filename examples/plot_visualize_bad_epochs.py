@@ -99,7 +99,7 @@ picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False,
 # may be saved by fitting :class:`autoreject.AutoReject` on a
 # representative subsample of the data.
 
-ar = AutoReject(picks=picks, random_state=42, n_jobs=1, verbose='tqdm')
+ar = AutoReject(picks=picks, random_state=42, n_jobs=1, verbose=True)
 
 epochs_ar, reject_log = ar.fit_transform(this_epoch, return_log=True)
 
