@@ -444,7 +444,7 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
         ch_names = epochs.ch_names
 
         my_thresh = delayed(_compute_thresh)
-        parallel = Parallel(n_jobs=n_jobs, verbose=False)
+        parallel = Parallel(n_jobs=n_jobs, verbose=0)
         desc = 'Computing thresholds ...'
         threshes = parallel(
             my_thresh(data[:, pick], cv=cv, method=method, y=y,

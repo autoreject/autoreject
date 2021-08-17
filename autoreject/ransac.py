@@ -191,7 +191,7 @@ class Ransac(object):
         n_epochs = len(epochs)
 
         n_jobs = check_n_jobs(self.n_jobs)
-        parallel = Parallel(n_jobs, verbose=True)
+        parallel = Parallel(n_jobs, verbose=10)
         my_iterator = delayed(_iterate_epochs)
         if self.verbose is not False and self.n_jobs > 1:
             print('Iterating epochs ...')
