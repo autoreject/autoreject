@@ -165,28 +165,20 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-def _pbar(iterable, desc, leave=True, position=None, verbose='progressbar'):
-
-    verbose = False if verbose == 0 else verbose
-    if verbose is not False and \
-            verbose not in ['progressbar', 'tqdm', 'tqdm_notebook']:
-        raise ValueError('verbose must be one of {progressbar,'
-                         'tqdm, tqdm_notebook, False}. Got %s' % verbose)
-
-    if verbose == 'progressbar':
-        from mne.utils import ProgressBar
-        pbar = ProgressBar(iterable, mesg=desc)
-    # XXX: remove the tqdm option after a few releases of MNE since it
-    # natively supported by the MNE progressbar
-    elif verbose == 'tqdm':
-        from tqdm import tqdm
-        pbar = tqdm(iterable, desc=desc, leave=leave, position=position,
-                    dynamic_ncols=True)
-    elif verbose == 'tqdm_notebook':
-        from tqdm.notebook import tqdm
-        pbar = tqdm(iterable, desc=desc, leave=leave,
-                    position=position, dynamic_ncols=True)
-    elif verbose is False:
+def _pbar(iterable, desc, verbose=True, **kwargs):
+    if (isinstance(verbose, str) and
+            verbose not in {"tqdm", "tqdm_notebook", "progressbar"}):
+        raise ValueError("verbose must be a boolean value. Got %s" % verbose)
+    elif isinstance(verbose, (int, str)):
+        warnings.warn(
+            (f"verbose flag only supports boolean inputs. Option {verbose} "
+            "coerced into type {bool(verbose)}"),
+            DeprecationWarning)
+        verbose = bool(verbose)
+    if verbose:
+        from mne.utils.progressbar import ProgressBar
+        pbar = ProgressBar(iterable, mesg=desc, **kwargs)
+    else:
         pbar = iterable
     return pbar
 
