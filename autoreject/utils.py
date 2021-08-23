@@ -172,8 +172,7 @@ def _pbar(iterable, desc, verbose=True, **kwargs):
     elif isinstance(verbose, (int, str)):
         warnings.warn(
             (f"verbose flag only supports boolean inputs. Option {verbose} "
-            f"coerced into type {bool(verbose)}"),
-            DeprecationWarning)
+                f"coerced into type {bool(verbose)}"), DeprecationWarning)
         verbose = bool(verbose)
     if verbose:
         from mne.utils.progressbar import ProgressBar
