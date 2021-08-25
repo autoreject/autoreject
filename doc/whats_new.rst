@@ -23,6 +23,8 @@ Changelog
 
 - Add additional type support for argument `picks` by `Mathieu Scheltienne`_ in `#225 <https://github.com/autoreject/autoreject/pull/225>`_
 
+- Use MNE progressbar by `Patrick Stetz`_ in `#227 <https://github.com/autoreject/autoreject/pull/227>`_
+
 Bug
 ~~~
 
@@ -75,3 +77,4 @@ API
 .. _Adina Wagner: https://www.adina-wagner.com/
 .. _Robert Luke: https://github.com/rob-luke/
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
+.. _Patrick Stetz: https://patrickstetz.com
