@@ -69,6 +69,7 @@ if __name__ == "__main__":
                   'pytest-sugar',
                   'check-manifest',
                   'flake8',
+                  'pooch'
               ],
               'doc': [
                   'sphinx',
@@ -77,7 +78,8 @@ if __name__ == "__main__":
                   'numpydoc',
                   'cython',
                   'pillow',
-                  'openneuro-py >= 2021.7'
+                  'openneuro-py >= 2021.7',
+                  'pooch'
               ]
           },
           packages=find_packages(),
