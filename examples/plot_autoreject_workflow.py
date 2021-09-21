@@ -7,8 +7,9 @@ with :mod:`autoreject` and discusses decisions about when and which
 other preprocessing steps to use in combination.
 
 **tldr**: We recommend that you first highpass filter the data,
-then estimate the global rejection threshold and supply it to the ICA
-algorithm for a robust fit, and finally run autoreject (local).
+then run autoreject (local) and supply the bad epochs detected by it
+to the ICA algorithm for a robust fit, and finally run
+autoreject (local) again.
 """
 
 # Author: Alex Rockhill <aprockhill@mailbox.org>
