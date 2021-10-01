@@ -459,8 +459,6 @@ class _AutoReject(BaseAutoReject):
 
     Parameters
     ----------
-    epochs : instance of mne.Epochs
-        The epochs object
     n_interpolate : int (default 0)
         Number of channels for which to interpolate. This is :math:`\\rho`.
     consensus : float (0 to 1.0)
