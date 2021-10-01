@@ -461,11 +461,11 @@ class _AutoReject(BaseAutoReject):
     ----------
     epochs : instance of mne.Epochs
         The epochs object
+    n_interpolate : int (default 0)
+        Number of channels for which to interpolate. This is :math:`\\rho`.
     consensus : float (0 to 1.0)
         Percentage of channels that must agree as a fraction of
         the total number of channels. This sets :math:`\\kappa/Q`.
-    n_interpolate : int (default 0)
-        Number of channels for which to interpolate. This is :math:`\\rho`.
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
         defaults to :func:`autoreject.compute_thresholds`.
@@ -498,10 +498,8 @@ class _AutoReject(BaseAutoReject):
         and the peak-to-peak thresholds as the values.
     """
 
-    def __init__(self, consensus=0.1,
-                 n_interpolate=0, thresh_func=None,
-                 method='bayesian_optimization',
-                 picks=None, dots=None,
+    def __init__(self, n_interpolate=0, consensus=0.1, thresh_func=None,
+                 picks=None, method='bayesian_optimization',  dots=None,
                  verbose=True):
         """Init it."""
         if thresh_func is None:
