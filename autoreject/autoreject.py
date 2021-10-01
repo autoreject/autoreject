@@ -475,6 +475,8 @@ class _AutoReject(BaseAutoReject):
         Can also be the string values ``'all'`` to pick all channels, or
         ``'data'`` to pick data channels. None (default) will pick data
         channels {'meg', 'eeg'}. Note that channels in ``info['bads']``
+    thresh_method : str
+        'bayesian_optimization' or 'random_search'
     verbose : boolean
         The verbosity of progress messages.
         If False, suppress all output messages.
@@ -497,7 +499,7 @@ class _AutoReject(BaseAutoReject):
     """
 
     def __init__(self, n_interpolate=0, consensus=0.1, thresh_func=None,
-                 picks=None, method='bayesian_optimization',  dots=None,
+                 picks=None, thresh_method='bayesian_optimization',  dots=None,
                  verbose=True):
         """Init it."""
         if thresh_func is None:
