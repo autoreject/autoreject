@@ -50,7 +50,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
     ----------
     epochs : instance of mne.Epochs.
         The epochs.
-    y : array | None
+    y : array | None
         The labels.
     param_name : str
         Name of the parameter that will be varied.
@@ -838,13 +838,13 @@ class AutoReject(object):
 
     Parameters
     ----------
+    n_interpolate : array | None
+        The values to try for the number of channels for which to interpolate.
+        This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
     consensus : array | None
         The values to try for percentage of channels that must agree as a
         fraction of the total number of channels. This sets :math:`\\kappa/Q`.
         If None, defaults to `np.linspace(0, 1.0, 11)`
-    n_interpolate : array | None
-        The values to try for the number of channels for which to interpolate.
-        This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
     picks : str | list | slice | None
