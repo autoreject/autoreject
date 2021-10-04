@@ -476,7 +476,9 @@ class _AutoReject(BaseAutoReject):
         ``'data'`` to pick data channels. None (default) will pick data
         channels {'meg', 'eeg'}. Note that channels in ``info['bads']``
     thresh_method : str
-        'bayesian_optimization' or 'random_search'
+        'bayesian_optimization' or 'random_search'.
+    dots : tuple
+        2-length tuple returned by utils._compute_dots.
     verbose : boolean
         The verbosity of progress messages.
         If False, suppress all output messages.
