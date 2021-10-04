@@ -50,7 +50,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
     ----------
     epochs : instance of mne.Epochs.
         The epochs.
-    y : array | None
+    y : array | None
         The labels.
     param_name : str
         Name of the parameter that will be varied.
@@ -459,13 +459,11 @@ class _AutoReject(BaseAutoReject):
 
     Parameters
     ----------
-    epochs : instance of mne.Epochs
-        The epochs object
+    n_interpolate : int (default 0)
+        Number of channels for which to interpolate. This is :math:`\\rho`.
     consensus : float (0 to 1.0)
         Percentage of channels that must agree as a fraction of
         the total number of channels. This sets :math:`\\kappa/Q`.
-    n_interpolate : int (default 0)
-        Number of channels for which to interpolate. This is :math:`\\rho`.
     thresh_func : callable | None
         Function which returns the channel-level thresholds. If None,
         defaults to :func:`autoreject.compute_thresholds`.
@@ -476,7 +474,12 @@ class _AutoReject(BaseAutoReject):
         strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
         Can also be the string values ``'all'`` to pick all channels, or
         ``'data'`` to pick data channels. None (default) will pick data
-        channels {'meg', 'eeg'}. Note that channels in ``info['bads']``
+        channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
+        be included* if their names or indices are explicitly provided.
+    thresh_method : str
+        'bayesian_optimization' or 'random_search'.
+    dots : tuple
+        2-length tuple returned by utils._compute_dots.
     verbose : boolean
         The verbosity of progress messages.
         If False, suppress all output messages.
@@ -498,10 +501,8 @@ class _AutoReject(BaseAutoReject):
         and the peak-to-peak thresholds as the values.
     """
 
-    def __init__(self, consensus=0.1,
-                 n_interpolate=0, thresh_func=None,
-                 method='bayesian_optimization',
-                 picks=None, dots=None,
+    def __init__(self, n_interpolate=0, consensus=0.1, thresh_func=None,
+                 picks=None, thresh_method='bayesian_optimization',  dots=None,
                  verbose=True):
         """Init it."""
         if thresh_func is None:
@@ -838,13 +839,13 @@ class AutoReject(object):
 
     Parameters
     ----------
+    n_interpolate : array | None
+        The values to try for the number of channels for which to interpolate.
+        This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
     consensus : array | None
         The values to try for percentage of channels that must agree as a
         fraction of the total number of channels. This sets :math:`\\kappa/Q`.
         If None, defaults to `np.linspace(0, 1.0, 11)`
-    n_interpolate : array | None
-        The values to try for the number of channels for which to interpolate.
-        This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
     cv : a scikit-learn cross-validation object
         Defaults to cv=10
     picks : str | list | slice | None
