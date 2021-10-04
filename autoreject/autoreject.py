@@ -474,7 +474,8 @@ class _AutoReject(BaseAutoReject):
         strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
         Can also be the string values ``'all'`` to pick all channels, or
         ``'data'`` to pick data channels. None (default) will pick data
-        channels {'meg', 'eeg'}. Note that channels in ``info['bads']``
+        channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
+        be included* if their names or indices are explicitly provided.
     thresh_method : str
         'bayesian_optimization' or 'random_search'.
     dots : tuple
