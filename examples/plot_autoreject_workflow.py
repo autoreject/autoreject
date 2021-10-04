@@ -47,7 +47,7 @@ openneuro.download(dataset=dataset, target_dir=target_dir,
 # %%
 # We will now load in the raw data from the bdf file downloaded from OpenNeuro
 # and, since this is resting-state data without any events, make regularly
-# spaced events with which to epoch the raw data. In the averaged plot, 
+# spaced events with which to epoch the raw data. In the averaged plot,
 # we can see that there may be some eyeblink
 # artifact contamination but, overall, the data is typical of
 # resting-state EEG.
@@ -91,7 +91,7 @@ reject_log.plot('horizontal')
 
 # %%
 # Autoreject with high-pass filter
-# -------------------------------
+# --------------------------------
 # The data may be very valuable and the time for the experiment
 # limited and so we may want to take steps to reduce the number of
 # epochs dropped by first using other steps to preprocess the data.
