@@ -1139,7 +1139,7 @@ class AutoReject(object):
         return self.fit(epochs).transform(epochs, return_log=return_log)
 
     def save(self, fname, overwrite=False):
-        """Save autoreject object.
+        """Save autoreject object with the HDF5 format.
 
         Parameters
         ----------
