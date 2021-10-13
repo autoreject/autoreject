@@ -29,11 +29,11 @@ Functions:
 .. autosummary::
    :toctree: generated/
 
+   read_auto_reject
    compute_thresholds
    get_rejection_threshold
    read_auto_reject
    validation_curve
-   read_auto_reject
 
 Utilities
 =========
