@@ -33,6 +33,7 @@ Functions:
    get_rejection_threshold
    read_auto_reject
    validation_curve
+   read_auto_reject
 
 Utilities
 =========
