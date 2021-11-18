@@ -38,8 +38,12 @@ jobs:
             - save_cache:
                 key: docbuild1-{{ epoch }}
                 paths:
-                  - ~/project/doc/auto_examples/plot_auto_repair*
-                  - ~/project/doc/auto_examples/images/plot_auto_repair*.png
+                  - ~/project/doc/auto_examples/plot_auto_repair.ipynb
+                  - ~/project/doc/auto_examples/plot_auto_repair.py
+                  - ~/project/doc/auto_examples/plot_auto_repair.py.md5
+                  - ~/project/doc/auto_examples/plot_auto_repair_codeobj.pickle
+                  - ~/project/doc/auto_examples/plot_auto_repair.rst
+                  - ~/project/doc/auto_examples/images/
     docbuild2:
         docker:
             - image: cimg/python:3.9
@@ -55,8 +59,12 @@ jobs:
             - save_cache:
                 key: docbuild2-{{ epoch }}
                 paths:
-                  - ~/project/doc/auto_examples/plot_autoreject_workflow*
-                  - ~/project/doc/auto_examples/images/plot_autoreject_workflow*.png
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.ipynb
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.py
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.py.md5
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.pickle
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.rst
+                  - ~/project/doc/auto_examples/images/
     finish:
         docker:
             - image: cimg/python:3.9
