@@ -73,10 +73,10 @@ jobs:
                 at: ~/
             - restore_cache:
                 keys:
-                  - docbuild1-{{ epoch }}
+                  - docbuild1
             - restore_cache:
                 keys:
-                  - docbuild2-{{ epoch }}
+                  - docbuild2
             - run:
                 name: Build the documentation
                 command: |
