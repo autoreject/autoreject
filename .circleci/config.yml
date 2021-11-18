@@ -33,3 +33,20 @@ jobs:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
                   - $CIRCLE_WORKING_DIRECTORY/examples/ds000117
+
+workflows:
+  commit:
+    jobs:
+      - build
+
+  weekly:
+    jobs:
+      - build
+
+    triggers:
+      - schedule:
+          cron: "0 4 * * 0"
+          filters:
+            branches:
+              only:
+                - master
