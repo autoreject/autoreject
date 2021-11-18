@@ -30,10 +30,10 @@ jobs:
             - attach_workspace:
                 at: ~/
             - run:
-              name: Build example plot_auto_repair
-              command: |
-                cd $CIRCLE_WORKING_DIRECTORY
-                PATTERN=plot_auto_repair make html_dev-pattern
+                name: Build example plot_auto_repair
+                command: |
+                  cd $CIRCLE_WORKING_DIRECTORY
+                  PATTERN=plot_auto_repair make html_dev-pattern
             - persist_to_workspace:
                 root: ~/
                 paths: .
@@ -44,10 +44,10 @@ jobs:
             - attach_workspace:
                 at: ~/
             - run:
-              name: Build example plot_autoreject_workflow
-              command: |
-                cd $CIRCLE_WORKING_DIRECTORY
-                PATTERN=plot_autoreject_workflow make html_dev-pattern
+                name: Build example plot_autoreject_workflow
+                command: |
+                  cd $CIRCLE_WORKING_DIRECTORY
+                  PATTERN=plot_autoreject_workflow make html_dev-pattern
             - persist_to_workspace:
                 root: ~/
                 paths: .
