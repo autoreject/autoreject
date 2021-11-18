@@ -32,7 +32,7 @@ jobs:
             - run:
                 name: Build example plot_auto_repair
                 command: |
-                  cd $CIRCLE_WORKING_DIRECTORY
+                  cd ~/project/doc
                   PATTERN=plot_auto_repair make html_dev-pattern
             - persist_to_workspace:
                 root: ~/
@@ -46,7 +46,7 @@ jobs:
             - run:
                 name: Build example plot_autoreject_workflow
                 command: |
-                  cd $CIRCLE_WORKING_DIRECTORY
+                  cd ~/project/doc
                   PATTERN=plot_autoreject_workflow make html_dev-pattern
             - persist_to_workspace:
                 root: ~/
@@ -60,18 +60,18 @@ jobs:
             - run:
                 name: Build the documentation
                 command: |
-                    cd $CIRCLE_WORKING_DIRECTORY
-                    make -C doc html
+                    cd ~/project/doc
+                    make html
                 no_output_timeout: 2h
             - store_artifacts:
-                path: $CIRCLE_WORKING_DIRECTORY/doc/_build/html/
+                path: ~project/doc/_build/html/
                 destination: html
             - save_cache:
                 key: data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
-                  - $CIRCLE_WORKING_DIRECTORY/examples/ds000117
+                  - ~/project/examples/ds000117
 
 workflows:
   commit:
