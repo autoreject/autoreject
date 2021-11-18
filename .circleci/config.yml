@@ -1,6 +1,6 @@
 version: 2.1
 jobs:
-    build:
+    setup:
         docker:
             - image: cimg/python:3.9
         steps:
@@ -8,7 +8,8 @@ jobs:
             - restore_cache:
                 keys:
                   # restore cache from last build. Unless __init__.py has changed since then
-                  - data-cache-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                  # bump the "vX" from data-cache-vX-* to update cache without changing __init__.py
+                  - data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
             - run:
                 name: Setup Python environment
                 command: |
@@ -19,16 +20,54 @@ jobs:
                 name: Download MNE sample data
                 command: |
                   python -c "import mne; mne.datasets.sample.data_path()"
+            - persist_to_workspace:
+                root: ~/
+                paths: .
+    docbuild1:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+              name: Build example plot_auto_repair
+              command: |
+                cd $CIRCLE_WORKING_DIRECTORY
+                PATTERN=plot_auto_repair make html_dev-pattern
+            - persist_to_workspace:
+                root: ~/
+                paths: .
+    docbuild2:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+              name: Build example plot_autoreject_workflow
+              command: |
+                cd $CIRCLE_WORKING_DIRECTORY
+                PATTERN=plot_autoreject_workflow make html_dev-pattern
+            - persist_to_workspace:
+                root: ~/
+                paths: .
+    finish:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
             - run:
                 name: Build the documentation
                 command: |
+                    cd $CIRCLE_WORKING_DIRECTORY
                     make -C doc html
                 no_output_timeout: 2h
             - store_artifacts:
-                path: doc/_build/html/
+                path: $CIRCLE_WORKING_DIRECTORY/doc/_build/html/
                 destination: html
             - save_cache:
-                key: data-cache-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                key: data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
@@ -37,11 +76,33 @@ jobs:
 workflows:
   commit:
     jobs:
-      - build
+      - setup
+      - docbuild1:
+          requires:
+            - setup
+      - docbuild2:
+          requires:
+            - setup
+      - finish:
+          requires:
+            - setup
+            - docbuild1
+            - docbuild2
 
   weekly:
     jobs:
-      - build
+      - setup
+      - docbuild1:
+          requires:
+            - setup
+      - docbuild2:
+          requires:
+            - setup
+      - finish:
+          requires:
+            - setup
+            - docbuild1
+            - docbuild2
 
     triggers:
       - schedule:
