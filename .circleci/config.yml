@@ -34,6 +34,7 @@ jobs:
                 command: |
                   cd ~/project/doc
                   PATTERN=plot_auto_repair make html_dev-pattern
+                no_output_timeout: 2h
             - persist_to_workspace:
                 root: ~/
                 paths: .
@@ -48,6 +49,7 @@ jobs:
                 command: |
                   cd ~/project/doc
                   PATTERN=plot_autoreject_workflow make html_dev-pattern
+                no_output_timeout: 2h
             - persist_to_workspace:
                 root: ~/
                 paths: .
