@@ -35,9 +35,11 @@ jobs:
                   cd ~/project/doc
                   PATTERN=plot_auto_repair make html_dev-pattern
                 no_output_timeout: 2h
-            - persist_to_workspace:
-                root: ~/
-                paths: .
+            - save_cache:
+                key: docbuild1-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_auto_repair*
+                  - ~/project/doc/auto_examples/images/plot_auto_repair*.png
     docbuild2:
         docker:
             - image: cimg/python:3.9
@@ -50,15 +52,23 @@ jobs:
                   cd ~/project/doc
                   PATTERN=plot_autoreject_workflow make html_dev-pattern
                 no_output_timeout: 2h
-            - persist_to_workspace:
-                root: ~/
-                paths: .
+            - save_cache:
+                key: docbuild2-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow*
+                  - ~/project/doc/auto_examples/images/plot_autoreject_workflow*.png
     finish:
         docker:
             - image: cimg/python:3.9
         steps:
             - attach_workspace:
                 at: ~/
+            - restore_cache:
+                keys:
+                  - docbuild1-{{ epoch }}
+            - restore_cache:
+                keys:
+                  - docbuild2-{{ epoch }}
             - run:
                 name: Build the documentation
                 command: |
