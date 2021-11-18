@@ -1,3 +1,4 @@
+# For an explanation, see: https://github.com/autoreject/autoreject/pull/247#issuecomment-973069510
 version: 2.1
 jobs:
     setup:
@@ -65,6 +66,111 @@ jobs:
                   - ~/project/doc/auto_examples/plot_autoreject_workflow.pickle
                   - ~/project/doc/auto_examples/plot_autoreject_workflow.rst
                   - ~/project/doc/auto_examples/images/
+    docbuild3:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_channel_thresholds
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_channel_thresholds make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild3-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.ipynb
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.py
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.py.md5
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.pickle
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild4:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_estimate_global_reject
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_estimate_global_reject make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild4-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.ipynb
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.py
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.py.md5
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.pickle
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild5:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_global_reject
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_global_reject make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild5-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_global_reject.ipynb
+                  - ~/project/doc/auto_examples/plot_global_reject.py
+                  - ~/project/doc/auto_examples/plot_global_reject.py.md5
+                  - ~/project/doc/auto_examples/plot_global_reject.pickle
+                  - ~/project/doc/auto_examples/plot_global_reject.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild6:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_ransac
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_ransac make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild6-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_ransac.ipynb
+                  - ~/project/doc/auto_examples/plot_ransac.py
+                  - ~/project/doc/auto_examples/plot_ransac.py.md5
+                  - ~/project/doc/auto_examples/plot_ransac.pickle
+                  - ~/project/doc/auto_examples/plot_ransac.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild7:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_visualize_bad_epochs
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_visualize_bad_epochs make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild7-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.ipynb
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.py
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.py.md5
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.pickle
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.rst
+                  - ~/project/doc/auto_examples/images/
     finish:
         docker:
             - image: cimg/python:3.9
@@ -77,6 +183,21 @@ jobs:
             - restore_cache:
                 keys:
                   - docbuild2
+            - restore_cache:
+                keys:
+                  - docbuild3
+            - restore_cache:
+                keys:
+                  - docbuild4
+            - restore_cache:
+                keys:
+                  - docbuild5
+            - restore_cache:
+                keys:
+                  - docbuild6
+            - restore_cache:
+                keys:
+                  - docbuild7
             - run:
                 name: Build the documentation
                 command: |
@@ -84,7 +205,7 @@ jobs:
                     make html
                 no_output_timeout: 2h
             - store_artifacts:
-                path: ~project/doc/_build/html/
+                path: ./doc/_build/html/
                 destination: html
             - save_cache:
                 key: data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
@@ -103,11 +224,31 @@ workflows:
       - docbuild2:
           requires:
             - setup
+      - docbuild3:
+          requires:
+            - setup
+      - docbuild4:
+          requires:
+            - setup
+      - docbuild5:
+          requires:
+            - setup
+      - docbuild6:
+          requires:
+            - setup
+      - docbuild7:
+          requires:
+            - setup
       - finish:
           requires:
             - setup
             - docbuild1
             - docbuild2
+            - docbuild3
+            - docbuild4
+            - docbuild5
+            - docbuild6
+            - docbuild7
 
   weekly:
     jobs:
@@ -118,11 +259,31 @@ workflows:
       - docbuild2:
           requires:
             - setup
+      - docbuild3:
+          requires:
+            - setup
+      - docbuild4:
+          requires:
+            - setup
+      - docbuild5:
+          requires:
+            - setup
+      - docbuild6:
+          requires:
+            - setup
+      - docbuild7:
+          requires:
+            - setup
       - finish:
           requires:
             - setup
             - docbuild1
             - docbuild2
+            - docbuild3
+            - docbuild4
+            - docbuild5
+            - docbuild6
+            - docbuild7
 
     triggers:
       - schedule:
