@@ -58,7 +58,7 @@ raw.info['bads'] = []
 # because we do not want epochs to be dropped when instantiating
 # :class:`mne.Epochs`.
 
-raw.info['projs'] = list()  # remove proj, don't proj while interpolating
+raw.del_proj()  # remove proj, don't proj while interpolating
 epochs = Epochs(raw, events, event_id, tmin, tmax,
                 baseline=(None, 0), reject=None,
                 verbose=False, detrend=0, preload=True)

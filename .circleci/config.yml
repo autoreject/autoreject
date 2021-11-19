@@ -1,6 +1,7 @@
+# For an explanation, see: https://github.com/autoreject/autoreject/pull/247#issuecomment-973069510
 version: 2.1
 jobs:
-    build:
+    setup:
         docker:
             - image: cimg/python:3.9
         steps:
@@ -8,7 +9,8 @@ jobs:
             - restore_cache:
                 keys:
                   # restore cache from last build. Unless __init__.py has changed since then
-                  - data-cache-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                  # bump the "vX" from data-cache-vX-* to update cache without changing __init__.py
+                  - data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
             - run:
                 name: Setup Python environment
                 command: |
@@ -19,17 +21,274 @@ jobs:
                 name: Download MNE sample data
                 command: |
                   python -c "import mne; mne.datasets.sample.data_path()"
+            - persist_to_workspace:
+                root: ~/
+                paths: .
+    docbuild1:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_auto_repair
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_auto_repair make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild1-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_auto_repair.ipynb
+                  - ~/project/doc/auto_examples/plot_auto_repair.py
+                  - ~/project/doc/auto_examples/plot_auto_repair.py.md5
+                  - ~/project/doc/auto_examples/plot_auto_repair_codeobj.pickle
+                  - ~/project/doc/auto_examples/plot_auto_repair.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild2:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_autoreject_workflow
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_autoreject_workflow make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild2-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.ipynb
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.py
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.py.md5
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.pickle
+                  - ~/project/doc/auto_examples/plot_autoreject_workflow.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild3:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_channel_thresholds
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_channel_thresholds make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild3-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.ipynb
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.py
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.py.md5
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.pickle
+                  - ~/project/doc/auto_examples/plot_channel_thresholds.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild4:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_estimate_global_reject
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_estimate_global_reject make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild4-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.ipynb
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.py
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.py.md5
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.pickle
+                  - ~/project/doc/auto_examples/plot_estimate_global_reject.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild5:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_global_reject
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_global_reject make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild5-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_global_reject.ipynb
+                  - ~/project/doc/auto_examples/plot_global_reject.py
+                  - ~/project/doc/auto_examples/plot_global_reject.py.md5
+                  - ~/project/doc/auto_examples/plot_global_reject.pickle
+                  - ~/project/doc/auto_examples/plot_global_reject.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild6:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_ransac
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_ransac make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild6-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_ransac.ipynb
+                  - ~/project/doc/auto_examples/plot_ransac.py
+                  - ~/project/doc/auto_examples/plot_ransac.py.md5
+                  - ~/project/doc/auto_examples/plot_ransac.pickle
+                  - ~/project/doc/auto_examples/plot_ransac.rst
+                  - ~/project/doc/auto_examples/images/
+    docbuild7:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - run:
+                name: Build example plot_visualize_bad_epochs
+                command: |
+                  cd ~/project/doc
+                  PATTERN=plot_visualize_bad_epochs make html_dev-pattern
+                no_output_timeout: 2h
+            - save_cache:
+                key: docbuild7-{{ epoch }}
+                paths:
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.ipynb
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.py
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.py.md5
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.pickle
+                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.rst
+                  - ~/project/doc/auto_examples/images/
+    finish:
+        docker:
+            - image: cimg/python:3.9
+        steps:
+            - attach_workspace:
+                at: ~/
+            - restore_cache:
+                keys:
+                  - docbuild1
+            - restore_cache:
+                keys:
+                  - docbuild2
+            - restore_cache:
+                keys:
+                  - docbuild3
+            - restore_cache:
+                keys:
+                  - docbuild4
+            - restore_cache:
+                keys:
+                  - docbuild5
+            - restore_cache:
+                keys:
+                  - docbuild6
+            - restore_cache:
+                keys:
+                  - docbuild7
             - run:
                 name: Build the documentation
                 command: |
-                    make -C doc html
+                    cd ~/project/doc
+                    make html
                 no_output_timeout: 2h
             - store_artifacts:
-                path: doc/_build/html/
+                path: ./doc/_build/html/
                 destination: html
             - save_cache:
-                key: data-cache-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                key: data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
-                  - $CIRCLE_WORKING_DIRECTORY/examples/ds000117
+                  - ~/project/examples/ds000117
+
+workflows:
+  commit:
+    jobs:
+      - setup
+      - docbuild1:
+          requires:
+            - setup
+      - docbuild2:
+          requires:
+            - setup
+      - docbuild3:
+          requires:
+            - setup
+      - docbuild4:
+          requires:
+            - setup
+      - docbuild5:
+          requires:
+            - setup
+      - docbuild6:
+          requires:
+            - setup
+      - docbuild7:
+          requires:
+            - setup
+      - finish:
+          requires:
+            - setup
+            - docbuild1
+            - docbuild2
+            - docbuild3
+            - docbuild4
+            - docbuild5
+            - docbuild6
+            - docbuild7
+
+  weekly:
+    jobs:
+      - setup
+      - docbuild1:
+          requires:
+            - setup
+      - docbuild2:
+          requires:
+            - setup
+      - docbuild3:
+          requires:
+            - setup
+      - docbuild4:
+          requires:
+            - setup
+      - docbuild5:
+          requires:
+            - setup
+      - docbuild6:
+          requires:
+            - setup
+      - docbuild7:
+          requires:
+            - setup
+      - finish:
+          requires:
+            - setup
+            - docbuild1
+            - docbuild2
+            - docbuild3
+            - docbuild4
+            - docbuild5
+            - docbuild6
+            - docbuild7
+
+    triggers:
+      - schedule:
+          cron: "0 4 * * 0"
+          filters:
+            branches:
+              only:
+                - master

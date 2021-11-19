@@ -8,7 +8,8 @@ on:
   create:
     branches: [master]
     tags: ['**']
-
+  schedule:
+    - cron: "0 4 * * *"
 
 jobs:
   style:

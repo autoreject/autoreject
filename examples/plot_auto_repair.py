@@ -78,7 +78,7 @@ picks = mne.pick_types(raw.info, meg='grad', eeg=False, stim=False, eog=False,
 # Now, we can create epochs. The ``reject`` params will be set to ``None``
 # because we do not want epochs to be dropped when instantiating
 # :class:`mne.Epochs`.
-raw.info['projs'] = list()  # remove proj, don't proj while interpolating
+raw.del_proj()  # remove proj, don't proj while interpolating
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                     baseline=(None, 0), reject=None,
                     verbose=False, detrend=0, preload=True)
