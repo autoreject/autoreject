@@ -1,6 +1,8 @@
 """Setup autoreject."""
+
 import os
-from setuptools import setup, find_packages
+
+from setuptools import find_packages, setup
 
 # get the version (don't import autoreject here to avoid dependency)
 version = None
@@ -12,10 +14,8 @@ with open(os.path.join('autoreject', '__init__.py'), 'r') as fid:
 if version is None:
     raise RuntimeError('Could not determine version')
 
-descr = """Automated rejection and repair of epochs in M/EEG."""
-
 DISTNAME = 'autoreject'
-DESCRIPTION = descr
+DESCRIPTION = 'Automated rejection and repair of epochs in M/EEG.'
 MAINTAINER = 'Mainak Jas'
 MAINTAINER_EMAIL = 'mainakjas@gmail.com'
 LICENSE = 'BSD-3-Clause'
