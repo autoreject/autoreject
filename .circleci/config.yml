@@ -25,7 +25,7 @@ jobs:
                     which python3
                     pip3 --version
                     which pip3
-                    mne sys_info
+                    python3 -c "import mne; mne.sys_info()"
 
             - run:
                 name: Download MNE sample data
