@@ -12,15 +12,25 @@ jobs:
                   # bump the "vX" from data-cache-vX-* to update cache without changing __init__.py
                   - data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
             - run:
-                name: Setup Python environment
+                name: Setup python3 environment
                 command: |
-                    python -m pip install --user --upgrade --progress-bar off pip
-                    python -m pip install --user --progress-bar off -e .[full]
-                    python -m pip install --user --progress-bar off -e .[doc]
+                    python3 -m pip install --user --upgrade --progress-bar off pip
+                    python3 -m pip install --user --progress-bar off -e .[full]
+                    python3 -m pip install --user --progress-bar off -e .[doc]
+            - run:
+                name: Print system information
+                command: |
+                    date
+                    python3 --version
+                    which python3
+                    pip --version
+                    which pip
+                    mne sys_info
+
             - run:
                 name: Download MNE sample data
                 command: |
-                  python -c "import mne; mne.datasets.sample.data_path()"
+                  python3 -c "import mne; mne.datasets.sample.data_path()"
             - persist_to_workspace:
                 root: ~/
                 paths: .
