@@ -2,8 +2,8 @@
 version: 2.1
 jobs:
     setup:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - checkout
             - restore_cache:
@@ -25,8 +25,8 @@ jobs:
                 root: ~/
                 paths: .
     docbuild1:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -46,8 +46,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_auto_repair.rst
                   - ~/project/doc/auto_examples/images/
     docbuild2:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -67,8 +67,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_autoreject_workflow.rst
                   - ~/project/doc/auto_examples/images/
     docbuild3:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -88,8 +88,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_channel_thresholds.rst
                   - ~/project/doc/auto_examples/images/
     docbuild4:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -109,8 +109,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_estimate_global_reject.rst
                   - ~/project/doc/auto_examples/images/
     docbuild5:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -130,8 +130,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_global_reject.rst
                   - ~/project/doc/auto_examples/images/
     docbuild6:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -151,8 +151,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_ransac.rst
                   - ~/project/doc/auto_examples/images/
     docbuild7:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
@@ -172,8 +172,8 @@ jobs:
                   - ~/project/doc/auto_examples/plot_visualize_bad_epochs.rst
                   - ~/project/doc/auto_examples/images/
     finish:
-        docker:
-            - image: cimg/python:3.9
+        machine:
+            image: ubuntu-2004:202111-01
         steps:
             - attach_workspace:
                 at: ~/
