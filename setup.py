@@ -76,6 +76,7 @@ if __name__ == "__main__":
                   'sphinx',
                   'sphinx-gallery',
                   'sphinx_bootstrap_theme',
+                  'sphinx-copybutton',
                   'numpydoc',
                   'cython',
                   'pillow',

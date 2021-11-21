@@ -92,7 +92,7 @@ rejection dictionary, simply do:
 	>>> from autoreject import get_rejection_threshold
 	>>> reject = get_rejection_threshold(epochs)  # doctest: +SKIP
 
-We also implement RANSAC from the PREP pipeline.
+We also implement RANSAC from the `PREP pipeline <https://doi.org/10.3389/fninf.2015.00016>`_.
 The API is the same:
 
 .. code:: python
@@ -107,7 +107,7 @@ For more details check out the example to
 Bug reports
 ===========
 
-Use the `github issue tracker <https://github.com/autoreject/autoreject/issues>`_ to report bugs.
+Please use the `GitHub issue tracker <https://github.com/autoreject/autoreject/issues>`_ to report bugs.
 
 Cite
 ====
