@@ -1,4 +1,7 @@
 """
+
+.. _plot_autoreject_workflow:
+
 ===================================================
 Preprocessing workflow with ``autoreject`` and ICA
 ===================================================
