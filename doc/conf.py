@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-author = 'Mainak Jas'
+author = 'autoreject developers'
 project = 'autoreject'
 td = date.today()
 copyright = f'2016-{td.year}, {author}. Last updated on {td.isoformat()}'
