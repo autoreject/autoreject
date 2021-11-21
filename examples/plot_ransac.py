@@ -19,7 +19,7 @@ References
 """
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 ###############################################################################
 # For the purposes of this example, we shall use the MNE sample dataset.

@@ -9,7 +9,7 @@ visualize the bad sensors in each trial
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #         Denis A. Engemann <denis.engemann@gmail.com>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 # sphinx_gallery_thumbnail_number = 2
 

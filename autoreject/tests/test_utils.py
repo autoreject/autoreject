@@ -1,5 +1,5 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest

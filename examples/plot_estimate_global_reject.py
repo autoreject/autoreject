@@ -8,7 +8,7 @@ find global rejection thresholds.
 """
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 ###############################################################################
 # Let us import the data using MNE-Python and epoch it.
