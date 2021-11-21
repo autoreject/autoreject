@@ -45,6 +45,7 @@ if __name__ == "__main__":
               'Operating System :: POSIX',
               'Operating System :: Unix',
               'Operating System :: MacOS',
+              'Programming Language :: Python :: 3',
           ],
           platforms='any',
           keywords=('electroencephalography eeg magnetoencephalography '
