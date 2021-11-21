@@ -14,17 +14,17 @@ jobs:
             - run:
                 name: Setup python3 environment
                 command: |
-                    python3 -m pip install --user --upgrade --progress-bar off pip
-                    python3 -m pip install --user --progress-bar off -e .[full]
-                    python3 -m pip install --user --progress-bar off -e .[doc]
+                    python3 -m pip install --progress-bar off --upgrade pip
+                    python3 -m pip install --progress-bar off -e .[full]
+                    python3 -m pip install --progress-bar off -e .[doc]
             - run:
                 name: Print system information
                 command: |
                     date
                     python3 --version
                     which python3
-                    pip --version
-                    which pip
+                    pip3 --version
+                    which pip3
                     mne sys_info
 
             - run:
