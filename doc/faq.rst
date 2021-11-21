@@ -9,7 +9,7 @@ This section of the documentation provides a *discussion-like* format, answering
 Should I apply ICA first or autoreject first?
 ---------------------------------------------
 
-Please read :ref:`<sphx_glr_auto_examples_plot_autoreject_workflow.py>`_.
+Please read :ref:`plot_autoreject_workflow`.
 
 Is it dangerous to do source estimation with interpolated channels?
 -------------------------------------------------------------------

@@ -9,7 +9,7 @@ repair epochs.
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 #         Denis A. Engemann <denis.engemann@gmail.com>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 # %%
 # Let us first define the parameters. `n_interpolates` are the :math:`\rho`

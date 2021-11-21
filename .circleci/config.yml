@@ -1,17 +1,12 @@
-# For an explanation of the workflow here, see:
-# https://github.com/autoreject/autoreject/pull/247#issuecomment-973069510
 version: 2.1
 jobs:
-    setup:
+    build:
         machine:
             image: ubuntu-2004:202111-01
         steps:
             - checkout
             - restore_cache:
                 keys:
-                  # restore cache from last build. Unless __init__.py or setup.py have changed since then
-                  # bump the "X" in the "vX" part from data-cache-vX-* to update cache if needed without
-                  # changing __init__.py or setup.py
                   - data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
             - run:
                 name: Setup python3 environment
@@ -20,7 +15,6 @@ jobs:
                     echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
             - run:
                 name: Install packages
-                # setuptools, wheel, psutil not strictly needed
                 command: |
                     python3 -m pip install --progress-bar off --upgrade pip setuptools wheel psutil
                     python3 -m pip install --progress-bar off -e .[full]
@@ -39,211 +33,6 @@ jobs:
                 name: Download MNE sample data
                 command: |
                   python3 -c "import mne; mne.datasets.sample.data_path()"
-            - persist_to_workspace:
-                root: ~/
-                paths:
-                  - autoreject_env
-                  - .mne
-                  - mne_data/MNE-sample-data
-                  - project
-    docbuild1:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_auto_repair
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_auto_repair make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild1-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_auto_repair.ipynb
-                  - ~/project/doc/auto_examples/plot_auto_repair.py
-                  - ~/project/doc/auto_examples/plot_auto_repair.py.md5
-                  - ~/project/doc/auto_examples/plot_auto_repair_codeobj.pickle
-                  - ~/project/doc/auto_examples/plot_auto_repair.rst
-                  - ~/project/doc/auto_examples/images/
-    docbuild2:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_autoreject_workflow
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_autoreject_workflow make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild2-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_autoreject_workflow.ipynb
-                  - ~/project/doc/auto_examples/plot_autoreject_workflow.py
-                  - ~/project/doc/auto_examples/plot_autoreject_workflow.py.md5
-                  - ~/project/doc/auto_examples/plot_autoreject_workflow.pickle
-                  - ~/project/doc/auto_examples/plot_autoreject_workflow.rst
-                  - ~/project/doc/auto_examples/images/
-    docbuild3:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_channel_thresholds
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_channel_thresholds make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild3-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_channel_thresholds.ipynb
-                  - ~/project/doc/auto_examples/plot_channel_thresholds.py
-                  - ~/project/doc/auto_examples/plot_channel_thresholds.py.md5
-                  - ~/project/doc/auto_examples/plot_channel_thresholds.pickle
-                  - ~/project/doc/auto_examples/plot_channel_thresholds.rst
-                  - ~/project/doc/auto_examples/images/
-    docbuild4:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_estimate_global_reject
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_estimate_global_reject make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild4-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_estimate_global_reject.ipynb
-                  - ~/project/doc/auto_examples/plot_estimate_global_reject.py
-                  - ~/project/doc/auto_examples/plot_estimate_global_reject.py.md5
-                  - ~/project/doc/auto_examples/plot_estimate_global_reject.pickle
-                  - ~/project/doc/auto_examples/plot_estimate_global_reject.rst
-                  - ~/project/doc/auto_examples/images/
-    docbuild5:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_global_reject
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_global_reject make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild5-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_global_reject.ipynb
-                  - ~/project/doc/auto_examples/plot_global_reject.py
-                  - ~/project/doc/auto_examples/plot_global_reject.py.md5
-                  - ~/project/doc/auto_examples/plot_global_reject.pickle
-                  - ~/project/doc/auto_examples/plot_global_reject.rst
-                  - ~/project/doc/auto_examples/images/
-    docbuild6:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_ransac
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_ransac make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild6-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_ransac.ipynb
-                  - ~/project/doc/auto_examples/plot_ransac.py
-                  - ~/project/doc/auto_examples/plot_ransac.py.md5
-                  - ~/project/doc/auto_examples/plot_ransac.pickle
-                  - ~/project/doc/auto_examples/plot_ransac.rst
-                  - ~/project/doc/auto_examples/images/
-    docbuild7:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - run:
-                name: Build example plot_visualize_bad_epochs
-                command: |
-                  cd ~/project/doc
-                  PATTERN=plot_visualize_bad_epochs make html_dev-pattern
-                no_output_timeout: 2h
-            - save_cache:
-                key: docbuild7-{{ .Branch }}-{{ epoch }}
-                paths:
-                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.ipynb
-                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.py
-                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.py.md5
-                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.pickle
-                  - ~/project/doc/auto_examples/plot_visualize_bad_epochs.rst
-                  - ~/project/doc/auto_examples/images/
-    finish:
-        machine:
-            image: ubuntu-2004:202111-01
-        steps:
-            - attach_workspace:
-                at: ~/
-            - run:
-                name: activate python3 environment
-                command: echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
-            - restore_cache:
-                keys:
-                  - docbuild1
-            - restore_cache:
-                keys:
-                  - docbuild2
-            - restore_cache:
-                keys:
-                  - docbuild3
-            - restore_cache:
-                keys:
-                  - docbuild4
-            - restore_cache:
-                keys:
-                  - docbuild5
-            - restore_cache:
-                keys:
-                  - docbuild6
-            - restore_cache:
-                keys:
-                  - docbuild7
             - run:
                 name: Build the documentation
                 command: |
@@ -263,74 +52,11 @@ jobs:
 workflows:
   commit:
     jobs:
-      - setup
-      - docbuild1:
-          requires:
-            - setup
-      - docbuild2:
-          requires:
-            - setup
-      - docbuild3:
-          requires:
-            - setup
-      - docbuild4:
-          requires:
-            - setup
-      - docbuild5:
-          requires:
-            - setup
-      - docbuild6:
-          requires:
-            - setup
-      - docbuild7:
-          requires:
-            - setup
-      - finish:
-          requires:
-            - setup
-            - docbuild1
-            - docbuild2
-            - docbuild3
-            - docbuild4
-            - docbuild5
-            - docbuild6
-            - docbuild7
+      - build
 
   weekly:
     jobs:
-      - setup
-      - docbuild1:
-          requires:
-            - setup
-      - docbuild2:
-          requires:
-            - setup
-      - docbuild3:
-          requires:
-            - setup
-      - docbuild4:
-          requires:
-            - setup
-      - docbuild5:
-          requires:
-            - setup
-      - docbuild6:
-          requires:
-            - setup
-      - docbuild7:
-          requires:
-            - setup
-      - finish:
-          requires:
-            - setup
-            - docbuild1
-            - docbuild2
-            - docbuild3
-            - docbuild4
-            - docbuild5
-            - docbuild6
-            - docbuild7
-
+      - build
     triggers:
       - schedule:
           cron: "0 4 * * 0"

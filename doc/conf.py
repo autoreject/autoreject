@@ -26,7 +26,12 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_gallery.gen_gallery',
     'numpydoc',
+    'sphinx_copybutton',
 ]
+
+# configure sphinx-copybutton
+copybutton_prompt_text = r">>> |\.\.\. |\$ "
+copybutton_prompt_is_regexp = True
 
 autosummary_generate = True  # generate autosummary even if no references
 
@@ -46,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-author = 'Mainak Jas'
+author = 'autoreject developers'
 project = 'autoreject'
 td = date.today()
 copyright = f'2016-{td.year}, {author}. Last updated on {td.isoformat()}'

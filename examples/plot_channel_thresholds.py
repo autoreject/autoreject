@@ -8,7 +8,7 @@ channel-wise thresholds.
 """
 
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 ###############################################################################
 # Let us first load the `raw` data using :func:`mne.io.read_raw_fif`.

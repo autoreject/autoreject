@@ -1,4 +1,7 @@
 """
+
+.. _plot_autoreject_workflow:
+
 ===================================================
 Preprocessing workflow with ``autoreject`` and ICA
 ===================================================
@@ -16,7 +19,7 @@ autoreject (local) again.
 #         Mainak Jas <mjas@mgh.harvard.edu>
 #         Apoorva Karekal <apoorvak@uoregon.edu>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
 # sphinx_gallery_thumbnail_number = 9
 
