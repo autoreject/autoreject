@@ -27,7 +27,11 @@ extensions = [
     'sphinx_gallery.gen_gallery',
     'numpydoc',
     'sphinx_copybutton',
+    'sphinx_github_role',
 ]
+
+# configure sphinx-github-role
+github_default_org_project = ("autoreject", "autoreject")
 
 # configure sphinx-copybutton
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
