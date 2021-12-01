@@ -27,7 +27,7 @@ extensions = [
     'sphinx_gallery.gen_gallery',
     'numpydoc',
     'sphinx_copybutton',
-    'sphinx-github-role',
+    'sphinx_github_role',
 ]
 
 # configure sphinx-github-role
