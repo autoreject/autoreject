@@ -29,6 +29,9 @@ extensions = [
     'sphinx_copybutton',
 ]
 
+# configure sphinx-github-role
+github_default_org_project = ("autoreject", "autoreject")
+
 # configure sphinx-copybutton
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True
