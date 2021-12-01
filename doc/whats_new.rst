@@ -15,9 +15,11 @@ Current
 Changelog
 ~~~~~~~~~
 
-- Make plotting of reject log more flexible by allowing to change the orientation of plot, option to supress the immediate display of the plot and returning the plot figure for further modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in :github:`#152`
+- Make plotting of reject log more flexible by allowing to change the orientation of plot,
+  option to supress the immediate display of the plot and returning the plot figure for further
+  modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in :github:`#152`
 
-- Add `show_names` option to :func:`autoreject.RejectLog.plot` by `Mainak Jas`_ in :github:`#322`
+- Add `show_names` option to :func:`autoreject.RejectLog.plot` by `Mainak Jas`_ in :github:`#209`
 
 - Enable support for fNIRS data types by `Robert Luke`_ in :github:`#177`
 
