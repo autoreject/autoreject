@@ -74,7 +74,7 @@ jobs:
               name: Deploy docs to gh-pages branch
               command: |
                 touch doc/_build/html/.nojekyll
-                gh-pages --dotfiles --message "doc updates [skip ci]" --dist doc/_build/html --dest ./dev
+                gh-pages --dotfiles --message "doc updates [skip ci]" --repo github.com/autoreject/autoreject.github.io/ --branch master --dist doc/_build/html --dest ./dev
 
 workflows:
   commit:
