@@ -67,7 +67,7 @@ jobs:
                 git config --global user.name "Circle Ci"
           - add_ssh_keys:
               fingerprints:
-                - "30:88:9c:32:2f:33:a7:dd:fe:f6:7a:19:4b:8b:c1:ce"
+                - "a1:ff:0f:40:b6:23:8f:64:40:5e:70:11:6d:ca:b3:d8"
 
           - run:
               # push built docs directory on the `gh-pages` branch
