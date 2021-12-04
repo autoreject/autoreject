@@ -49,6 +49,33 @@ jobs:
                   - ~/mne_data/MNE-sample-data
                   - ~/project/examples/ds000117
 
+    docs-deploy:
+        # will only be run on master branch
+        docker:
+          - image: node:8.10.0
+        steps:
+          - checkout
+
+          - attach_workspace:
+              at: doc/_build
+
+          - run:
+              name: Install and configure dependencies
+              command: |
+                npm install -g --silent gh-pages@2.2
+                git config --global user.email "circle@autoreject.com"
+                git config --global user.name "Circle Ci"
+          - add_ssh_keys:
+              fingerprints:
+                - "a1:ff:0f:40:b6:23:8f:64:40:5e:70:11:6d:ca:b3:d8"
+
+          - run:
+              # push built docs directory on the `gh-pages` branch
+              name: Deploy docs to gh-pages branch
+              command: |
+                touch doc/_build/html/.nojekyll
+                gh-pages --dotfiles --message "doc updates [skip ci]" --repo github.com/autoreject/autoreject.github.io/ --branch master --dist doc/_build/html --dest ./dev
+
 workflows:
   commit:
     jobs:
