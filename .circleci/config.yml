@@ -39,6 +39,11 @@ jobs:
                     cd ~/project/doc
                     make html
                 no_output_timeout: 2h
+
+            - persist_to_workspace:
+                root: ./doc/_build
+                paths: html
+
             - store_artifacts:
                 path: ./doc/_build/html/
                 destination: html
@@ -52,7 +57,7 @@ jobs:
     docs-deploy:
         # will only be run on master branch
         docker:
-          - image: node:8.10.0
+          - image: cimg/node:lts
         steps:
           - checkout
 
@@ -61,8 +66,10 @@ jobs:
 
           - run:
               name: Install and configure dependencies
+              # do not update gh-pages above 3.0.0
+              # see: https://github.com/tschaub/gh-pages/issues/354
               command: |
-                npm install -g --silent gh-pages@2.2
+                npm install -g --silent gh-pages@3.0.0
                 git config --global user.email "circle@autoreject.com"
                 git config --global user.name "Circle Ci"
           - add_ssh_keys:
@@ -80,6 +87,12 @@ workflows:
   commit:
     jobs:
       - build
+      - docs-deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
 
   weekly:
     jobs:
