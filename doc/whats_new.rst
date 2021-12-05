@@ -19,18 +19,20 @@ Changelog
   option to supress the immediate display of the plot and returning the plot figure for further
   modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in :github:`#152`
 
-- Add `show_names` option to :func:`autoreject.RejectLog.plot` by `Mainak Jas`_ in :github:`#209`
+- Add `show_names` option to :func:`autoreject.RejectLog.plot,` by `Mainak Jas`_ in :github:`#209`
 
-- Enable support for fNIRS data types by `Robert Luke`_ in :github:`#177`
+- Enable support for fNIRS data types, by `Robert Luke`_ in :github:`#177`
 
-- Add additional type support for argument `picks` by `Mathieu Scheltienne`_ in :github:`#225`
+- Add additional type support for argument `picks`, by `Mathieu Scheltienne`_ in :github:`#225`
 
-- Use MNE progressbar by `Patrick Stetz`_ in :github:`#227`
+- Use MNE progressbar, by `Patrick Stetz`_ in :github:`#227`
+
+- :func:`autoreject.RejectLog.plot` now accepts an ``ax`` parameter to pass an existing Axes object, by `Stefan Appelhoff`_ in :github:`#301`
 
 Bug
 ~~~
 
-- Don't reset `epochs.info['bads']` within :func:`autoreject.compute_thresholds` by `Mainak Jas`_ in :github:`#203`
+- Don't reset `epochs.info['bads']` within :func:`autoreject.compute_thresholds`, by `Mainak Jas`_ in :github:`#203`
 
 - Adjust usage of a private MNE method used for interpolation that failed for newer MNE versions, by `Adina Wagner`_ in :github:`#212`.
 
@@ -58,11 +60,11 @@ Bug
 ~~~
 
 - Fixed bug in picking bad channels during interpolation. This bug only affects users who got an assertion
-  error when running :class:`autoreject.Autoreject`. Fixed by `Mainak Jas`_ in :github:`#115`
+  error when running :class:`autoreject.Autoreject`, by `Mainak Jas`_ in :github:`#115`
 - Added check for channel locations so that autoreject does not
-  hang when the channel positions are nan. Fixed by `Mainak Jas`_ in :github:`#130`
+  hang when the channel positions are nan, by `Mainak Jas`_ in :github:`#130`
 - Fixed bug in random seed for the Ransac algorithm when n_jobs > 1, by `Legrand Nico`_ and `Mainak Jas`_ in :github:`#138`
-- Fixed pikcling of :class:`autoreject.AutoReject`. Fixed by `Hubert Banville`_ in :github:`#193`
+- Fixed pikcling of :class:`autoreject.AutoReject`, by `Hubert Banville`_ in :github:`#193`
 
 
 API
@@ -80,3 +82,4 @@ API
 .. _Robert Luke: https://github.com/rob-luke/
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 .. _Patrick Stetz: https://patrickstetz.com
+.. _Stefan Appelhoff: https://stefanappelhoff.com/
