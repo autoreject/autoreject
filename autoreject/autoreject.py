@@ -1230,7 +1230,7 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, orientation='vertical', show_names='auto', show=True):
+    def plot(self, orientation='vertical', show_names='auto', show=True, ax=None):
         """Plot an image of good, bad and interpolated channels for each epoch.
 
         Parameters
@@ -1245,10 +1245,13 @@ class RejectLog(object):
             show_names entries.
         show : bool
             If True, display the figure immediately.
+        ax : matplotlib.axes.Axes | None
+            The axes to plot to. In ``None`` (default), create a new figure and axes.
 
         Returns
         -------
         figure : Instance of matplotlib.figure.Figure
+            The figure object containing the plot.
         """
         import matplotlib as mpl
         import matplotlib.pyplot as plt
@@ -1256,8 +1259,11 @@ class RejectLog(object):
 
         if show_names == 'auto':
             show_names = 1 if len(self.ch_names) < 25 else 5
-
-        figure, ax = plt.subplots(figsize=(12, 6))
+        
+        if not ax:
+            figure, ax = plt.subplots(figsize=(12, 6))
+        else:
+            figure = ax.get_figure()
         ax.grid(False)
         ch_names_ = self.ch_names[::show_names]
 
