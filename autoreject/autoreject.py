@@ -1237,15 +1237,15 @@ class RejectLog(object):
         Parameters
         ----------
         orientation : 'vertical' or 'horizontal'
-            If `'vertical'`, will plot sensors on x-axis and epochs on y-axis.
-            If `'horizontal'`, will plot epochs on x-axis and sensors
+            If `'vertical'` (default), will plot sensors on x-axis and epochs
+            on y-axis. If `'horizontal'`, will plot epochs on x-axis and sensors
             on y-axis.
         show_names : 'auto' | int
-            If 'auto', show all channel names if fewer than 25 entries.
-            Otherwise it shows every 5 entries. If int, show every
+            If 'auto' (default), show all channel names if fewer than 25
+            entries. Otherwise it shows every 5 entries. If int, show every
             show_names entries.
         show : bool
-            If True, display the figure immediately.
+            If True (default), display the figure immediately.
         ax : matplotlib.axes.Axes | None
             The axes to plot to. In ``None`` (default), create a new
             figure and axes.
@@ -1262,7 +1262,7 @@ class RejectLog(object):
         if show_names == 'auto':
             show_names = 1 if len(self.ch_names) < 25 else 5
 
-        if ax is not None:
+        if ax is None:
             figure, ax = plt.subplots(figsize=(12, 6))
         else:
             figure = ax.get_figure()
