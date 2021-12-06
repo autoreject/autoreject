@@ -84,7 +84,7 @@ jobs:
                 node_modules/gh-pages/bin/gh-pages.js \
                     --dotfiles \
                     --message "doc updates [skip ci]" \
-                    --repo "https://github.com/autoreject/autoreject.github.io/" \
+                    --repo="https://github.com/autoreject/autoreject.github.io" \
                     --branch master \
                     --dist doc/_build/html \
                     --dest ./dev
