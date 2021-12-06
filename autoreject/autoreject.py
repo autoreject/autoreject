@@ -1262,7 +1262,7 @@ class RejectLog(object):
         if show_names == 'auto':
             show_names = 1 if len(self.ch_names) < 25 else 5
 
-        if not ax:
+        if ax is not None:
             figure, ax = plt.subplots(figsize=(12, 6))
         else:
             figure = ax.get_figure()

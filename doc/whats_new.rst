@@ -64,7 +64,7 @@ Bug
 - Added check for channel locations so that autoreject does not
   hang when the channel positions are nan, by `Mainak Jas`_ in :github:`#130`
 - Fixed bug in random seed for the Ransac algorithm when n_jobs > 1, by `Legrand Nico`_ and `Mainak Jas`_ in :github:`#138`
-- Fixed pikcling of :class:`autoreject.AutoReject`, by `Hubert Banville`_ in :github:`#193`
+- Fixed pickling of :class:`autoreject.AutoReject`, by `Hubert Banville`_ in :github:`#193`
 
 
 API
