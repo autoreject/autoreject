@@ -1230,25 +1230,30 @@ class RejectLog(object):
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, orientation='vertical', show_names='auto', show=True):
+    def plot(self, orientation='vertical', show_names='auto', show=True,
+             ax=None):
         """Plot an image of good, bad and interpolated channels for each epoch.
 
         Parameters
         ----------
         orientation : 'vertical' or 'horizontal'
-            If `'vertical'`, will plot sensors on x-axis and epochs on y-axis.
-            If `'horizontal'`, will plot epochs on x-axis and sensors
-            on y-axis.
+            If `'vertical'` (default), will plot sensors on x-axis and epochs
+            on y-axis. If `'horizontal'`, will plot epochs on x-axis and
+            sensors on y-axis.
         show_names : 'auto' | int
-            If 'auto', show all channel names if fewer than 25 entries.
-            Otherwise it shows every 5 entries. If int, show every
+            If 'auto' (default), show all channel names if fewer than 25
+            entries. Otherwise it shows every 5 entries. If int, show every
             show_names entries.
         show : bool
-            If True, display the figure immediately.
+            If True (default), display the figure immediately.
+        ax : matplotlib.axes.Axes | None
+            The axes to plot to. In ``None`` (default), create a new
+            figure and axes.
 
         Returns
         -------
         figure : Instance of matplotlib.figure.Figure
+            The figure object containing the plot.
         """
         import matplotlib as mpl
         import matplotlib.pyplot as plt
@@ -1257,7 +1262,10 @@ class RejectLog(object):
         if show_names == 'auto':
             show_names = 1 if len(self.ch_names) < 25 else 5
 
-        figure, ax = plt.subplots(figsize=(12, 6))
+        if ax is None:
+            figure, ax = plt.subplots(figsize=(12, 6))
+        else:
+            figure = ax.get_figure()
         ax.grid(False)
         ch_names_ = self.ch_names[::show_names]
 
