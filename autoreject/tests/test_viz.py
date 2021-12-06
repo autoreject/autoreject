@@ -48,5 +48,5 @@ def test_viz():
     plt.close('all')
 
     fig_in, ax = plt.subplots()
-    fig_out = reject_log.plot_epochs(epochs, ax=ax)
+    fig_out = reject_log.plot(ax=ax)
     assert fig_in == fig_out
