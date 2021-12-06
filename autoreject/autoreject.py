@@ -1238,8 +1238,8 @@ class RejectLog(object):
         ----------
         orientation : 'vertical' or 'horizontal'
             If `'vertical'` (default), will plot sensors on x-axis and epochs
-            on y-axis. If `'horizontal'`, will plot epochs on x-axis and sensors
-            on y-axis.
+            on y-axis. If `'horizontal'`, will plot epochs on x-axis and
+            sensors on y-axis.
         show_names : 'auto' | int
             If 'auto' (default), show all channel names if fewer than 25
             entries. Otherwise it shows every 5 entries. If int, show every
