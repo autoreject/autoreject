@@ -69,7 +69,7 @@ jobs:
               # do not update gh-pages above 3.0.0
               # see: https://github.com/tschaub/gh-pages/issues/354
               command: |
-                npm install -g --silent gh-pages@3.0.0
+                npm install gh-pages@3.0.0
                 git config --global user.email "circle@autoreject.com"
                 git config --global user.name "Circle Ci"
           - add_ssh_keys:
@@ -81,7 +81,7 @@ jobs:
               name: Deploy docs to gh-pages branch
               command: |
                 touch doc/_build/html/.nojekyll
-                gh-pages --dotfiles --message "doc updates [skip ci]" --repo github.com/autoreject/autoreject.github.io/ --branch master --dist doc/_build/html --dest ./dev
+                node_modules/gh-pages/bin/gh-pages.js --dotfiles --message "doc updates [skip ci]" --repo github.com/autoreject/autoreject.github.io/ --branch master --dist doc/_build/html --dest ./dev
 
 workflows:
   commit:
