@@ -7,10 +7,10 @@ What's new?
 
 .. currentmodule:: autoreject
 
-.. _current:
+.. _0.3:
 
-Current
--------
+0.3
+---
 
 Changelog
 ~~~~~~~~~
