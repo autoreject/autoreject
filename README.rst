@@ -59,12 +59,12 @@ and it should not give any error messages.
 Below, we list the dependencies for ``autoreject``.
 All required dependencies are installed automatically when you install ``autoreject``.
 
-* ``mne`` (>=0.14)
-* ``numpy`` (>=1.8)
-* ``scipy`` (>=0.16)
-* ``scikit-learn`` (>=0.18)
+* ``mne`` (>=0.24)
+* ``numpy`` (>=1.20)
+* ``scipy`` (>=1.6)
+* ``scikit-learn`` (>=0.24)
 * ``joblib``
-* ``matplotlib`` (>=1.3)
+* ``matplotlib`` (>=3.3)
 
 Optional dependencies are:
 
