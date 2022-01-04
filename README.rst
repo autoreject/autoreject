@@ -20,7 +20,8 @@ autoreject
 
 This is a library to automatically reject bad trials and repair bad sensors in magneto-/electroencephalography (M/EEG) data.
 
-.. image:: http://autoreject.github.io/_images/sphx_glr_plot_visualize_bad_epochs_002.png
+.. image:: https://autoreject.github.io/stable/_images/sphx_glr_plot_auto_repair_001.png
+   :width: 400
 
 
 The documentation can be found under the following links:
@@ -102,7 +103,7 @@ The API is the same:
 	>>> epochs_clean = rsc.fit_transform(epochs)  # doctest: +SKIP
 
 For more details check out the example to
-`automatically detect and repair bad epochs <https://circleci.com/api/v1.1/project/github/autoreject/autoreject/latest/artifacts/0/html/auto_examples/plot_auto_repair.html#sphx-glr-auto-examples-plot-auto-repair-py?branch=master>`_.
+`automatically detect and repair bad epochs <https://autoreject.github.io/stable/_images/sphx_glr_plot_auto_repair_001.png>`_.
 
 Bug reports
 ===========
