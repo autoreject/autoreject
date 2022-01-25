@@ -17,7 +17,7 @@ jobs:
                 name: Install packages
                 command: |
                     python3 -m pip install --progress-bar off --upgrade pip setuptools wheel psutil
-                    python3 -m pip install --progress-bar off -e .
+                    python3 -m pip install --progress-bar off -e .[full]
                     python3 -m pip install --progress-bar off -e .[doc]
             - run:
                 name: Print system information

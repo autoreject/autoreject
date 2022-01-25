@@ -82,7 +82,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: Test extras install
       run: |
-        pip install .
+        pip install .[full]
         python -c 'import autoreject; print(autoreject.__version__)'
         python -c 'import tqdm; print(tqdm.__version__)'
         python -c 'import h5io; print(h5io.__version__)'
@@ -108,7 +108,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install autoreject
       run: |
-        pip install -e .
+        pip install -e .[full]
         pip install -e .[test]
     - name: Install mne (master|stable)
       if: "matrix.os == 'ubuntu-latest'"
