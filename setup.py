@@ -54,23 +54,18 @@ if __name__ == "__main__":
           install_requires=[
               'numpy >= 1.8',
               'scipy >= 0.16',
-              'mne >= 0.14',
+              'mne[hdf5] >= 1.0.dev0',
               'scikit-learn >= 0.18',
               'joblib',
               'matplotlib >= 1.3',
           ],
           extras_require={
-              'full': [
-                  'tqdm',
-                  'h5py'
-              ],
               'test': [
                   'pytest',
                   'pytest-cov',
                   'pytest-sugar',
                   'check-manifest',
-                  'flake8',
-                  'pooch'
+                  'flake8'
               ],
               'doc': [
                   'sphinx',

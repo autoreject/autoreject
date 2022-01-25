@@ -70,7 +70,7 @@ All required dependencies are installed automatically when you install ``autorej
 Optional dependencies are:
 
 * ``tqdm`` (for nice progress-bars when setting ``verbose=True``)
-* ``h5py`` (for writing ``autoreject`` objects using the HDF5 format)
+* ``h5io`` (for writing ``autoreject`` objects using the HDF5 format)
 * ``openneuro-py`` (>= 2021.7, for fetching data from OpenNeuro.org)
 
 Quickstart
