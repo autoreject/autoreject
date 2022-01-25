@@ -55,7 +55,7 @@ if __name__ == "__main__":
               'numpy >= 1.8',
               'scipy >= 0.16',
               # 'mne[hdf5] >= 0.24.2',  # XXX : after mne 1.0 is released
-              'mne >= 0.24.2',
+              'mne >= 0.24.1',
               'scikit-learn >= 0.18',
               'joblib',
               'matplotlib >= 1.3',
