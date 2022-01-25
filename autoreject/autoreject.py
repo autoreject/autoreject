@@ -11,7 +11,11 @@ import numpy as np
 from scipy.stats.distributions import uniform
 
 from joblib import Parallel, delayed
-from h5io import read_hdf5, write_hdf5
+
+try:  # for mne < 1.0
+    from mne.externals.h5io import read_hdf5, write_hdf5
+except ImportError:
+    from h5io import read_hdf5, write_hdf5
 
 import mne
 from mne import pick_types
