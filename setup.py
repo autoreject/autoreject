@@ -54,7 +54,8 @@ if __name__ == "__main__":
           install_requires=[
               'numpy >= 1.8',
               'scipy >= 0.16',
-              'mne >= 0.14',
+              # 'mne[hdf5] >= 1.0',  # XXX : after mne 1.0 is released
+              'mne >= 0.24.1',
               'scikit-learn >= 0.18',
               'joblib',
               'matplotlib >= 1.3',
@@ -62,7 +63,7 @@ if __name__ == "__main__":
           extras_require={
               'full': [
                   'tqdm',
-                  'h5py'
+                  'h5io'
               ],
               'test': [
                   'pytest',

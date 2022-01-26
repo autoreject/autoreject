@@ -12,9 +12,13 @@ from scipy.stats.distributions import uniform
 
 from joblib import Parallel, delayed
 
+try:  # for mne < 1.0
+    from mne.externals.h5io import read_hdf5, write_hdf5
+except ImportError:
+    from h5io import read_hdf5, write_hdf5
+
 import mne
 from mne import pick_types
-from mne.externals.h5io import read_hdf5, write_hdf5
 from mne.viz import plot_epochs as plot_mne_epochs
 
 from sklearn.base import BaseEstimator
