@@ -7,6 +7,7 @@ coverage.xml
 *~
 .#*
 *.lprof
+*.orig
 *.swp
 *.swo
 .DS_Store
