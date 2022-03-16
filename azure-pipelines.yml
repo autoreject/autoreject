@@ -3,7 +3,7 @@ trigger:
   batch: False
   branches:
     include:
-      - 'main'
+      - 'master'
       - 'maint/*'
 pr:
   branches:
@@ -15,7 +15,7 @@ schedules:
   displayName: 'Daily midnight build'
   branches:
     include:
-      - 'main'
+      - 'master'
       - 'maint/*'
   always: 'true'
 
