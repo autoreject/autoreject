@@ -14,7 +14,7 @@ from joblib import Parallel, delayed
 
 try:  # for mne < 1.0
     from mne.externals.h5io import read_hdf5, write_hdf5
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     from h5io import read_hdf5, write_hdf5
 
 import mne
