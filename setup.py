@@ -52,25 +52,20 @@ if __name__ == "__main__":
                     'meg preprocessing analysis'),
           python_requires='~=3.7',
           install_requires=[
-              'numpy >= 1.8',
-              'scipy >= 0.16',
+              'numpy >= 1.20',
+              'scipy >= 1.6',
               'mne[hdf5] >= 1.0',
-              'scikit-learn >= 0.18',
+              'scikit-learn >= 0.24',
               'joblib',
-              'matplotlib >= 1.3',
+              'matplotlib >= 3.3',
           ],
           extras_require={
-              'full': [
-                  'tqdm',
-                  'h5io'
-              ],
               'test': [
                   'pytest',
                   'pytest-cov',
                   'pytest-sugar',
                   'check-manifest',
                   'flake8',
-                  'pooch'
               ],
               'doc': [
                   'sphinx',
@@ -82,7 +77,6 @@ if __name__ == "__main__":
                   'cython',
                   'pillow',
                   'openneuro-py >= 2021.10.1',
-                  'pooch'
               ]
           },
           packages=find_packages(),

@@ -15,7 +15,7 @@ What's new?
 Changelog
 ~~~~~~~~~
 
-- Nothing yet
+- ``autoreject`` now requires ``mne >= 1.0``, by `Mainak Jas`_, `Alex Gramfort`_, and `Stefan Appelhoff`_ in :github:`#267` and :github:`#268`
 
 .. _0.3:
 
