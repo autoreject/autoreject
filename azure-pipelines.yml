@@ -45,7 +45,6 @@ stages:
         addToPath: true
     - bash: |
         set -e
-        pip install -e .[full]
         pip install -e .[test]
       displayName: Install autoreject
     - script: pip install --upgrade https://github.com/mne-tools/mne-python/zipball/main

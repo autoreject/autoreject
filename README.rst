@@ -60,7 +60,7 @@ and it should not give any error messages.
 Below, we list the dependencies for ``autoreject``.
 All required dependencies are installed automatically when you install ``autoreject``.
 
-* ``mne`` (>=0.24)
+* ``mne`` (>=1.0)
 * ``numpy`` (>=1.20)
 * ``scipy`` (>=1.6)
 * ``scikit-learn`` (>=0.24)
@@ -69,9 +69,7 @@ All required dependencies are installed automatically when you install ``autorej
 
 Optional dependencies are:
 
-* ``tqdm`` (for nice progress-bars when setting ``verbose=True``)
-* ``h5io`` (for writing ``autoreject`` objects using the HDF5 format)
-* ``openneuro-py`` (>= 2021.7, for fetching data from OpenNeuro.org)
+* ``openneuro-py`` (>= 2021.10.1, for fetching data from `OpenNeuro.org <https://openneuro.org>`_)
 
 Quickstart
 ==========
