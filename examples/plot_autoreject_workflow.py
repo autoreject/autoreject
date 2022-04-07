@@ -32,8 +32,6 @@ autoreject (local) again.
 # installed with the command ``pip install openneuro-py``.
 
 import os.path as op
-
-import numpy as np
 import matplotlib.pyplot as plt
 import openneuro
 
@@ -131,8 +129,8 @@ reject_log.plot('horizontal')
 # eyeblinks from the data. If our analysis were to be very dependent on
 # sensors at the front of the head, we could skip ICA and use the previous
 # result. However, ICA can increase the amount of usable data by applying
-# a spatial filter that downscales the data in sensors most affected by eyeblink
-# artifacts.
+# a spatial filter that downscales the data in sensors most affected by
+# eyeblink artifacts.
 #
 # Note that ICA works best if bad segments of the data are removed
 # Hence, we will remove the bad segments from the
@@ -195,6 +193,58 @@ reject_log.plot('horizontal')
 # Next, we will visualize the cleaned average data and compare it against
 # the bad segments.
 evoked_bad = epochs[reject_log.bad_epochs].average()
+plt.figure()
+plt.plot(evoked_bad.times, evoked_bad.data.T * 1e6, 'r', zorder=-1)
+epochs_ar.average().plot(axes=plt.gca())
+
+# %%
+# As a last, optional step, we can do post-doc corrections.
+
+reject_log = ar.get_reject_log(epochs)
+
+# %%
+# We can observe that, for a few sensors,
+# there are very few green squares and mostly red and blue squares.
+# The autoreject algorithm is keeping the data represented by a
+# red square and considering it a false positive based on the
+# cross-validation scores. For consistency, we can choose to do a
+# post-hoc modification to mark the entire channel for interpolation.
+# We would do this for consistency because whether the square is
+# blue or red depends on the other sensors in that epoch; if there
+# are worse sensors in that epoch, the sensor will be marked red as
+# a false positive and, if not, it will be marked blue. In some cases
+# it may be preferable to interpolate this channel to avoid this effect.
+
+# if more than half bad (red or blue), interpolate
+reject_log.interpolate_bads(interp_thresh=0.5)
+reject_log.plot('horizontal')
+
+# %%
+# Additionally we can chose to drop instead of interpolating any epoch
+# with adjacent bad channels as this will effect the accuracy of the
+# interpolation. Similarly, this should be done on a case-by-case basis
+# based on the montage of sensors and the analysis.
+
+ch_adjacency, ch_names = mne.channels.find_ch_adjacency(epochs, 'eeg')
+reject_log.drop_epochs_with_adjacent_channel_interpolation(
+    ch_adjacency, ch_names)
+reject_log.plot('horizontal')
+
+# %%
+# Lastly, if we want to avoid any bad sensors with being left in our data,
+# even on a single epoch, we can drop all epochs with a red square
+# for a bad sensor.
+
+reject_log.drop_epochs_with_bads()
+reject_log.plot('horizontal')
+
+# %%
+# Finally, we can apply the modified reject log to our epoch data. Note
+# that since this example data is not very clean, we have lost most of
+# our epochs; applying these post-hoc corrections should be done as
+# needed in cases where keeping potentially bad data is not desirable.
+
+epochs_ar = ar.transform(epochs, reject_log=reject_log)
 plt.figure()
 plt.plot(evoked_bad.times, evoked_bad.data.T * 1e6, 'r', zorder=-1)
 epochs_ar.average().plot(axes=plt.gca())
