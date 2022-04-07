@@ -129,6 +129,25 @@ def read_auto_reject(fname):
     return ar
 
 
+def read_reject_log(fname):
+    """Read a reject log.
+
+    Parameters
+    ----------
+    fname : str
+        The filename where the reject log is saved.
+
+    Returns
+    -------
+    reject_log : instance of autoreject.RejectLog
+    """
+    reject_log_data = np.load(fname)
+    reject_log = RejectLog(bad_epochs=reject_log_data['bad_epochs'],
+                           labels=reject_log_data['labels'],
+                           ch_names=reject_log_data['ch_names'])
+    return reject_log
+
+
 class BaseAutoReject(BaseEstimator):
     """Base class for rejection."""
 
@@ -506,7 +525,7 @@ class _AutoReject(BaseAutoReject):
     """
 
     def __init__(self, n_interpolate=0, consensus=0.1, thresh_func=None,
-                 picks=None, thresh_method='bayesian_optimization',  dots=None,
+                 picks=None, thresh_method='bayesian_optimization', dots=None,
                  verbose=True):
         """Init it."""
         if thresh_func is None:
@@ -1083,7 +1102,7 @@ class AutoReject(object):
             reject_log.ch_names = this_reject_log.ch_names
         return reject_log
 
-    def transform(self, epochs, return_log=False):
+    def transform(self, epochs, return_log=False, reject_log=None):
         """Remove bad epochs, repairs sensors and returns clean epochs.
 
         Parameters
@@ -1093,6 +1112,10 @@ class AutoReject(object):
 
         return_log : bool
             If true the rejection log is also returned.
+
+        reject_log : instance of autoreject.RejectLog | None
+            The reject log to use. If None, the default reject log
+            is used.
 
         Returns
         -------
@@ -1108,7 +1131,9 @@ class AutoReject(object):
 
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
 
-        reject_log = self.get_reject_log(epochs)
+        if reject_log is None:
+            reject_log = self.get_reject_log(epochs)
+        mne.utils._validate_type(reject_log, RejectLog, 'reject_log')
         epochs_clean = epochs.copy()
         _apply_interp(reject_log, epochs_clean, self.threshes_,
                       self.picks_, self.dots, self.verbose)
@@ -1121,7 +1146,7 @@ class AutoReject(object):
         else:
             return epochs_clean
 
-    def fit_transform(self, epochs, return_log=False):
+    def fit_transform(self, epochs, return_log=False, reject_log=None):
         """Estimate the rejection params and finds bad epochs.
 
         Parameters
@@ -1132,6 +1157,10 @@ class AutoReject(object):
         return_log : bool
             If true the rejection log is also returned.
 
+        reject_log : instance of autoreject.RejectLog | None
+            The reject log to use. If None, the default reject log
+            is used.
+
         Returns
         -------
         epochs_clean : instance of mne.Epochs
@@ -1140,7 +1169,8 @@ class AutoReject(object):
         reject_log : instance of autoreject.RejectLog
             The rejection log. Returned only of return_log is True.
         """
-        return self.fit(epochs).transform(epochs, return_log=return_log)
+        return self.fit(epochs).transform(epochs, return_log=return_log,
+                                          reject_log=reject_log)
 
     def save(self, fname, overwrite=False):
         """Save autoreject object with the HDF5 format.
@@ -1392,3 +1422,66 @@ class RejectLog(object):
             epochs=epochs,
             epoch_colors=epoch_colors, scalings=scalings,
             title='')
+
+    def drop_epochs_with_adjacent_channel_interpolation(
+            self, ch_adjacency, ch_names):
+        """Drop epochs where adjacent channels are marked for interpolation.
+
+        Parameters
+        ----------
+        ch_adjacency : scipy.sparse.csr_matrix, shape (n_channels, n_channels)
+            The adjacency as computed by
+            :func:`mne.channels.find_ch_adjacency`.
+
+        """
+        bads = np.logical_or(self.labels == 1, self.labels == 2)
+        for i in range(self.labels.shape[0]):
+            if self.bad_epochs[i]:  # already bad
+                continue
+            bad_idxs = set(np.where(bads[i])[0])
+            for bad_idx in bad_idxs:
+                bad_ch = self.ch_names[bad_idx]
+                for bad_idx2 in bad_idxs.difference(set([bad_idx])):
+                    bad_ch2 = self.ch_names[bad_idx2]
+                    if bad_ch in ch_names and bad_ch2 in ch_names:
+                        # adjust to adjacency matrix
+                        bad_idx = ch_names.index(bad_ch)
+                        bad_idx2 = ch_names.index(bad_ch2)
+                        if ch_adjacency[bad_idx, bad_idx2]:
+                            self.bad_epochs[i] = True
+
+    def interpolate_bads(self, interp_thresh=0.5):
+        """Interpolate an entire channel if most of the channel is marked.
+
+        Parameters
+        ----------
+        interp_thresh : float
+            The percentage of bad epochs for a sensor to interpolate the
+            entire sensor.
+        """
+        bads = np.logical_or(self.labels == 1, self.labels == 2)
+        interp = np.where(
+            np.nansum(bads, axis=0) > self.labels.shape[0] * interp_thresh)[0]
+        self.labels[:, interp] = 2
+
+    def drop_epochs_with_bads(self):
+        """Drop any epoch with a bad sensor not marked for interpolation."""
+        self.bad_epochs = np.any(self.labels == 1, axis=1)
+
+    def save(self, fname, overwrite=False):
+        """Save a reject log.
+
+        Parameters
+        ----------
+        fname : str
+            The filename to save to. The filename must end in '.npz'.
+        overwrite : bool
+            If True, overwrite file if it already exists. Defaults to False.
+        """
+        fname = op.realpath(fname)
+        if not overwrite and op.isfile(fname):
+            raise ValueError(f'{fname} already exists. Please set '
+                             'overwrite=True if you want to overwrite it.')
+
+        np.savez_compressed(fname, ch_names=self.ch_names,
+                            bad_epochs=self.bad_epochs, labels=self.labels)

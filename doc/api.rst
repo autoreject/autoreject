@@ -32,6 +32,7 @@ Functions:
    compute_thresholds
    get_rejection_threshold
    read_auto_reject
+   read_reject_log
    validation_curve
 
 Utilities

@@ -21,7 +21,8 @@ from mne.utils import _TempDir
 
 from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
-                        get_rejection_threshold, read_auto_reject)
+                        get_rejection_threshold, read_auto_reject,
+                        RejectLog, read_reject_log)
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
@@ -272,6 +273,42 @@ def test_autoreject():
     assert set(threshes_b.keys()) == set(ch_names)
 
 
+def test_reject_log():
+    """Test reject log functionality."""
+    reject_log = RejectLog(bad_epochs=np.zeros((10,)),
+                           labels=np.zeros((10, len(raw.ch_names))),
+                           ch_names=raw.ch_names)
+    # test adjacent channel interpolation
+    ch_adjacency, ch_names = mne.channels.find_ch_adjacency(raw.info, 'eeg')
+    neighbors = set(np.where(ch_adjacency[0].toarray()[0])[0]
+                    ).difference(set([0]))
+    reject_log.labels[:, reject_log.ch_names.index(ch_names[0])] = 1
+    reject_log.labels[:, reject_log.ch_names.index(
+        ch_names[list(neighbors)[0]])] = 1
+    reject_log.drop_epochs_with_adjacent_channel_interpolation(
+        ch_adjacency, ch_names)
+    assert reject_log.bad_epochs.sum() == 10
+
+    # test interpolate bads
+    reject_log = RejectLog(bad_epochs=np.zeros((10,)),
+                           labels=np.zeros((10, len(raw.ch_names))),
+                           ch_names=raw.ch_names)
+    reject_log.labels[1:, 0] = 1
+    reject_log.labels[::2, 0] = 2
+    reject_log.interpolate_bads()
+    assert all(reject_log.labels[:, 0] == 2)
+
+    # test drop any bad
+    reject_log = RejectLog(bad_epochs=np.zeros((10,)),
+                           labels=np.zeros((10, len(raw.ch_names))),
+                           ch_names=raw.ch_names)
+    reject_log.labels[0, 2] = 1
+    reject_log.labels[5, 1] = 1
+    reject_log.drop_epochs_with_bads()
+    bad_epochs = np.array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+    assert_array_equal(reject_log.bad_epochs, bad_epochs)
+
+
 def test_io():
     """Test IO functionality."""
     event_id = None
@@ -319,6 +356,12 @@ def test_io():
     assert_array_equal(epochs_clean1.get_data(), epochs_clean3.get_data())
     assert_array_equal(reject_log1.labels, reject_log2.labels)
     assert_array_equal(reject_log1.labels, reject_log3.labels)
+
+    reject_log1.save(op.join(savedir, 'reject_log.npz'))
+    reject_log4 = read_reject_log(op.join(savedir, 'reject_log.npz'))
+    assert_array_equal(reject_log1.labels, reject_log4.labels)
+    assert_array_equal(reject_log1.bad_epochs, reject_log4.bad_epochs)
+    assert all(reject_log1.ch_names == reject_log4.ch_names)
 
 
 def test_fnirs():
