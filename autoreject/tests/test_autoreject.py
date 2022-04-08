@@ -275,23 +275,23 @@ def test_autoreject():
 
 def test_reject_log():
     """Test reject log functionality."""
-    reject_log = RejectLog(bad_epochs=np.zeros((10,)),
-                           labels=np.zeros((10, len(raw.ch_names))),
+    n_trials = 10
+    reject_log = RejectLog(bad_epochs=np.zeros((n_trials,)),
+                           labels=np.zeros((n_trials, len(raw.ch_names))),
                            ch_names=raw.ch_names)
     # test adjacent channel interpolation
     ch_adjacency, ch_names = mne.channels.find_ch_adjacency(raw.info, 'eeg')
-    neighbors = set(np.where(ch_adjacency[0].toarray()[0])[0]
-                    ).difference(set([0]))
+    neighbors = list(set(np.where(ch_adjacency[0].toarray()[0])[0]
+                         ).difference(set([0])))
     reject_log.labels[:, reject_log.ch_names.index(ch_names[0])] = 1
-    reject_log.labels[:, reject_log.ch_names.index(
-        ch_names[list(neighbors)[0]])] = 1
+    reject_log.labels[:, reject_log.ch_names.index(ch_names[neighbors[0]])] = 1
     reject_log.drop_epochs_with_adjacent_channel_interpolation(
         ch_adjacency, ch_names)
-    assert reject_log.bad_epochs.sum() == 10
+    assert reject_log.bad_epochs.sum() == n_trials
 
     # test interpolate bads
-    reject_log = RejectLog(bad_epochs=np.zeros((10,)),
-                           labels=np.zeros((10, len(raw.ch_names))),
+    reject_log = RejectLog(bad_epochs=np.zeros((n_trials,)),
+                           labels=np.zeros((n_trials, len(raw.ch_names))),
                            ch_names=raw.ch_names)
     reject_log.labels[1:, 0] = 1
     reject_log.labels[::2, 0] = 2
@@ -299,13 +299,15 @@ def test_reject_log():
     assert all(reject_log.labels[:, 0] == 2)
 
     # test drop any bad
-    reject_log = RejectLog(bad_epochs=np.zeros((10,)),
-                           labels=np.zeros((10, len(raw.ch_names))),
+    reject_log = RejectLog(bad_epochs=np.zeros((n_trials,)),
+                           labels=np.zeros((n_trials, len(raw.ch_names))),
                            ch_names=raw.ch_names)
     reject_log.labels[0, 2] = 1
     reject_log.labels[5, 1] = 1
     reject_log.drop_epochs_with_bads()
-    bad_epochs = np.array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0])
+    bad_epochs = np.zeros((n_trials,))
+    bad_epochs[0] = 1
+    bad_epochs[5] = 1
     assert_array_equal(reject_log.bad_epochs, bad_epochs)
 
     # test transform
@@ -327,7 +329,7 @@ def test_reject_log():
     reject_log = ar.get_reject_log(epochs)
     reject_log.drop_epochs_with_bads()
     epochs_ar = ar.transform(epochs, reject_log=reject_log)
-    assert len(epochs_ar) == 3
+    assert len(epochs_ar) < 0.5 * n_trials
 
 
 def test_io():
