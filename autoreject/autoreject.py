@@ -1447,7 +1447,7 @@ class RejectLog(object):
                         if ch_adjacency[bad_idx, bad_idx2]:
                             self.bad_epochs[idx] = True
 
-    def interpolate_bads(self, interp_thresh=0.5):
+    def interpolate_bads(self, interp_thresh=0.75):
         """Interpolate an entire channel if most of the channel is marked.
 
         Parameters
