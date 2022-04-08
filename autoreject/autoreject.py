@@ -737,7 +737,7 @@ class _AutoReject(BaseAutoReject):
             The cleaned epochs.
 
         reject_log : instance of autoreject.RejectLog
-            The rejection log. Returned only of return_log is True.
+            If not None, override the reject log determined by autoreject.
         """
         _check_data(epochs, picks=self.picks, verbose=self.verbose,
                     ch_constraint='data_channels')
@@ -1428,12 +1428,14 @@ class RejectLog(object):
             The adjacency as computed by
             :func:`mne.channels.find_ch_adjacency`.
 
+        ch_names : list
+            The list of channel names present in adjacency matrix.
         """
         bads = np.logical_or(self.labels == 1, self.labels == 2)
-        for i in range(self.labels.shape[0]):
-            if self.bad_epochs[i]:  # already bad
+        for idx in range(self.labels.shape[0]):
+            if self.bad_epochs[idx]:  # already bad
                 continue
-            bad_idxs = set(np.where(bads[i])[0])
+            bad_idxs = set(np.where(bads[idx])[0])
             for bad_idx in bad_idxs:
                 bad_ch = self.ch_names[bad_idx]
                 for bad_idx2 in bad_idxs.difference(set([bad_idx])):
@@ -1443,7 +1445,7 @@ class RejectLog(object):
                         bad_idx = ch_names.index(bad_ch)
                         bad_idx2 = ch_names.index(bad_ch2)
                         if ch_adjacency[bad_idx, bad_idx2]:
-                            self.bad_epochs[i] = True
+                            self.bad_epochs[idx] = True
 
     def interpolate_bads(self, interp_thresh=0.5):
         """Interpolate an entire channel if most of the channel is marked.
