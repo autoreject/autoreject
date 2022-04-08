@@ -1130,10 +1130,10 @@ class AutoReject(object):
             raise ValueError('Please run autoreject.fit() method first')
 
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
+        mne.utils._validate_type(reject_log, (None, RejectLog), 'reject_log')
 
         if reject_log is None:
             reject_log = self.get_reject_log(epochs)
-        mne.utils._validate_type(reject_log, RejectLog, 'reject_log')
         epochs_clean = epochs.copy()
         _apply_interp(reject_log, epochs_clean, self.threshes_,
                       self.picks_, self.dots, self.verbose)
