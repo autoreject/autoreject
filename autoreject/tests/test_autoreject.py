@@ -308,6 +308,27 @@ def test_reject_log():
     bad_epochs = np.array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0])
     assert_array_equal(reject_log.bad_epochs, bad_epochs)
 
+    # test transform
+    event_id = None
+    tmin, tmax = -0.2, 0.5
+    events = mne.find_events(raw)
+
+    include = [u'EEG %03d' % i for i in range(1, 45, 3)]
+    picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
+                           eog=True, include=include, exclude=[])
+
+    # raise error if preload is false
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0), decim=4,
+                        reject=None, preload=True)[:10]
+    ar = AutoReject(cv=2, random_state=42, n_interpolate=[1],
+                    consensus=[0.5], verbose=False)
+    ar.fit(epochs)
+    reject_log = ar.get_reject_log(epochs)
+    reject_log.drop_epochs_with_bads()
+    epochs_ar = ar.transform(epochs, reject_log=reject_log)
+    assert len(epochs_ar) == 3
+
 
 def test_io():
     """Test IO functionality."""

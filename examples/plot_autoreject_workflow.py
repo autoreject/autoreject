@@ -198,7 +198,10 @@ plt.plot(evoked_bad.times, evoked_bad.data.T * 1e6, 'r', zorder=-1)
 epochs_ar.average().plot(axes=plt.gca())
 
 # %%
-# As a last, optional step, we can do post-doc corrections.
+# As a last, optional step, we can do post-doc corrections to be even
+# more stringent in order to favor rejecting epochs over keeping channels
+# marked bad by ``autoreject`` that, based on cross-validation, are
+# considered false positive bad channels.
 
 reject_log = ar.get_reject_log(epochs)
 
