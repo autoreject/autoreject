@@ -228,7 +228,7 @@ reject_log.plot('horizontal')
 # interpolation. Similarly, this should be done on a case-by-case basis
 # based on the montage of sensors and the analysis.
 
-ch_adjacency, ch_names = mne.channels.find_ch_adjacency(epochs, 'eeg')
+ch_adjacency, ch_names = mne.channels.find_ch_adjacency(epochs.info, 'eeg')
 reject_log.drop_epochs_with_adjacent_channel_interpolation(
     ch_adjacency, ch_names)
 reject_log.plot('horizontal')

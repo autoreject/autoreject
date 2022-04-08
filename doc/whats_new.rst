@@ -96,3 +96,4 @@ Changelog
 .. _Mathieu Scheltienne: https://github.com/mscheltienne
 .. _Patrick Stetz: https://patrickstetz.com
 .. _Stefan Appelhoff: https://stefanappelhoff.com/
+.. _Alex Rockhill: https://github.com/alexrockhill
