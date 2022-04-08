@@ -1146,7 +1146,7 @@ class AutoReject(object):
         else:
             return epochs_clean
 
-    def fit_transform(self, epochs, return_log=False, reject_log=None):
+    def fit_transform(self, epochs, return_log=False):
         """Estimate the rejection params and finds bad epochs.
 
         Parameters
@@ -1157,10 +1157,6 @@ class AutoReject(object):
         return_log : bool
             If true the rejection log is also returned.
 
-        reject_log : instance of autoreject.RejectLog | None
-            The reject log to use. If None, the default reject log
-            is used.
-
         Returns
         -------
         epochs_clean : instance of mne.Epochs
@@ -1169,8 +1165,7 @@ class AutoReject(object):
         reject_log : instance of autoreject.RejectLog
             The rejection log. Returned only of return_log is True.
         """
-        return self.fit(epochs).transform(epochs, return_log=return_log,
-                                          reject_log=reject_log)
+        return self.fit(epochs).transform(epochs, return_log=return_log)
 
     def save(self, fname, overwrite=False):
         """Save autoreject object with the HDF5 format.
