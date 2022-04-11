@@ -281,10 +281,9 @@ def test_reject_log():
                            ch_names=raw.ch_names)
     # test adjacent channel interpolation
     ch_adjacency, ch_names = mne.channels.find_ch_adjacency(raw.info, 'eeg')
-    neighbors = list(set(np.where(ch_adjacency[0].toarray()[0])[0]
-                         ).difference(set([0])))
-    reject_log.labels[:, reject_log.ch_names.index(ch_names[0])] = 1
-    reject_log.labels[:, reject_log.ch_names.index(ch_names[neighbors[0]])] = 1
+    neighbors = np.delete(np.where(ch_adjacency[0].toarray()[0])[0], 0)
+    reject_log.labels[:, reject_log.ch_names.index(ch_names[0])] = 2
+    reject_log.labels[:, reject_log.ch_names.index(ch_names[neighbors[0]])] = 2
     reject_log.drop_epochs_with_adjacent_channel_interpolation(
         ch_adjacency, ch_names)
     assert reject_log.bad_epochs.sum() == n_trials

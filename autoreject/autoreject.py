@@ -1431,23 +1431,23 @@ class RejectLog(object):
         ch_names : list
             The list of channel names present in adjacency matrix.
         """
-        bads = np.logical_or(self.labels == 1, self.labels == 2)
+        interps = self.labels == 2
         for idx in range(self.labels.shape[0]):
             if self.bad_epochs[idx]:  # already bad
                 continue
-            bad_idxs = set(np.where(bads[idx])[0])
-            for bad_idx in bad_idxs:
-                bad_ch = self.ch_names[bad_idx]
-                for bad_idx2 in bad_idxs.difference(set([bad_idx])):
-                    bad_ch2 = self.ch_names[bad_idx2]
-                    if bad_ch in ch_names and bad_ch2 in ch_names:
+            interp_idxs = set(np.where(interps[idx])[0])
+            for interp_idx in interp_idxs:
+                interp_ch = self.ch_names[interp_idx]
+                for interp_idx2 in interp_idxs.difference(set([interp_idx])):
+                    interp_ch2 = self.ch_names[interp_idx2]
+                    if interp_ch in ch_names and interp_ch2 in ch_names:
                         # adjust to adjacency matrix
-                        bad_idx = ch_names.index(bad_ch)
-                        bad_idx2 = ch_names.index(bad_ch2)
-                        if ch_adjacency[bad_idx, bad_idx2]:
+                        interp_idx = ch_names.index(interp_ch)
+                        interp_idx2 = ch_names.index(interp_ch2)
+                        if ch_adjacency[interp_idx, interp_idx2]:
                             self.bad_epochs[idx] = True
 
-    def interpolate_bads(self, interp_thresh=0.75):
+    def interpolate_bads(self, interp_thresh=0.5):
         """Interpolate an entire channel if most of the channel is marked.
 
         Parameters
