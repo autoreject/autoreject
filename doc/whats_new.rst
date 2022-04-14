@@ -17,9 +17,12 @@ Changelog
 
 - ``autoreject`` now requires ``mne >= 1.0``, by `Mainak Jas`_, `Alex Gramfort`_, and `Stefan Appelhoff`_ in :github:`#267` and :github:`#268`
 
-- Add :meth:`autoreject.RejectLog.drop_epochs_with_adjacent_channel_interpolation`, :meth:`autoreject.RejectLog.interpolate_bads` and :meth:`autoreject.RejectLog.drop_epochs_with_bads` for post-doc corrections to ensure the cleanest possible data as shown in :ref:`plot_autoreject_workflow`, by `Alex Rockhill`_ :github:`#270`
+- Add ``reject_log`` option to :meth:`autoreject.AutoReject.transform` to enable
+  users to make corrections to ``reject_log`` estimated by autoreject, by `Alex Rockhill`
+  in :github:`#270` 
 
-- Add :meth:`autoreject.RejectLog.save` and :func:`autoreject.read_reject_log` to save and load reject logs, by `Alex Rockhill`_ :github:`#270`
+- Add :meth:`autoreject.RejectLog.save` and :func:`autoreject.read_reject_log` to
+  save and load reject logs, by `Alex Rockhill`_ in :github:`#270`
 
 .. _0.3:
 

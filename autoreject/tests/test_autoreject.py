@@ -22,7 +22,7 @@ from mne.utils import _TempDir
 from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold, read_auto_reject,
-                        RejectLog, read_reject_log)
+                        read_reject_log)
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
@@ -226,6 +226,14 @@ def test_autoreject():
         is_same = np.isscalar(is_same)
     assert not is_same
 
+    # test that transform can take new reject_log
+    reject_log1 = ar.get_reject_log(epochs)
+    assert reject_log1.bad_epochs.sum() > 0  # ensure > 1 bad epoch
+    reject_log1.bad_epochs[:] = False
+    epochs_nobad = ar.transform(epochs, reject_log=reject_log1)
+    assert len(epochs_nobad) == len(epochs)
+    pytest.raises(ValueError, ar.transform, epochs, reject_log='blah')
+
     # test that transform ignores bad channels
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
     ar_bads = AutoReject(cv=3, random_state=42,
@@ -271,64 +279,6 @@ def test_autoreject():
     threshes_b = compute_thresholds(
         epochs_fit, picks=picks, method='bayesian_optimization')
     assert set(threshes_b.keys()) == set(ch_names)
-
-
-def test_reject_log():
-    """Test reject log functionality."""
-    n_trials = 10
-    reject_log = RejectLog(bad_epochs=np.zeros((n_trials,)),
-                           labels=np.zeros((n_trials, len(raw.ch_names))),
-                           ch_names=raw.ch_names)
-    # test adjacent channel interpolation
-    ch_adjacency, ch_names = mne.channels.find_ch_adjacency(raw.info, 'eeg')
-    neighbors = np.delete(np.where(ch_adjacency[0].toarray()[0])[0], 0)
-    reject_log.labels[:, reject_log.ch_names.index(ch_names[0])] = 2
-    reject_log.labels[:, reject_log.ch_names.index(ch_names[neighbors[0]])] = 2
-    reject_log.drop_epochs_with_adjacent_channel_interpolation(
-        ch_adjacency, ch_names)
-    assert reject_log.bad_epochs.sum() == n_trials
-
-    # test interpolate bads
-    reject_log = RejectLog(bad_epochs=np.zeros((n_trials,)),
-                           labels=np.zeros((n_trials, len(raw.ch_names))),
-                           ch_names=raw.ch_names)
-    reject_log.labels[1:, 0] = 1
-    reject_log.labels[::2, 0] = 2
-    reject_log.interpolate_bads()
-    assert all(reject_log.labels[:, 0] == 2)
-
-    # test drop any bad
-    reject_log = RejectLog(bad_epochs=np.zeros((n_trials,)),
-                           labels=np.zeros((n_trials, len(raw.ch_names))),
-                           ch_names=raw.ch_names)
-    reject_log.labels[0, 2] = 1
-    reject_log.labels[5, 1] = 1
-    reject_log.drop_epochs_with_bads()
-    bad_epochs = np.zeros((n_trials,))
-    bad_epochs[0] = 1
-    bad_epochs[5] = 1
-    assert_array_equal(reject_log.bad_epochs, bad_epochs)
-
-    # test transform
-    event_id = None
-    tmin, tmax = -0.2, 0.5
-    events = mne.find_events(raw)
-
-    include = [u'EEG %03d' % i for i in range(1, 45, 3)]
-    picks = mne.pick_types(raw.info, meg=False, eeg=False, stim=False,
-                           eog=True, include=include, exclude=[])
-
-    # raise error if preload is false
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                        picks=picks, baseline=(None, 0), decim=4,
-                        reject=None, preload=True)[:10]
-    ar = AutoReject(cv=2, random_state=42, n_interpolate=[1],
-                    consensus=[0.5], verbose=False)
-    ar.fit(epochs)
-    reject_log = ar.get_reject_log(epochs)
-    reject_log.drop_epochs_with_bads()
-    epochs_ar = ar.transform(epochs, reject_log=reject_log)
-    assert len(epochs_ar) < 0.5 * n_trials
 
 
 def test_io():

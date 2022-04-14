@@ -1130,7 +1130,9 @@ class AutoReject(object):
             raise ValueError('Please run autoreject.fit() method first')
 
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
-        mne.utils._validate_type(reject_log, (None, RejectLog), 'reject_log')
+        if reject_log is not None and not isinstance(reject_log, RejectLog):
+            raise ValueError('reject_log must be an instance of RejectLog, '
+                             f'got {type(reject_log)}')
 
         if reject_log is None:
             reject_log = self.get_reject_log(epochs)
@@ -1417,53 +1419,6 @@ class RejectLog(object):
             epochs=epochs,
             epoch_colors=epoch_colors, scalings=scalings,
             title='')
-
-    def drop_epochs_with_adjacent_channel_interpolation(
-            self, ch_adjacency, ch_names):
-        """Drop epochs where adjacent channels are marked for interpolation.
-
-        Parameters
-        ----------
-        ch_adjacency : scipy.sparse.csr_matrix, shape (n_channels, n_channels)
-            The adjacency as computed by
-            :func:`mne.channels.find_ch_adjacency`.
-
-        ch_names : list
-            The list of channel names present in adjacency matrix.
-        """
-        interps = self.labels == 2
-        for idx in range(self.labels.shape[0]):
-            if self.bad_epochs[idx]:  # already bad
-                continue
-            interp_idxs = set(np.where(interps[idx])[0])
-            for interp_idx in interp_idxs:
-                interp_ch = self.ch_names[interp_idx]
-                for interp_idx2 in interp_idxs.difference(set([interp_idx])):
-                    interp_ch2 = self.ch_names[interp_idx2]
-                    if interp_ch in ch_names and interp_ch2 in ch_names:
-                        # adjust to adjacency matrix
-                        interp_idx = ch_names.index(interp_ch)
-                        interp_idx2 = ch_names.index(interp_ch2)
-                        if ch_adjacency[interp_idx, interp_idx2]:
-                            self.bad_epochs[idx] = True
-
-    def interpolate_bads(self, interp_thresh=0.5):
-        """Interpolate an entire channel if most of the channel is marked.
-
-        Parameters
-        ----------
-        interp_thresh : float
-            The percentage of bad epochs for a sensor to interpolate the
-            entire sensor.
-        """
-        bads = np.logical_or(self.labels == 1, self.labels == 2)
-        interp = np.where(
-            np.nansum(bads, axis=0) > self.labels.shape[0] * interp_thresh)[0]
-        self.labels[:, interp] = 2
-
-    def drop_epochs_with_bads(self):
-        """Drop any epoch with a bad sensor not marked for interpolation."""
-        self.bad_epochs = np.any(self.labels == 1, axis=1)
 
     def save(self, fname, overwrite=False):
         """Save a reject log.
