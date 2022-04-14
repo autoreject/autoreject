@@ -1392,3 +1392,18 @@ class RejectLog(object):
             epochs=epochs,
             epoch_colors=epoch_colors, scalings=scalings,
             title='')
+
+    def bad_sensors_counts(self):
+        """Get number of bad sensors per epochs.
+
+        Parameters
+        ----------
+
+
+        Returns
+        -------
+        counts : Instance of np.array
+            Number of bad sensors per epoch
+        """
+        return np.sum(
+            np.logical_and(self.labels != 0, ~np.isnan(self.labels)), axis=1)
