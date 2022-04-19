@@ -1272,7 +1272,7 @@ class RejectLog(object):
 
         Parameters
         ----------
-        orientation : 'vertical' or 'horizontal'
+        orientation : 'vertical' | 'horizontal'
             If `'vertical'` (default), will plot sensors on x-axis and epochs
             on y-axis. If `'horizontal'`, will plot epochs on x-axis and
             sensors on y-axis.
@@ -1288,7 +1288,7 @@ class RejectLog(object):
 
         Returns
         -------
-        figure : Instance of matplotlib.figure.Figure
+        figure : matplotlib.figure.Figure
             The figure object containing the plot.
         """
         import matplotlib as mpl
@@ -1382,7 +1382,7 @@ class RejectLog(object):
 
         Returns
         -------
-        fig : Instance of matplotlib.figure.Figure
+        fig : matplotlib.figure.Figure
             Epochs traces.
         """
         labels = self.labels

@@ -47,6 +47,7 @@ numpydoc_xref_ignore = {
     "instance",
     "of",
     "shape",
+    "object",
 }
 
 autodoc_default_options = {
