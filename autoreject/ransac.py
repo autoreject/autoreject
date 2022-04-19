@@ -57,54 +57,56 @@ def _get_channel_type(epochs, picks):
 
 
 class Ransac(object):
-    """RANSAC algorithm to find bad sensors and repair them."""
+    """RANSAC algorithm to find bad sensors and repair them.
+
+    Implements RAndom SAmple Consensus (RANSAC) method to detect bad sensors.
+
+    Parameters
+    ----------
+    n_resample : int
+        Number of times the sensors are resampled.
+    min_channels : float
+        Fraction of sensors for robust reconstruction.
+    min_corr : float
+        Cut-off correlation for abnormal wrt neighbours.
+    unbroken_time : float
+        Cut-off fraction of time sensor can have poor RANSAC
+        predictability.
+    n_jobs : int
+        Number of parallel jobs.
+    random_state : int | np.random.RandomState | None
+        The seed of the pseudo random number generator to use.
+        Defaults to 435656.
+    picks : str | list | slice | None
+        Channels to include. Slices and lists of integers will be
+        interpreted as channel indices. In lists, channel *name* strings
+        (e.g., ``['MEG0111', 'MEG2623']``) will pick the given channels.
+        None (default) will pick data channels {'meg', 'eeg'}. Note that
+        channels in ``info['bads']`` *will be included* if their names or
+        indices are explicitly provided.
+    verbose : bool
+        The verbosity of progress messages.
+        If False, suppress all output messages.
+
+    Notes
+    -----
+    The window_size is automatically set to the epoch length.
+
+    References
+    ----------
+    [1] Bigdely-Shamlo, Nima, et al.
+        "The PREP pipeline: standardized preprocessing for large-scale EEG
+        analysis." Frontiers in neuroinformatics 9 (2015).
+    [2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and
+        Alexandre Gramfort, "Autoreject: Automated artifact rejection for
+        MEG and EEG." arXiv preprint arXiv:1612.08194, 2016.
+    """
 
     def __init__(self, n_resample=50, min_channels=0.25, min_corr=0.75,
                  unbroken_time=0.4, n_jobs=1,
                  random_state=435656, picks=None,
                  verbose=True):
-        """Implements RAndom SAmple Consensus (RANSAC) method to detect bad sensors.
-
-        Parameters
-        ----------
-        n_resample : int
-            Number of times the sensors are resampled.
-        min_channels : float
-            Fraction of sensors for robust reconstruction.
-        min_corr : float
-            Cut-off correlation for abnormal wrt neighbours.
-        unbroken_time : float
-            Cut-off fraction of time sensor can have poor RANSAC
-            predictability.
-        n_jobs : int
-            Number of parallel jobs.
-        random_state : int | np.random.RandomState | None
-            The seed of the pseudo random number generator to use.
-            Defaults to 435656.
-        picks : str | list | slice | None
-            Channels to include. Slices and lists of integers will be
-            interpreted as channel indices. In lists, channel *name* strings
-            (e.g., ``['MEG0111', 'MEG2623']``) will pick the given channels.
-            None (default) will pick data channels {'meg', 'eeg'}. Note that
-            channels in ``info['bads']`` *will be included* if their names or
-            indices are explicitly provided.
-        verbose : bool
-            The verbosity of progress messages.
-            If False, suppress all output messages.
-
-        Notes
-        -----
-        The window_size is automatically set to the epoch length.
-
-        References
-        ----------
-        [1] Bigdely-Shamlo, Nima, et al.
-            "The PREP pipeline: standardized preprocessing for large-scale EEG
-            analysis." Frontiers in neuroinformatics 9 (2015).
-        [2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and
-            Alexandre Gramfort, "Autoreject: Automated artifact rejection for
-            MEG and EEG." arXiv preprint arXiv:1612.08194, 2016.
-        """
+        """Initialize Ransac object."""
         self.n_resample = n_resample
         self.min_channels = min_channels
         self.min_corr = min_corr
