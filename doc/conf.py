@@ -42,6 +42,18 @@ autosummary_generate = True  # generate autosummary even if no references
 # configure numpydoc
 numpydoc_xref_param_type = True
 numpydoc_show_class_members = False  # noqa:E501  https://stackoverflow.com/a/34604043/5201771
+numpydoc_xref_ignore = {
+    # words
+    "instance",
+    "of",
+    "shape",
+}
+
+autodoc_default_options = {
+    "members": True,
+    "inherited-members": True,
+    "show-inheritance": True,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -106,6 +118,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/devdocs', None),
     'scipy': ('https://scipy.github.io/devdocs', None),
     'matplotlib': ('https://matplotlib.org', None),
+    'sklearn': ('https://scikit-learn.org/stable', None),
 }
 intersphinx_timeout = 5
 
