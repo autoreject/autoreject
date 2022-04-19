@@ -78,8 +78,9 @@ class Ransac(object):
             predictability.
         n_jobs : int
             Number of parallel jobs.
-        random_state : None | int | np.random.RandomState
+        random_state : int | np.random.RandomState | None
             The seed of the pseudo random number generator to use.
+            Defaults to 435656.
         picks : str | list | slice | None
             Channels to include. Slices and lists of integers will be
             interpreted as channel indices. In lists, channel *name* strings
@@ -87,7 +88,7 @@ class Ransac(object):
             None (default) will pick data channels {'meg', 'eeg'}. Note that
             channels in ``info['bads']`` *will be included* if their names or
             indices are explicitly provided.
-        verbose : boolean
+        verbose : bool
             The verbosity of progress messages.
             If False, suppress all output messages.
 

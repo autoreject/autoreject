@@ -52,7 +52,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
 
     Parameters
     ----------
-    epochs : instance of mne.Epochs.
+    epochs : instance of mne.Epochs
         The epochs.
     y : array | None
         The labels.
@@ -63,8 +63,9 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         The values of the parameter that will be evaluated.
         If None, 15 values between the min and the max threshold
         will be tested.
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int | sklearn.model_selection object | iterable | None
         Determines the cross-validation strategy.
+        Defaults to None.
     return_param_range : bool
         If True the used param_range is returned.
         Defaults to False.
@@ -199,19 +200,20 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
 
     Parameters
     ----------
-    epochs : mne.Epochs object
+    epochs : mne.Epochs
         The epochs from which to estimate the epochs dictionary
     decim : int
         The decimation factor: Increment for selecting every nth time slice.
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int | np.random.RandomState | None
         The seed of the pseudo random number generator to use.
+        Defaults to None.
     ch_types : str | list of str | None
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
         will have keys ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr'].
-    cv : a scikit-learn cross-validation object
-        Defaults to cv=5
-    verbose : boolean
+    cv : int | sklearn.model_selection object
+        Defaults to cv=5.
+    verbose : bool
         The verbosity of progress messages.
         If False, suppress all output messages.
 
@@ -331,10 +333,11 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         Data for one channel.
     method : str
         'bayesian_optimization' or 'random_search'
-    cv : iterator
+    cv : int | iterator
         Iterator for cross-validation.
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int | np.random.RandomState | None
         The seed of the pseudo random number generator to use.
+        Defaults to None.
 
     Returns
     -------
@@ -397,8 +400,9 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         The epochs objects whose thresholds must be computed.
     method : str
         'bayesian_optimization' or 'random_search'
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use
+    random_state : int | np.random.RandomState | None
+        The seed of the pseudo random number generator to use.
+        Defaults to None.
     picks : str | list | slice | None
         Channels to include. Slices and lists of integers will be interpreted
         as channel indices. In lists, channel *type* strings (e.g.,
@@ -408,10 +412,10 @@ def compute_thresholds(epochs, method='bayesian_optimization',
         ``'data'`` to pick data channels. None (default) will pick data
         channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
         be included* if their names or indices are explicitly provided.
-    augment : boolean
+    augment : bool
         Whether to augment the data or not. By default it is True, but
         set it to False, if the channel locations are not available.
-    verbose : boolean
+    verbose : bool
         The verbosity of progress messages.
         If False, suppress all output messages.
     n_jobs : int
@@ -503,7 +507,7 @@ class _AutoReject(BaseAutoReject):
         'bayesian_optimization' or 'random_search'.
     dots : tuple
         2-length tuple returned by utils._compute_dots.
-    verbose : boolean
+    verbose : bool
         The verbosity of progress messages.
         If False, suppress all output messages.
 
@@ -869,8 +873,8 @@ class AutoReject(object):
         The values to try for percentage of channels that must agree as a
         fraction of the total number of channels. This sets :math:`\\kappa/Q`.
         If None, defaults to `np.linspace(0, 1.0, 11)`
-    cv : a scikit-learn cross-validation object
-        Defaults to cv=10
+    cv : int | sklearn.model_selection object
+        Defaults to cv=10.
     picks : str | list | slice | None
         Channels to include. Slices and lists of integers will be interpreted
         as channel indices. In lists, channel *type* strings (e.g.,
@@ -886,9 +890,10 @@ class AutoReject(object):
         'bayesian_optimization' or 'random_search'
     n_jobs : int
         The number of jobs.
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int | np.random.RandomState | None
         The seed of the pseudo random number generator to use.
-    verbose : boolean
+        Defaults to None.
+    verbose : bool
         The verbosity of progress messages.
         If False, suppress all output messages.
 

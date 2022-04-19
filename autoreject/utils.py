@@ -195,7 +195,7 @@ def clean_by_interp(inst, picks=None, verbose=True):
 
     Parameters
     ----------
-    inst : instance of mne.Evoked or mne.Epochs
+    inst : mne.Evoked | mne.Epochs
         The evoked or epochs object.
     picks : str | list | slice | None
         Channels to include. Slices and lists of integers will be interpreted
@@ -206,7 +206,7 @@ def clean_by_interp(inst, picks=None, verbose=True):
         ``'data'`` to pick data channels. None (default) will pick data
         channels {'meg', 'eeg'}. Note that channels in ``info['bads']`` *will
         be included* if their names or indices are explicitly provided.
-    verbose : boolean
+    verbose : bool
         The verbosity of progress messages.
         If False, suppress all output messages.
 
