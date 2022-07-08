@@ -203,7 +203,7 @@ class Ransac(object):
         base_random_state = rng.randint(np.iinfo(np.int16).max)
         self.ch_subsets_ = [self._get_random_subsets(
                             epochs.info, base_random_state + random_state)
-                            for random_state in np.arange(0, n_epochs, n_jobs)]
+                            for random_state in np.arange(0, n_jobs)]
         epoch_idxs = np.array_split(np.arange(n_epochs), n_jobs)
         corrs = parallel(my_iterator(self, epochs, idxs, chs, verbose)
                          for idxs, chs in zip(epoch_idxs, self.ch_subsets_))
