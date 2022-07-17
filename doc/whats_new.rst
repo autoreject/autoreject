@@ -15,6 +15,8 @@ What's new?
 Changelog
 ~~~~~~~~~
 
+- RANSAC implementation was refactored, works now with `n_jobs>1` and produces consistent results across different number of jobs. Testing on simulated data added. by `Simon Kern`_ in :github:`#280`
+
 - ``autoreject`` now requires ``mne >= 1.0``, by `Mainak Jas`_, `Alex Gramfort`_, and `Stefan Appelhoff`_ in :github:`#267` and :github:`#268`
 
 - Add ``reject_log`` option to :meth:`autoreject.AutoReject.transform` to enable
@@ -100,3 +102,4 @@ Changelog
 .. _Patrick Stetz: https://patrickstetz.com
 .. _Stefan Appelhoff: https://stefanappelhoff.com/
 .. _Alex Rockhill: https://github.com/alexrockhill
+.. _Simon Kern: https://github.com/skjerns

@@ -6,6 +6,7 @@ also works for MEG data.
 """
 
 # Authors: Mainak Jas <mainak.jas@telecom-paristech.fr>
+#          Simon Kern
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -17,7 +18,6 @@ from mne.utils import check_random_state
 
 from .utils import _pbar, _handle_picks
 from .utils import _check_data, _get_channel_type
-
 
 
 class Ransac(object):
@@ -79,7 +79,6 @@ class Ransac(object):
         self.random_state = random_state
         self.verbose = verbose
         self.picks = picks
-        
 
     def _iterate_epochs(self, epochs, idxs):
         n_channels = len(self.picks)
@@ -89,7 +88,7 @@ class Ransac(object):
             data = epochs.get_data()[idx, self.picks]
             corrs[i, :] = self._compute_correlations(data)
         return corrs
-    
+
     def _get_random_subsets(self, info):
         """ Get random channels"""
         # have to set the seed here, as here the only part with randomization
@@ -104,17 +103,18 @@ class Ransac(object):
 
         # get picks for resamples, but ignore channels marked as bad
         bad_chs = info['bads']
-        ch_list = [ch for ch in picked_info['ch_names'] if not ch in bad_chs]
-        assert len(ch_list)>=n_samples, 'too many channels marked as bad,'\
-            'cannot perform interpolation with min_channels={self.min_channels}'
-            
-        # randomly sample subsets of good channels     
-        ch_subsets = []
+        ch_list = [ch for ch in picked_info['ch_names'] if ch not in bad_chs]
+        assert len(ch_list) >= n_samples, 'too many channels marked as bad,'\
+                                          'cannot perform interpolation with'\
+                                          f'min_channels={self.min_channels}'
+
+        # randomly sample subsets of good channels
+        ch_subsets = list()
         for idx in range(self.n_resample):
             picks = rng.choice(ch_list, size=n_samples, replace=False)
-            picks = [str(p) for p in picks] # convert from str-array to string
+            picks = [str(p) for p in picks]  # convert from str-array to string
             ch_subsets.append(picks)
-            
+
         return ch_subsets
 
     def _get_mappings(self, inst, ch_subsets):
@@ -125,7 +125,7 @@ class Ransac(object):
         ch_names = picked_info['ch_names']
         n_channels = len(ch_names)
         pick_to = range(n_channels)
-        mappings = []
+        mappings = list()
         # Try different channel subsets
         for subset in _pbar(ch_subsets, desc='interpolating channels',
                             verbose=self.verbose):
@@ -166,6 +166,27 @@ class Ransac(object):
         return corr
 
     def fit(self, epochs):
+        """Perform RANSAC on the given epochs.
+
+        Steps:
+            1. Interpolate all channels from a subset of channels
+              (fraction denoted as `min_channels`), repeat `n_resample` times.
+            2. See if correlation of interpolated channels to original channel
+              is above 75% per epoch (`min_corr`)
+            3. if more than `unbroken_time` fraction of epochs have a lower
+              correlation than that, add channel to self.bad_chs_
+
+        Parameters
+        ----------
+        epochs : mne.Epochs
+            An Epochs object with data to perform RANSAC on
+
+        Returns
+        ---------
+        self : Ransac
+            The updated instance with the list of bad channels accessible by
+            ``self.bad_chs_``
+        """
         self.picks = _handle_picks(info=epochs.info, picks=self.picks)
         _check_data(epochs, picks=self.picks,
                     ch_constraint='single_channel_type', verbose=self.verbose)
@@ -176,28 +197,29 @@ class Ransac(object):
         parallel = Parallel(n_jobs, verbose=10 if self.verbose else 0)
 
         # create `n_resample` different random subsamples of channels,
-        # with each subsample set containing `min_channels` amount of 
+        # with each subsample set containing `min_channels` amount of
         # random channels from the list of all channels.
-        ch_subsets = self._get_random_subsets(epochs.info)
-        
+        self.ch_subsets_ = self._get_random_subsets(epochs.info)
+
         # compute mappings with possibility of parallelization
-        n_splits = min(n_jobs, self.n_resample) #max n_resample splits possible
-        ch_subsets_split = np.array_split(ch_subsets, n_splits)
+        # max n_resample splits possible
+        n_splits = min(n_jobs, self.n_resample)
+        ch_subsets_split = np.array_split(self.ch_subsets_, n_splits)
         delayed_func = delayed(self._get_mappings)
         # no random seed needs to be supplied to get_mappings, as there is
         # no random subsampling happening here
         mappings = parallel(delayed_func(epochs, ch_subset) for ch_subset
-                                                          in ch_subsets_split)
+                            in ch_subsets_split)
         self.mappings_ = np.concatenate(mappings)
-        
+
         # compute correlations with possibility of parallelization
         delayed_func = delayed(self._iterate_epochs)
-        n_splits = min(n_jobs, n_epochs) # max n_epochs splits possible
+        n_splits = min(n_jobs, n_epochs)  # max n_epochs splits possible
         epoch_idxs_splits = np.array_split(np.arange(n_epochs), n_splits)
         corrs = parallel(delayed_func(epochs, idxs) for idxs
                          in epoch_idxs_splits)
         self.corr_ = np.concatenate(corrs)
-        
+
         if self.verbose is not False:
             print('[Done]')
 
@@ -211,7 +233,7 @@ class Ransac(object):
             self.bad_chs_ = [
                 epochs.info['ch_names'][self.picks[p]] for p in bad_idx]
         else:
-            self.bad_chs_ = []
+            self.bad_chs_ = list()
         return self
 
     def transform(self, epochs):
