@@ -16,44 +16,8 @@ from mne.parallel import check_n_jobs
 from mne.utils import check_random_state
 
 from .utils import _pbar, _handle_picks
-from .utils import _check_data
+from .utils import _check_data, _get_channel_type
 
-
-def _iterate_epochs(ransac, epochs, idxs, ch_subset, verbose):
-    ransac.mappings_ = ransac._get_mappings(epochs, ch_subset)
-    n_channels = len(ransac.picks)
-    corrs = np.zeros((len(idxs), n_channels))
-    for idx, _ in enumerate(_pbar(idxs, desc='Iterating epochs',
-                                  verbose=verbose)):
-        ransac.corr_ = ransac._compute_correlations(
-            epochs.get_data()[idx, ransac.picks])
-        corrs[idx, :] = ransac.corr_
-    return corrs
-
-
-def _get_channel_type(epochs, picks):
-    picked_info = mne.io.pick.pick_info(epochs.info, picks)
-    ch_types_picked = {
-        mne.io.meas_info.channel_type(picked_info, idx)
-        for idx in range(len(picks))}
-    invalid_ch_types_present = [key for key in ch_types_picked
-                                if key not in ['mag', 'grad', 'eeg'] and
-                                key in epochs]
-    if len(invalid_ch_types_present) > 0:
-        raise ValueError('Invalid channel types present in epochs.'
-                         ' Expected ONLY `meg` or ONLY `eeg`. Got %s'
-                         % ', '.join(invalid_ch_types_present))
-
-    has_meg = any(kk in ch_types_picked for kk in ('mag', 'grad'))
-    if 'eeg' in ch_types_picked and has_meg:
-        raise ValueError('Got mixed channel types. Pick either eeg or meg'
-                         ' but not both')
-    if 'eeg' in ch_types_picked:
-        return 'eeg'
-    elif has_meg:
-        return 'meg'
-    else:
-        raise ValueError('Oh no! Your channel type is not known.')
 
 
 class Ransac(object):
@@ -115,28 +79,42 @@ class Ransac(object):
         self.random_state = random_state
         self.verbose = verbose
         self.picks = picks
+        
 
-    def _get_random_subsets(self, info, random_state):
+    def _iterate_epochs(self, epochs, idxs):
+        n_channels = len(self.picks)
+        corrs = np.zeros((len(idxs), n_channels))
+        for i, idx in enumerate(_pbar(idxs, desc='Iterating epochs',
+                                      verbose=self.verbose)):
+            data = epochs.get_data()[idx, self.picks]
+            corrs[i, :] = self._compute_correlations(data)
+        return corrs
+    
+    def _get_random_subsets(self, info):
         """ Get random channels"""
-        # have to set the seed here
-        rng = check_random_state(random_state)
+        # have to set the seed here, as here the only part with randomization
+        # occurs. However, all subsets are precomputed outside of Parallel,
+        # therefore, we can simply compute them once
+        rng = check_random_state(self.random_state)
         picked_info = mne.io.pick.pick_info(info, self.picks)
         n_channels = len(picked_info['ch_names'])
 
         # number of channels to interpolate from
         n_samples = int(np.round(self.min_channels * n_channels))
 
-        # get picks for resamples
-        picks = []
-        for idx in range(self.n_resample):
-            pick = rng.permutation(n_channels)[:n_samples].copy()
-            picks.append(pick)
-
-        # get channel subsets as lists
+        # get picks for resamples, but ignore channels marked as bad
+        bad_chs = info['bads']
+        ch_list = [ch for ch in picked_info['ch_names'] if not ch in bad_chs]
+        assert len(ch_list)>=n_samples, 'too many channels marked as bad,'\
+            'cannot perform interpolation with min_channels={self.min_channels}'
+            
+        # randomly sample subsets of good channels     
         ch_subsets = []
-        for pick in picks:
-            ch_subsets.append([picked_info['ch_names'][p] for p in pick])
-
+        for idx in range(self.n_resample):
+            picks = rng.choice(ch_list, size=n_samples, replace=False)
+            picks = [str(p) for p in picks] # convert from str-array to string
+            ch_subsets.append(picks)
+            
         return ch_subsets
 
     def _get_mappings(self, inst, ch_subsets):
@@ -149,11 +127,12 @@ class Ransac(object):
         pick_to = range(n_channels)
         mappings = []
         # Try different channel subsets
-        for idx in range(len(ch_subsets)):
+        for subset in _pbar(ch_subsets, desc='interpolating channels',
+                            verbose=self.verbose):
             # don't do the following as it will sort the channels!
             # pick_from = pick_channels(ch_names, ch_subsets[idx])
             pick_from = np.array([ch_names.index(name)
-                                  for name in ch_subsets[idx]])
+                                  for name in subset])
             mapping = np.zeros((n_channels, n_channels))
             if self.ch_type == 'meg':
                 mapping[:, pick_from] = _fast_map_meg_channels(
@@ -194,21 +173,32 @@ class Ransac(object):
         n_epochs = len(epochs)
 
         n_jobs = check_n_jobs(self.n_jobs)
-        parallel = Parallel(n_jobs, verbose=10)
-        my_iterator = delayed(_iterate_epochs)
-        if self.verbose is not False and self.n_jobs > 1:
-            print('Iterating epochs ...')
-        verbose = False if self.n_jobs > 1 else self.verbose
-        rng = check_random_state(self.random_state)
-        base_random_state = rng.randint(np.iinfo(np.int16).max)
-        self.ch_subsets_ = [self._get_random_subsets(
-                            epochs.info, base_random_state + random_state)
-                            for random_state in np.arange(0, n_epochs, n_jobs)]
-        epoch_idxs = np.array_split(np.arange(n_epochs), n_jobs)
-        corrs = parallel(my_iterator(self, epochs, idxs, chs, verbose)
-                         for idxs, chs in zip(epoch_idxs, self.ch_subsets_))
+        parallel = Parallel(n_jobs, verbose=10 if self.verbose else 0)
+
+        # create `n_resample` different random subsamples of channels,
+        # with each subsample set containing `min_channels` amount of 
+        # random channels from the list of all channels.
+        ch_subsets = self._get_random_subsets(epochs.info)
+        
+        # compute mappings with possibility of parallelization
+        n_splits = min(n_jobs, self.n_resample) #max n_resample splits possible
+        ch_subsets_split = np.array_split(ch_subsets, n_splits)
+        delayed_func = delayed(self._get_mappings)
+        # no random seed needs to be supplied to get_mappings, as there is
+        # no random subsampling happening here
+        mappings = parallel(delayed_func(epochs, ch_subset) for ch_subset
+                                                          in ch_subsets_split)
+        self.mappings_ = np.concatenate(mappings)
+        
+        # compute correlations with possibility of parallelization
+        delayed_func = delayed(self._iterate_epochs)
+        n_splits = min(n_jobs, n_epochs) # max n_epochs splits possible
+        epoch_idxs_splits = np.array_split(np.arange(n_epochs), n_splits)
+        corrs = parallel(delayed_func(epochs, idxs) for idxs
+                         in epoch_idxs_splits)
         self.corr_ = np.concatenate(corrs)
-        if self.verbose is not False and self.n_jobs > 1:
+        
+        if self.verbose is not False:
             print('[Done]')
 
         # compute how many windows is a sensor RANSAC-bad
