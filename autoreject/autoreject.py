@@ -210,7 +210,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     ch_types : str | list of str | None
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
-        will have keys ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr'].
+        will have keys ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr',
+        'ecog', 'seeg'].
     cv : int | sklearn.model_selection object
         Defaults to cv=5.
     verbose : bool
