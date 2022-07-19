@@ -234,7 +234,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
                          'or str. Got %s' % type(ch_types))
 
     if ch_types is None:
-        ch_types = ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr']
+        ch_types = ['mag', 'grad', 'eeg', 'eog', 'hbo', 'hbr', 'ecog', 'seeg']
     elif isinstance(ch_types, str):
         ch_types = [ch_types]
 
@@ -258,6 +258,10 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             picks = pick_types(epochs.info, meg='grad', eeg=False)
         elif ch_type in ['hbo', 'hbr']:
             picks = pick_types(epochs.info, meg=False, fnirs=ch_type)
+        elif ch_type == 'ecog':
+            picks = pick_types(epochs.info, ecog=True)
+        elif ch_type == 'seeg':
+            picks = pick_types(epochs.info, seeg=True)
 
         X = epochs.get_data()[:, picks, :]
         n_epochs, n_channels, n_times = X.shape
