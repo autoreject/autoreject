@@ -7,7 +7,6 @@ import numpy as np
 import mne
 from mne.datasets import sample
 from mne import io
-import pickle
 
 from autoreject import Ransac
 
