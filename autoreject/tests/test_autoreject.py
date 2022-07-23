@@ -358,9 +358,33 @@ def test_fnirs():
     assert len(epochs_clean) < len(epochs)
     # Test threshold extraction
     reject = get_rejection_threshold(epochs)
-    print(reject)
     assert "hbo" in reject.keys()
     assert "hbr" in reject.keys()
     assert reject["hbo"] < 0.001  # This is a very high value as sanity check
     assert reject["hbr"] < 0.001
     assert reject["hbr"] > 0.0
+
+
+def test_ecog():
+    """Test that autoreject runs on ECoG and sEEG data."""
+    misc_path = mne.datasets.misc.data_path()
+    raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
+    for ch_type in ['ecog', 'seeg']:
+        # setting the channel types
+        ch_dict = {ch: ch_type for ch in raw.ch_names}
+        raw.set_channel_types(ch_dict)
+
+        # make events
+        events = np.arange(1315, 1365, 2, dtype=int) * 1000  # in samples
+        events = np.array([[e, 0, 0] for e in events])
+        epochs = mne.Epochs(raw, events, event_id=0,
+                            tmin=-1, tmax=1, baseline=None, verbose=True)
+        epochs.load_data()
+        n1 = len(epochs)
+        reject = get_rejection_threshold(epochs)
+        epochs.drop_bad(reject=reject)
+        n2 = len(epochs)
+        assert ch_type in reject.keys()
+        assert reject[ch_type] > 0.0
+        assert reject[ch_type] < 0.01
+        assert n2 < n1
