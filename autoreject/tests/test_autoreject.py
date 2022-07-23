@@ -358,7 +358,6 @@ def test_fnirs():
     assert len(epochs_clean) < len(epochs)
     # Test threshold extraction
     reject = get_rejection_threshold(epochs)
-    print(reject)
     assert "hbo" in reject.keys()
     assert "hbr" in reject.keys()
     assert reject["hbo"] < 0.001  # This is a very high value as sanity check
@@ -383,7 +382,6 @@ def test_ecog():
         epochs.load_data()
         n1 = len(epochs)
         reject = get_rejection_threshold(epochs)
-        print(reject)
         epochs.drop_bad(reject=reject)
         n2 = len(epochs)
         assert ch_type in reject.keys()
