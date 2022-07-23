@@ -18,7 +18,6 @@ import mne
 from mne.datasets import sample
 from mne import io
 from mne.utils import _TempDir
-from mne_bids import BIDSPath, read_raw_bids
 
 from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
@@ -370,23 +369,18 @@ def test_fnirs():
 def test_ecog():
     """
     Test that autoreject runs on ECoG data.
-    inspired by https://mne.tools/stable/auto_tutorials/clinical/30_ecog.html
+    inspired by https://mne.tools/stable/auto_tutorials/clinical/20_seeg.html
     """
-    # paths to mne datasets - sample ECoG
-    bids_root = mne.datasets.epilepsy_ecog.data_path()
-    # define the bids path
-    bids_path = BIDSPath(root=bids_root, subject='pt1', session='presurgery',
-                         task='ictal', datatype='ieeg', extension='vhdr')
+    misc_path = mne.datasets.misc.data_path()
+    raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
 
-    # load the sample dataset
-    # Here we use a format (iEEG) that is only available in MNE-BIDS 0.7+, so it
-    # will emit a warning on versions <= 0.6
-    raw = read_raw_bids(bids_path=bids_path, verbose=False)
-    # print('bads:', raw.info['bads'])
-    raw.drop_channels(raw.info['bads'])
+    # changing channel types from seeg to ecog
+    ch_dict = {ch: 'ecog' for ch in raw.ch_names}
+    raw.set_channel_types(ch_dict)
+    # raw.drop_channels(raw.info['bads'])
 
     # make events
-    events = np.arange(5, 55, 2, dtype=int) * 1000  # in samples
+    events = np.arange(1315, 1365, 2, dtype=int) * 1000  # in samples
     events = np.array([[e, 0, 0] for e in events])
     epochs = mne.Epochs(raw, events, event_id=0,
                         tmin=-1, tmax=1, baseline=None, verbose=True)
@@ -400,6 +394,7 @@ def test_ecog():
     assert reject["ecog"] > 0.0
     assert reject["ecog"] < 0.01
     assert n2 < n1
+
 
 def test_seeg():
     """
