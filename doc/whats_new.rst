@@ -24,6 +24,8 @@ Changelog
 - Add :meth:`autoreject.RejectLog.save` and :func:`autoreject.read_reject_log` to
   save and load reject logs, by `Alex Rockhill`_ in :github:`#270`
 
+- ``get_rejection_threshold`` now also accepts ECoG and SEEG data by `Nikolai Chapochnikov`_ in :github:`#281`
+
 .. _0.3:
 
 0.3 (2022-01-04)
@@ -100,3 +102,4 @@ Changelog
 .. _Patrick Stetz: https://patrickstetz.com
 .. _Stefan Appelhoff: https://stefanappelhoff.com/
 .. _Alex Rockhill: https://github.com/alexrockhill
+.. _Nikolai Chapochnikov: https://github.com/chapochn
