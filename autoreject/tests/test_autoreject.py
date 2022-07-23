@@ -367,9 +367,7 @@ def test_fnirs():
 
 
 def test_ecog():
-    """Test that autoreject runs on ECoG and sEEG data.
-    inspired by https://mne.tools/stable/auto_tutorials/clinical/20_seeg.html
-    """
+    """Test that autoreject runs on ECoG and sEEG data."""
     misc_path = mne.datasets.misc.data_path()
     raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
     for ch_type in ['ecog', 'seeg']:
