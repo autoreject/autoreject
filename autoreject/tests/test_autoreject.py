@@ -367,57 +367,28 @@ def test_fnirs():
 
 
 def test_ecog():
-    """
-    Test that autoreject runs on ECoG data.
+    """Test that autoreject runs on ECoG and sEEG data.
     inspired by https://mne.tools/stable/auto_tutorials/clinical/20_seeg.html
     """
     misc_path = mne.datasets.misc.data_path()
     raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
+    for ch_type in ['ecog', 'seeg']:
+        # setting the channel types
+        ch_dict = {ch: ch_type for ch in raw.ch_names}
+        raw.set_channel_types(ch_dict)
 
-    # changing channel types from seeg to ecog
-    ch_dict = {ch: 'ecog' for ch in raw.ch_names}
-    raw.set_channel_types(ch_dict)
-    # raw.drop_channels(raw.info['bads'])
-
-    # make events
-    events = np.arange(1315, 1365, 2, dtype=int) * 1000  # in samples
-    events = np.array([[e, 0, 0] for e in events])
-    epochs = mne.Epochs(raw, events, event_id=0,
-                        tmin=-1, tmax=1, baseline=None, verbose=True)
-    epochs.load_data()
-    n1 = len(epochs)
-    reject = get_rejection_threshold(epochs)
-    print(reject)
-    epochs.drop_bad(reject=reject)
-    n2 = len(epochs)
-    assert "ecog" in reject.keys()
-    assert reject["ecog"] > 0.0
-    assert reject["ecog"] < 0.01
-    assert n2 < n1
-
-
-def test_seeg():
-    """
-    Test that autoreject runs on sEEG data.
-    inspired by https://mne.tools/stable/auto_tutorials/clinical/20_seeg.html
-    """
-    misc_path = mne.datasets.misc.data_path()
-    raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
-    print('bads:', raw.info['bads'])
-    # raw.drop_channels(raw.info['bads'])
-
-    # make events
-    events = np.arange(1315, 1365, 2, dtype=int) * 1000  # in samples
-    events = np.array([[e, 0, 0] for e in events])
-    epochs = mne.Epochs(raw, events, event_id=0,
-                        tmin=-1, tmax=1, baseline=None, verbose=True)
-    epochs.load_data()
-    n1 = len(epochs)
-    reject = get_rejection_threshold(epochs)
-    print(reject)
-    epochs.drop_bad(reject=reject)
-    n2 = len(epochs)
-    assert "seeg" in reject.keys()
-    assert reject["seeg"] > 0.0
-    assert reject["seeg"] < 0.01
-    assert n2 < n1
+        # make events
+        events = np.arange(1315, 1365, 2, dtype=int) * 1000  # in samples
+        events = np.array([[e, 0, 0] for e in events])
+        epochs = mne.Epochs(raw, events, event_id=0,
+                            tmin=-1, tmax=1, baseline=None, verbose=True)
+        epochs.load_data()
+        n1 = len(epochs)
+        reject = get_rejection_threshold(epochs)
+        print(reject)
+        epochs.drop_bad(reject=reject)
+        n2 = len(epochs)
+        assert ch_type in reject.keys()
+        assert reject[ch_type] > 0.0
+        assert reject[ch_type] < 0.01
+        assert n2 < n1
