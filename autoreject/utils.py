@@ -469,3 +469,29 @@ def _patch_setup_dots(mode, info, coils, ch):
         return _setup_dots(mode, coils, ch)
     else:
         return _setup_dots(mode, info, coils, ch)
+
+
+def _get_channel_type(epochs, picks):
+    """return whether a set of picks are all meg or all eeg channels."""
+    picked_info = mne.io.pick.pick_info(epochs.info, picks)
+    ch_types_picked = {
+        mne.io.meas_info.channel_type(picked_info, idx)
+        for idx in range(len(picks))}
+    invalid_ch_types_present = [key for key in ch_types_picked
+                                if key not in ['mag', 'grad', 'eeg'] and
+                                key in epochs]
+    if len(invalid_ch_types_present) > 0:
+        raise ValueError('Invalid channel types present in epochs.'
+                         ' Expected ONLY `meg` or ONLY `eeg`. Got %s'
+                         % ', '.join(invalid_ch_types_present))
+
+    has_meg = any(kk in ch_types_picked for kk in ('mag', 'grad'))
+    if 'eeg' in ch_types_picked and has_meg:
+        raise ValueError('Got mixed channel types. Pick either eeg or meg'
+                         ' but not both')
+    if 'eeg' in ch_types_picked:
+        return 'eeg'
+    elif has_meg:
+        return 'meg'
+    else:
+        raise ValueError('Oh no! Your channel type is not known.')
