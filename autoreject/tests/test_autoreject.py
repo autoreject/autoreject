@@ -388,3 +388,9 @@ def test_ecog():
         assert reject[ch_type] > 0.0
         assert reject[ch_type] < 0.01
         assert n2 < n1
+
+        # testing that compute_thresholds is working without location data
+        epochs.set_montage(None)
+        rejects = compute_thresholds(epochs, augment=False)
+        assert set(rejects.keys()) == set(raw.ch_names)
+

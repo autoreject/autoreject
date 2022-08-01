@@ -15,6 +15,9 @@ What's new?
 Changelog
 ~~~~~~~~~
 
+- ``compute_thresholds`` now works without channel location data with option
+  ``augment=False`` by `Nikolai Chapochnikov`_ in :github:`#282`
+
 - ``get_rejection_threshold`` now also accepts ECoG and SEEG data by `Nikolai Chapochnikov`_ in :github:`#281`
 
 - RANSAC implementation was refactored, works now with `n_jobs>1` and produces consistent results across different number of jobs. Testing on simulated data added. by `Simon Kern`_ in :github:`#280`
