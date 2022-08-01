@@ -48,17 +48,15 @@ def _check_data(epochs, picks, ch_constraint='data_channels', check_loc=True,
                            'for autoreject to work')
 
     # XXX : ch_constraint -> allow_many_types=True | False
+    supported_channels = ['mag', 'grad', 'eeg', 'hbo', 'hbr', 'ecog', 'seeg']
+    channel_text = ', '.join(x for x in supported_channels)
+    message = f'AutoReject only supports {channel_text} currenly.'
     if ch_constraint == 'data_channels':
-        if not all(ch in ('mag', 'grad', 'eeg', 'hbo', 'hbr', 'ecog', 'seeg')
-                   for ch in ch_types_picked):
-            raise ValueError('AutoReject only supports mag, grad, eeg, and '
-                             'ecog at this point.')
+        if not all(ch in supported_channels for ch in ch_types_picked):
+            raise ValueError(message)
     elif ch_constraint == 'single_channel_type':
-        if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg',
-                                                'hbo', 'hbr', 'ecog', 'seeg'))\
-                > 1:
-            raise ValueError('AutoReject only supports mag, grad, eeg, and '
-                             'ecog at this point.')  # XXX: to check
+        if sum(ch in ch_types_picked for ch in supported_channels) > 1:
+            raise ValueError(message)  # XXX: to check
     else:
         raise ValueError('bad value for ch_constraint.')
 
