@@ -28,7 +28,7 @@ def _check_ch_locs(chs):
                 np.allclose(locs3d, 0.))
 
 
-def _check_data(epochs, picks, ch_constraint='data_channels',
+def _check_data(epochs, picks, ch_constraint='data_channels', check_loc=True,
                 verbose=True):
     BaseEpochs = _get_epochs_type()
     if not isinstance(epochs, BaseEpochs):
@@ -43,21 +43,22 @@ def _check_data(epochs, picks, ch_constraint='data_channels',
         mne.io.meas_info.channel_type(picked_info, idx)
         for idx in range(len(picks))}
 
-    if not _check_ch_locs(picked_info['chs']):
+    if check_loc and not _check_ch_locs(picked_info['chs']):
         raise RuntimeError('Valid channel positions are needed '
                            'for autoreject to work')
 
     # XXX : ch_constraint -> allow_many_types=True | False
     if ch_constraint == 'data_channels':
-        if not all(ch in ('mag', 'grad', 'eeg', 'hbo', 'hbr')
+        if not all(ch in ('mag', 'grad', 'eeg', 'hbo', 'hbr', 'ecog', 'seeg')
                    for ch in ch_types_picked):
-            raise ValueError('AutoReject only supports mag, grad, and eeg '
-                             'at this point.')
+            raise ValueError('AutoReject only supports mag, grad, eeg, and '
+                             'ecog at this point.')
     elif ch_constraint == 'single_channel_type':
         if sum(ch in ch_types_picked for ch in ('mag', 'grad', 'eeg',
-                                                'hbo', 'hbr')) > 1:
-            raise ValueError('AutoReject only supports mag, grad, and eeg '
-                             'at this point.')  # XXX: to check
+                                                'hbo', 'hbr', 'ecog', 'seeg'))\
+                > 1:
+            raise ValueError('AutoReject only supports mag, grad, eeg, and '
+                             'ecog at this point.')  # XXX: to check
     else:
         raise ValueError('bad value for ch_constraint.')
 
@@ -73,7 +74,7 @@ def _handle_picks(info, picks):
     """Pick the data channls or return picks."""
     if picks is None:
         out = mne.pick_types(info, meg=True, eeg=True, ref_meg=False,
-                             fnirs=True, exclude='bads')
+                             fnirs=True, ecog=True, seeg=True, exclude='bads')
     else:
         out = _picks_to_idx(info, picks, exclude='bads')
     return out

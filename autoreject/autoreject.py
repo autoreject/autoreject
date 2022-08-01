@@ -449,7 +449,7 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
     if method not in ['bayesian_optimization', 'random_search']:
         raise ValueError('`method` param not recognized')
     picks = _handle_picks(info=epochs.info, picks=picks)
-    _check_data(epochs, picks, verbose=verbose,
+    _check_data(epochs, picks, verbose=verbose, check_loc=augment,
                 ch_constraint='data_channels')
     picks_by_type = _get_picks_by_type(picks=picks, info=epochs.info)
     picks_by_type = None if len(picks_by_type) == 1 else picks_by_type  # XXX
