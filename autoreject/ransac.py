@@ -13,7 +13,7 @@ from joblib import Parallel, delayed
 
 import mne
 from mne.channels.interpolation import _make_interpolation_matrix
-from mne.parallel import check_n_jobs
+from mne.parallel import parallel_func
 from mne.utils import check_random_state
 
 from .utils import _pbar, _handle_picks
@@ -193,7 +193,7 @@ class Ransac(object):
         self.ch_type = _get_channel_type(epochs, self.picks)
         n_epochs = len(epochs)
 
-        n_jobs = check_n_jobs(self.n_jobs)
+        _, _, n_jobs = parallel_func(self._get_mappings, self.n_jobs)
         parallel = Parallel(n_jobs, verbose=10 if self.verbose else 0)
 
         # create `n_resample` different random subsamples of channels,
