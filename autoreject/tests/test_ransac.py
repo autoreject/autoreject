@@ -1,6 +1,5 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD-3-Clause
-import os
 import pytest
 
 import numpy as np
@@ -88,9 +87,9 @@ def test_ransac_multiprocessing():
     noisy_idx = rng.choice(mag_idx, 5, replace=False)
     noisy_idx = sorted(noisy_idx)
 
-    times = np.arange(0, epochs.tmax-epochs.tmin + 1/epochs.info['sfreq'],
-                      1/epochs.info['sfreq'])
-    sinewave = 10 * np.sin(2*np.pi*50*times)
+    times = np.arange(0, epochs.tmax - epochs.tmin + 1 / epochs.info['sfreq'],
+                      1 / epochs.info['sfreq'])
+    sinewave = 10 * np.sin(2 * np.pi * 50 * times)
 
     epochs._data[:, noisy_idx, :] *= sinewave
 

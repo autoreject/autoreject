@@ -393,4 +393,3 @@ def test_ecog():
         epochs.set_montage(None)
         rejects = compute_thresholds(epochs, augment=False)
         assert set(rejects.keys()) == set(raw.ch_names)
-
