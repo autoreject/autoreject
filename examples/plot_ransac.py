@@ -34,14 +34,14 @@ from mne.datasets import sample
 # Let us now read in the raw `fif` file for MNE sample dataset.
 
 data_path = sample.data_path()
-raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+meg_path = data_path / 'MEG' / 'sample'
+raw_fname = meg_path / 'sample_audvis_filt-0-40_raw.fif'
 raw = io.read_raw_fif(raw_fname, preload=True)
 
 ###############################################################################
 # We can then read in the events
 
-event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
-                           'eve.fif')
+event_fname = meg_path / 'sample_audvis_filt-0-40_raw-eve.fif'
 event_id = {'Auditory/Left': 1}
 tmin, tmax = -0.2, 0.5
 

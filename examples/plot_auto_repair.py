@@ -53,14 +53,14 @@ from autoreject import (AutoReject, set_matplotlib_defaults)  # noqa
 check_random_state(42)
 
 data_path = sample.data_path()
-raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+meg_path = data_path / 'MEG' / 'sample'
+raw_fname = meg_path / 'sample_audvis_filt-0-40_raw.fif'
 raw = mne.io.read_raw_fif(raw_fname, preload=True)
 
 # %%
 # We can then read in the events
 
-event_fname = data_path + ('/MEG/sample/sample_audvis_filt-0-40_raw-'
-                           'eve.fif')
+event_fname = meg_path / 'sample_audvis_filt-0-40_raw-eve.fif'
 event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}
 tmin, tmax = -0.2, 0.5
 

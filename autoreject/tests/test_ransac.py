@@ -11,12 +11,12 @@ from autoreject import Ransac
 
 import matplotlib
 matplotlib.use('Agg')
+data_path = sample.data_path()
+raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_filt-0-40_raw.fif'
 
 
 def test_ransac():
     """Some basic tests for ransac."""
-    data_path = sample.data_path()
-    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     raw = io.read_raw_fif(raw_fname, preload=False)
     raw.crop(0, 15)
     raw.del_proj()
@@ -66,8 +66,6 @@ def test_ransac_multiprocessing():
     test on real data with 5 random channels augmented with strong
     50 Hz line noise.
     """
-    data_path = sample.data_path()
-    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     raw = io.read_raw_fif(raw_fname, preload=False)
 
     raw.del_proj()
