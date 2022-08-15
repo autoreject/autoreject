@@ -19,7 +19,7 @@ raw = io.read_raw_fif(raw_fname, preload=False)
 raw.crop(0, 15)
 raw.del_proj()
 
-evoked_fname = data_path + '/MEG/sample/sample_audvis-ave.fif'
+evoked_fname = data_path / 'MEG' / 'sample' / 'sample_audvis-ave.fif'
 evoked = mne.read_evokeds(evoked_fname, condition='Left Auditory',
                           baseline=(None, 0))
 
