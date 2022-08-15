@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 data_path = sample.data_path()
-raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_filt-0-40_raw.fif'
 raw = io.read_raw_fif(raw_fname, preload=False)
 raw.crop(0, 15)
 raw.del_proj()
