@@ -1428,7 +1428,7 @@ class RejectLog(object):
         return plot_mne_epochs(
             epochs=epochs,
             epoch_colors=epoch_colors, scalings=scalings,
-            title='')
+            title=title)
 
     def save(self, fname, overwrite=False):
         """Save a reject log.
