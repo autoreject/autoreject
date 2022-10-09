@@ -9,7 +9,7 @@ What's new?
 
 .. _0.4:
 
-0.4 (unreleased)
+0.4 (2022-10-09)
 ----------------
 
 Changelog
