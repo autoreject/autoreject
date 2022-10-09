@@ -7,6 +7,13 @@ What's new?
 
 .. currentmodule:: autoreject
 
+.. _0.5:
+
+0.5 (unreleased)
+----------------
+
+- Nothing yet
+
 .. _0.4:
 
 0.4 (2022-10-09)
