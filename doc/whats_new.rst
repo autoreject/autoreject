@@ -24,17 +24,13 @@ Changelog
 
 - ``compute_thresholds`` now works without channel location data with option
   ``augment=False`` by `Nikolai Chapochnikov`_ in :github:`#282`
-
 - ``get_rejection_threshold`` now also accepts ECoG and SEEG data by `Nikolai Chapochnikov`_ in :github:`#281`
-
-- RANSAC implementation was refactored, works now with `n_jobs>1` and produces consistent results across different number of jobs. Testing on simulated data added. by `Simon Kern`_ in :github:`#280`
-
+- RANSAC implementation was refactored, works now with `n_jobs>1` and produces consistent results across different number of jobs.
+  Testing on simulated data added. by `Simon Kern`_ in :github:`#280`
 - ``autoreject`` now requires ``mne >= 1.0``, by `Mainak Jas`_, `Alex Gramfort`_, and `Stefan Appelhoff`_ in :github:`#267` and :github:`#268`
-
 - Add ``reject_log`` option to :meth:`autoreject.AutoReject.transform` to enable
   users to make corrections to ``reject_log`` estimated by autoreject, by `Alex Rockhill`
-  in :github:`#270` 
-
+  in :github:`#270`
 - Add :meth:`autoreject.RejectLog.save` and :func:`autoreject.read_reject_log` to
   save and load reject logs, by `Alex Rockhill`_ in :github:`#270`
 
