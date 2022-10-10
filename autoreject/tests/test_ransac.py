@@ -9,8 +9,6 @@ from mne import io
 
 from autoreject import Ransac
 
-pytest_plugins = "mne.conftest"
-
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 

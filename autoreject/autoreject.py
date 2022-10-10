@@ -1014,7 +1014,7 @@ class AutoReject:
             meg_picks = pick_types(epochs.info, meg=True,
                                    eeg=False, exclude=[])
             this_info = mne.pick_info(epochs.info, meg_picks, copy=True)
-            self.dots = _compute_dots(this_info)
+            self.dots = _compute_dots(this_info, templates=None)
 
         thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,

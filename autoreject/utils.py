@@ -385,13 +385,14 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
     _do_interp_dots(inst, mapping, picks_good_, picks_bad_orig)
 
 
-def _compute_dots(info, mode='fast'):
+def _compute_dots(info, mode='fast', *, templates):
     """Compute all-to-all dots."""
     from mne.forward._lead_dots import _do_self_dots, _do_cross_dots
     from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
     from mne.bem import _check_origin
 
-    templates = _read_coil_defs()
+    if templates is None:
+        templates = _read_coil_defs(verbose='error')
     coils = _create_meg_coils(info['chs'], 'normal', info['dev_head_t'],
                               templates)
     my_origin = _check_origin((0., 0., 0.04), info)
@@ -423,7 +424,7 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     miss = 1e-4  # Smoothing criterion for MEG
 
     info_from = pick_info(info, pick_from, copy=True)
-    templates = _read_coil_defs()
+    templates = _read_coil_defs(verbose='error')
     coils_from = _create_meg_coils(info_from['chs'], 'normal',
                                    info_from['dev_head_t'], templates)
     my_origin = _check_origin((0., 0., 0.04), info_from)
@@ -433,7 +434,8 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
     if dots is None:
-        dots = self_dots, cross_dots = _compute_dots(info, mode=mode)
+        dots = self_dots, cross_dots = _compute_dots(
+            info, mode=mode, templates=templates)
     else:
         self_dots, cross_dots = dots
 

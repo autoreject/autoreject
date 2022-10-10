@@ -25,8 +25,6 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
-pytest_plugins = "mne.conftest"
-
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 
