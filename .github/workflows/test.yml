@@ -1,0 +1,129 @@
+name: test
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  create:
+    branches: [master]
+    tags: ['**']
+  schedule:
+    - cron: "0 4 * * *"
+
+jobs:
+  style:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e.[test]
+    - name: Display versions and environment information
+      run: |
+        python --version
+        which python
+    - name: Run style & documentation tests
+      run: |
+        flake8 autoreject
+        check-manifest --ignore .circleci/*,doc
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.7, 3.8]
+
+    steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Update pip and wheel
+      run: python -m pip install --upgrade pip wheel
+
+    - uses: actions/checkout@v2
+    - name: Build sdist
+      run: python setup.py sdist
+    - name: Install sdist
+      run: pip install ./dist/autoreject-*
+    - name: Clean up working directory
+      run: rm -rf ./*
+    - name: Try importing autoreject
+      run: python -c 'import autoreject; print(autoreject.__version__)'
+    - name: Remove sdist install
+      run: pip uninstall -y autoreject
+
+    - uses: actions/checkout@v2
+    - name: Build wheel
+      run: python setup.py bdist_wheel
+    - name: Install wheel
+      run: pip install ./dist/autoreject-*.whl
+    - name: Clean up working directory
+      run: rm -rf ./*
+    - name: Try importing autoreject
+      run: python -c 'import autoreject; print(autoreject.__version__)'
+    - name: Remove wheel install
+      run: pip uninstall -y autoreject
+
+    - uses: actions/checkout@v2
+    - name: Test extras install
+      run: |
+        pip install .
+        python -c 'import autoreject; print(autoreject.__version__)'
+        python -c 'import tqdm; print(tqdm.__version__)'
+        python -c 'import h5io; print(h5io.__version__)'
+
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.7, 3.8]
+        mne-version: [stable, main]
+    env:
+      TZ: Europe/Berlin
+      FORCE_COLOR: true
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install autoreject
+      run: |
+        pip install -e .[test]
+    - name: Install mne (master|stable)
+      if: "matrix.os == 'ubuntu-latest'"
+      run: pip install https://api.github.com/repos/mne-tools/mne-python/zipball/main;
+    - name: Display versions and environment information
+      run: |
+        echo $TZ
+        date
+        python --version
+        which python
+        mne sys_info
+    - name: Run pytest
+      run: |
+        python -m pytest . --cov=autoreject autoreject/tests/ --cov-report=xml --cov-config=setup.cfg --verbose
+    - name: Upload coverage stats to codecov
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8 && matrix.mne-version == 'stable' }}
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml

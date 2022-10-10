@@ -1,9 +1,13 @@
+.vscode/
+htmlcov
+coverage.xml
 *.pyc
 *.so
 *.pyd
 *~
 .#*
 *.lprof
+*.orig
 *.swp
 *.swo
 .DS_Store
@@ -25,3 +29,5 @@ autoreject.egg-info/
 .tags
 tags
 .coverage
+
+/examples/ds117/

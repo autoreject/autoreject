@@ -1,54 +1,52 @@
+:orphan:
+
 .. _api_documentation:
 
 =================
 API Documentation
 =================
 
-.. currentmodule:: autoreject
-
 Epochs rejection
 ================
 
-Classes
+.. automodule:: autoreject
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: autoreject
+
+Classes:
 
 .. autosummary::
    :toctree: generated/
 
-   GlobalAutoReject
-   LocalAutoReject
-   LocalAutoRejectCV
+   AutoReject
+   RejectLog
    Ransac
 
-Functions
+Functions:
 
 .. autosummary::
    :toctree: generated/
 
    compute_thresholds
+   get_rejection_threshold
+   read_auto_reject
+   read_reject_log
    validation_curve
-
-
-Visualization
-=============
-
-Functions
-
-.. currentmodule:: autoreject.viz
-
-.. autosummary::
-   :toctree: generated/
-
-   plot_epochs
 
 Utilities
 =========
 
-Functions
+.. automodule:: autoreject.utils
+   :no-members:
+   :no-inherited-members:
 
 .. currentmodule:: autoreject.utils
+
+Functions:
 
 .. autosummary::
    :toctree: generated/
 
-   fetch_file
    set_matplotlib_defaults

@@ -1,16 +1,27 @@
-#! /usr/bin/env python
-import setuptools  # noqa; we are using a setuptools namespace
-from numpy.distutils.core import setup
+"""Setup autoreject."""
 
-descr = """Automated rejection and repair of epochs in M/EEG."""
+import os
+
+from setuptools import find_packages, setup
+
+# get the version (don't import autoreject here to avoid dependency)
+version = None
+with open(os.path.join('autoreject', '__init__.py'), 'r') as fid:
+    for line in (line.strip() for line in fid):
+        if line.startswith('__version__'):
+            version = line.split('=')[1].strip().strip('\'')
+            break
+if version is None:
+    raise RuntimeError('Could not determine version')
 
 DISTNAME = 'autoreject'
-DESCRIPTION = descr
+DESCRIPTION = 'Automated rejection and repair of epochs in M/EEG.'
 MAINTAINER = 'Mainak Jas'
 MAINTAINER_EMAIL = 'mainakjas@gmail.com'
-LICENSE = 'BSD (3-clause)'
+LICENSE = 'BSD-3-Clause'
+URL = 'http://autoreject.github.io/'
 DOWNLOAD_URL = 'https://github.com/autoreject/autoreject.git'
-VERSION = '0.1.dev0'
+VERSION = version
 
 if __name__ == "__main__":
     setup(name=DISTNAME,
@@ -19,8 +30,10 @@ if __name__ == "__main__":
           description=DESCRIPTION,
           license=LICENSE,
           version=VERSION,
+          url=URL,
           download_url=DOWNLOAD_URL,
           long_description=open('README.rst').read(),
+          long_description_content_type='text/x-rst',
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
@@ -32,9 +45,44 @@ if __name__ == "__main__":
               'Operating System :: POSIX',
               'Operating System :: Unix',
               'Operating System :: MacOS',
+              'Programming Language :: Python :: 3',
           ],
           platforms='any',
-          packages=[
-              'autoreject'
+          keywords=('electroencephalography eeg magnetoencephalography '
+                    'meg preprocessing analysis'),
+          python_requires='~=3.7',
+          install_requires=[
+              'numpy >= 1.20',
+              'scipy >= 1.6',
+              'mne[hdf5] >= 1.0',
+              'scikit-learn >= 0.24',
+              'joblib',
+              'matplotlib >= 3.3',
           ],
+          extras_require={
+              'test': [
+                  'pytest',
+                  'pytest-cov',
+                  'pytest-sugar',
+                  'check-manifest',
+                  'flake8',
+              ],
+              'doc': [
+                  'sphinx',
+                  'sphinx-gallery',
+                  'sphinx_bootstrap_theme',
+                  'sphinx-copybutton',
+                  'sphinx-github-role',
+                  'numpydoc',
+                  'cython',
+                  'pillow',
+                  'openneuro-py >= 2021.10.1',
+              ]
+          },
+          packages=find_packages(),
+          project_urls={
+              'Documentation': 'http://autoreject.github.io/',
+              'Bug Reports': 'https://github.com/autoreject/autoreject/issues',
+              'Source': 'https://github.com/autoreject/autoreject'
+          }
           )

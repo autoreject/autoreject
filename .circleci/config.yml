@@ -1,0 +1,111 @@
+version: 2.1
+jobs:
+    build:
+        machine:
+            image: ubuntu-2004:202111-01
+        steps:
+            - checkout
+            - restore_cache:
+                keys:
+                  - data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+            - run:
+                name: Setup python3 environment
+                command: |
+                    python3 -m venv /home/circleci/autoreject_env
+                    echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
+            - run:
+                name: Install packages
+                command: |
+                    python3 -m pip install --progress-bar off --upgrade pip setuptools wheel psutil
+                    python3 -m pip install --progress-bar off -e .[doc]
+            - run:
+                name: Print system information
+                command: |
+                    date
+                    python3 --version
+                    which python3
+                    pip3 --version
+                    which pip3
+                    mne sys_info
+                    which mne
+            - run:
+                name: Download MNE sample data
+                command: |
+                  python3 -c "import mne; mne.datasets.sample.data_path()"
+            - run:
+                name: Build the documentation
+                command: |
+                    cd ~/project/doc
+                    make html
+                no_output_timeout: 2h
+
+            - persist_to_workspace:
+                root: ./doc/_build
+                paths: html
+
+            - store_artifacts:
+                path: ./doc/_build/html/
+                destination: html
+            - save_cache:
+                key: data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                paths:
+                  - ~/.mne
+                  - ~/mne_data/MNE-sample-data
+                  - ~/project/examples/ds000117
+
+    docs-deploy:
+        # will only be run on master branch
+        docker:
+          - image: cimg/node:lts
+        steps:
+          - checkout
+
+          - attach_workspace:
+              at: doc/_build
+
+          - run:
+              name: Install and configure dependencies
+              # do not update gh-pages above 3.0.0
+              # see: https://github.com/tschaub/gh-pages/issues/354
+              command: |
+                npm install gh-pages@3.0.0
+                git config --global user.email "circle@autoreject.com"
+                git config --global user.name "Circle Ci"
+          - add_ssh_keys:
+              fingerprints:
+                - "a1:ff:0f:40:b6:23:8f:64:40:5e:70:11:6d:ca:b3:d8"
+
+          - run:
+              # push built docs directory on the `gh-pages` branch
+              name: Deploy docs to gh-pages branch
+              command: |
+                touch doc/_build/html/.nojekyll
+                node_modules/gh-pages/bin/gh-pages.js \
+                    --dotfiles \
+                    --message "doc updates [skip ci]" \
+                    --repo="https://github.com/autoreject/autoreject.github.io" \
+                    --branch master \
+                    --dist doc/_build/html \
+                    --dest ./dev
+
+workflows:
+  commit:
+    jobs:
+      - build
+      - docs-deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+
+  weekly:
+    jobs:
+      - build
+    triggers:
+      - schedule:
+          cron: "0 4 * * 0"
+          filters:
+            branches:
+              only:
+                - master
