@@ -25,7 +25,7 @@ def test_utils():
     raw.crop(0, 15)
     raw.del_proj()
     evoked = mne.read_evokeds(evoked_fname, condition='Left Auditory',
-                            baseline=(None, 0))
+                              baseline=(None, 0))
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
