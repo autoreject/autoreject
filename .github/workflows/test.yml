@@ -127,18 +127,17 @@ jobs:
       working-directory: mne-python
       shell: bash
       name: 'Get testing version'
-
     - uses: actions/cache@v3
       with:
         key: ${{ env.TESTING_VERSION }}
         path: ~/mne_data
       name: 'Cache testing data'
-
     - run: ./tools/github_actions_download.sh
       shell: bash
       working-directory: mne-python
 
     - name: Run pytest
+      shell: bash
       run: |
         pytest --cov=autoreject --cov-report=xml --cov-config=setup.cfg -v autoreject/
     - name: Upload coverage stats to codecov

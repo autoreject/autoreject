@@ -121,7 +121,12 @@ def test_ransac_multiprocessing():
     corrs = dict()
     bad_chs = dict()
 
-    for n_jobs in [1, 2, 3]:
+    if sys.platform.startswith("win"):
+        use_jobs = [1]  # joblib unpickling issues on Windows
+    else:
+        use_jobs = [1, 2, 3]
+
+    for n_jobs in use_jobs:
         ransac = Ransac(picks=mag_idx, random_state=np.random.RandomState(42),
                         n_jobs=n_jobs, n_resample=50)
         with pytest.warns(UserWarning, match='2 channels are marked as'):
