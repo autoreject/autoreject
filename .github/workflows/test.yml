@@ -20,9 +20,9 @@ jobs:
         python-version: [3.8]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -48,14 +48,14 @@ jobs:
 
     steps:
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Update pip and wheel
       run: python -m pip install --upgrade pip wheel
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build sdist
       run: python setup.py sdist
     - name: Install sdist
@@ -67,7 +67,7 @@ jobs:
     - name: Remove sdist install
       run: pip uninstall -y autoreject
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Build wheel
       run: python setup.py bdist_wheel
     - name: Install wheel
@@ -79,7 +79,7 @@ jobs:
     - name: Remove wheel install
       run: pip uninstall -y autoreject
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Test extras install
       run: |
         pip install .
@@ -101,9 +101,9 @@ jobs:
       FORCE_COLOR: true
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install autoreject

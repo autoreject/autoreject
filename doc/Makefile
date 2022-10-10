@@ -1,7 +1,7 @@
 # Makefile for Sphinx documentation
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -vT
+SPHINXOPTS    = -nWT --keep-going
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = autoreject
 PAPER         =
