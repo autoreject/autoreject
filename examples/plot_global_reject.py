@@ -46,7 +46,7 @@ param_range = np.linspace(40e-6, 200e-6, 30)
 ###############################################################################
 # Next, we can use :func:`autoreject.validation_curve` to compute the Root Mean
 # Squared (RMSE) values at the candidate thresholds. Under the hood, this is
-# using  :class:`autoreject._GlobalAutoReject` to find global (i.e., for all
+# using  ``autoreject._GlobalAutoReject`` to find global (i.e., for all
 # channels) peak-to-peak thresholds.
 
 from autoreject import validation_curve  # noqa

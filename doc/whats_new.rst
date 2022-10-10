@@ -45,7 +45,7 @@ Changelog
 - Make plotting of reject log more flexible by allowing to change the orientation of plot,
   option to supress the immediate display of the plot and returning the plot figure for further
   modification or saving in :meth:`autoreject.RejectLog.plot`, by `Marcin Koculak`_ in :github:`#152`
-- Add `show_names` option to :func:`autoreject.RejectLog.plot,` by `Mainak Jas`_ in :github:`#209`
+- Add `show_names` option to :meth:`autoreject.RejectLog.plot,` by `Mainak Jas`_ in :github:`#209`
 - Enable support for fNIRS data types, by `Robert Luke`_ in :github:`#177`
 - Add additional type support for argument `picks`, by `Mathieu Scheltienne`_ in :github:`#225`
 - Use MNE progressbar, by `Patrick Stetz`_ in :github:`#227`
@@ -79,7 +79,7 @@ Bug
 ~~~
 
 - Fixed bug in picking bad channels during interpolation. This bug only affects users who got an assertion
-  error when running :class:`autoreject.Autoreject`, by `Mainak Jas`_ in :github:`#115`
+  error when running :class:`autoreject.AutoReject`, by `Mainak Jas`_ in :github:`#115`
 - Added check for channel locations so that autoreject does not
   hang when the channel positions are nan, by `Mainak Jas`_ in :github:`#130`
 - Fixed bug in random seed for the Ransac algorithm when n_jobs > 1, by `Legrand Nico`_ and `Mainak Jas`_ in :github:`#138`

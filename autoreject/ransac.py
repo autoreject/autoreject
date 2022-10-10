@@ -169,12 +169,13 @@ class Ransac(object):
         """Perform RANSAC on the given epochs.
 
         Steps:
-            1. Interpolate all channels from a subset of channels
-              (fraction denoted as `min_channels`), repeat `n_resample` times.
-            2. See if correlation of interpolated channels to original channel
-              is above 75% per epoch (`min_corr`)
-            3. if more than `unbroken_time` fraction of epochs have a lower
-              correlation than that, add channel to self.bad_chs_
+
+        #. Interpolate all channels from a subset of channels
+           (fraction denoted as `min_channels`), repeat `n_resample` times.
+        #. See if correlation of interpolated channels to original channel
+           is above 75% per epoch (`min_corr`)
+        #. If more than `unbroken_time` fraction of epochs have a lower
+           correlation than that, add channel to ``self.bad_chs_``
 
         Parameters
         ----------
