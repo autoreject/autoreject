@@ -11,6 +11,6 @@ exclude .coveragerc
 exclude *.yml
 exclude dictionary.txt
 exclude .mailmap
+recursive-exclude .circleci *
 recursive-exclude autoreject *.pyc
-
 recursive-exclude doc *

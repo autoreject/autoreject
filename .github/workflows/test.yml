@@ -35,10 +35,8 @@ jobs:
       run: |
         python --version
         which python
-    - name: Run style & documentation tests
-      run: |
-        flake8 autoreject
-        check-manifest --ignore .circleci/*,doc
+    - run: flake8 autoreject
+    - run: check-manifest
 
   build:
     runs-on: ${{ matrix.os }}
