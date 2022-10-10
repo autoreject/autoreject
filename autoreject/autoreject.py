@@ -864,11 +864,11 @@ class AutoReject:
     r"""Efficiently find n_interpolate and consensus.
 
     .. note::
-    AutoReject by design supports multiple channels.
-    If no picks are passed, separate solutions will be computed for each
-    channel type and internally combined. This then readily supports
-    cleaning unseen epochs from the different channel types used during
-    fit.
+        AutoReject by design supports multiple channels.
+        If no picks are passed, separate solutions will be computed for each
+        channel type and internally combined. This then readily supports
+        cleaning unseen epochs from the different channel types used during
+        fit.
 
     Parameters
     ----------
