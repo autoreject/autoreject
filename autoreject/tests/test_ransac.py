@@ -1,5 +1,7 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD-3-Clause
+import sys
+
 import pytest
 
 import numpy as np
