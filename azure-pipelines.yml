@@ -64,7 +64,7 @@ stages:
       condition: eq(variables['MNE'], 'dev')
     - script: mne sys_info
       displayName: 'Print config'
-    - script: python -m pytest . --cov=autoreject autoreject/tests/ --cov-report=xml --cov-config=setup.cfg --verbose
+    - script: python -m pytest --cov=autoreject --cov-report=xml --cov-config=setup.cfg --verbose autoreject/
       displayName: Run pytest
     - bash: bash <(curl -s https://codecov.io/bash)
       displayName: 'Codecov'
