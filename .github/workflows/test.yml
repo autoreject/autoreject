@@ -110,7 +110,7 @@ jobs:
       run: |
         pip install -e .[test]
     - name: Clone MNE-Python
-      run: git clone --depth 1 --single-branch --branch main https://github.com/mne-tools/mne-python.git -b main
+      run: git clone --depth 1 --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (master|stable)
       if: "matrix.os == 'ubuntu-latest'"
       run: pip install -e mne-python/
