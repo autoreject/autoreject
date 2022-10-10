@@ -873,30 +873,32 @@ class AutoReject(object):
         AutoReject by design supports multiple channels.
         If no picks are passed, separate solutions will be computed for each
         channel type and internally combined. This then readily supports
-        cleaning unseen epochs from the different channel types used during fit.
+        cleaning unseen epochs from the different channel types used during
+        fit.
 
         Parameters
         ----------
         n_interpolate : array | None
-            The values to try for the number of channels for which to interpolate.
-            This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
+            The values to try for the number of channels for which to
+            interpolate. This is :math:`\\rho`. If None, defaults to
+            ``np.array([1, 4, 32])``
         consensus : array | None
             The values to try for percentage of channels that must agree as a
-            fraction of the total number of channels. This sets :math:`\\kappa/Q`.
-            If None, defaults to `np.linspace(0, 1.0, 11)`
+            fraction of the total number of channels. This sets
+            :math:`\\kappa/Q`. If None, defaults to ``np.linspace(0, 1.0, 11)``
         cv : int | sklearn.model_selection object
             Defaults to cv=10.
         picks : str | list | slice | None
-            Channels to include. Slices and lists of integers will be interpreted
-            as channel indices. In lists, channel *type* strings (e.g.,
-            ``['meg', 'eeg']``) will pick channels of those types, channel *name*
-            strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
-            Can also be the string values ``'all'`` to pick all channels, or
-            ``'data'`` to pick data channels. None (default) will pick data
-            channels {'meg', 'eeg'}, which will lead fitting and combining
-            autoreject solutions across these channel types. Note that channels in
-            ``info['bads']`` *will be included* if their names or indices are
-            explicitly provided.
+            Channels to include. Slices and lists of integers will be
+            interpreted as channel indices. In lists, channel *type* strings
+            (e.g., ``['meg', 'eeg']``) will pick channels of those types,
+            channel *name* strings (e.g., ``['MEG0111', 'MEG2623']`` will pick
+            the given channels. Can also be the string values ``'all'`` to pick
+            all channels, or ``'data'`` to pick data channels. None (default)
+            will pick data channels {'meg', 'eeg'}, which will lead fitting and
+            combining  autoreject solutions across these channel types. Note
+            that channels in ``info['bads']`` *will be included* if their names
+            or indices are explicitly provided.
         thresh_method : str
             'bayesian_optimization' or 'random_search'
         n_jobs : int

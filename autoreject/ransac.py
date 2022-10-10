@@ -183,7 +183,7 @@ class Ransac(object):
             An Epochs object with data to perform RANSAC on
 
         Returns
-        ---------
+        -------
         self : Ransac
             The updated instance with the list of bad channels accessible by
             ``self.bad_chs_``
