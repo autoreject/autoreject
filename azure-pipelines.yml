@@ -51,6 +51,7 @@ stages:
       displayName: Clone MNE-Python
     - bash: source tools/get_testing_version.sh
       displayName: 'Get testing version'
+      workingDirectory: mne-python
     - task: Cache@2
       inputs:
         key: $(testing_version)
