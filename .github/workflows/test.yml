@@ -140,7 +140,7 @@ jobs:
 
     - name: Run pytest
       run: |
-        python -m pytest --cov=autoreject --cov-report=xml --cov-config=setup.cfg --verbose autoreject/
+        pytest --cov=autoreject --cov-report=xml --cov-config=setup.cfg -v autoreject/
     - name: Upload coverage stats to codecov
       uses: codecov/codecov-action@v1
       with:
