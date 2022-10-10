@@ -517,7 +517,7 @@ class _AutoReject(BaseAutoReject):
         If False, suppress all output messages.
 
     Attributes
-    -----------
+    ----------
     bad_segments : array, shape (n_epochs, n_channels)
         A boolean matrix where 1 denotes a bad data segment
         according to the sensor thresholds.
@@ -860,37 +860,39 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
     return local_reject, loss
 
 
-class AutoReject(object):
+class AutoReject:
     r"""Efficiently find n_interpolate and consensus.
 
     .. note::
-       AutoReject by design supports multiple channels.
-       If no picks are passed, separate solutions will be computed for each
-       channel type and internally combined. This then readily supports
-       cleaning unseen epochs from the different channel types used during fit.
+        AutoReject by design supports multiple channels.
+        If no picks are passed, separate solutions will be computed for each
+        channel type and internally combined. This then readily supports
+        cleaning unseen epochs from the different channel types used during
+        fit.
 
     Parameters
     ----------
     n_interpolate : array | None
-        The values to try for the number of channels for which to interpolate.
-        This is :math:`\\rho`. If None, defaults to np.array([1, 4, 32])
+        The values to try for the number of channels for which to
+        interpolate. This is :math:`\\rho`. If None, defaults to
+        ``np.array([1, 4, 32])``
     consensus : array | None
         The values to try for percentage of channels that must agree as a
-        fraction of the total number of channels. This sets :math:`\\kappa/Q`.
-        If None, defaults to `np.linspace(0, 1.0, 11)`
+        fraction of the total number of channels. This sets
+        :math:`\\kappa/Q`. If None, defaults to ``np.linspace(0, 1.0, 11)``
     cv : int | sklearn.model_selection object
         Defaults to cv=10.
     picks : str | list | slice | None
-        Channels to include. Slices and lists of integers will be interpreted
-        as channel indices. In lists, channel *type* strings (e.g.,
-        ``['meg', 'eeg']``) will pick channels of those types, channel *name*
-        strings (e.g., ``['MEG0111', 'MEG2623']`` will pick the given channels.
-        Can also be the string values ``'all'`` to pick all channels, or
-        ``'data'`` to pick data channels. None (default) will pick data
-        channels {'meg', 'eeg'}, which will lead fitting and combining
-        autoreject solutions across these channel types. Note that channels in
-        ``info['bads']`` *will be included* if their names or indices are
-        explicitly provided.
+        Channels to include. Slices and lists of integers will be
+        interpreted as channel indices. In lists, channel *type* strings
+        (e.g., ``['meg', 'eeg']``) will pick channels of those types,
+        channel *name* strings (e.g., ``['MEG0111', 'MEG2623']`` will pick
+        the given channels. Can also be the string values ``'all'`` to pick
+        all channels, or ``'data'`` to pick data channels. None (default)
+        will pick data channels {'meg', 'eeg'}, which will lead fitting and
+        combining  autoreject solutions across these channel types. Note
+        that channels in ``info['bads']`` *will be included* if their names
+        or indices are explicitly provided.
     thresh_method : str
         'bayesian_optimization' or 'random_search'
     n_jobs : int
@@ -903,7 +905,7 @@ class AutoReject(object):
         If False, suppress all output messages.
 
     Attributes
-    -----------
+    ----------
     local_reject_ : list
         The instances of _AutoReject for each channel type.
     threshes_ : dict
@@ -924,7 +926,7 @@ class AutoReject(object):
                  thresh_func=None, cv=10, picks=None,
                  thresh_method='bayesian_optimization',
                  n_jobs=1, random_state=None, verbose=True):
-        """Init it."""
+        """Initialize the AutoReject class."""
         self.n_interpolate = n_interpolate
         self.consensus = consensus
         self.thresh_method = thresh_method
@@ -1249,7 +1251,7 @@ def _get_interp_chs(labels, ch_names, picks):
     return interp_channels
 
 
-class RejectLog(object):
+class RejectLog:
     """The Rejection Log.
 
     Parameters
@@ -1265,6 +1267,7 @@ class RejectLog(object):
     """
 
     def __init__(self, bad_epochs, labels, ch_names):
+        """Initialize the Rejection Log."""
         self.bad_epochs = bad_epochs
         self.labels = labels
         self.ch_names = ch_names
@@ -1374,7 +1377,7 @@ class RejectLog(object):
 
         Parameters
         ----------
-        epochs : instance of Epochs
+        epochs : instance of mne.Epochs
             The epochs.
         scalings : dict | None
             Scaling factors for the traces. If None, defaults to::
