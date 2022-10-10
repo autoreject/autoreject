@@ -47,7 +47,18 @@ stages:
         set -e
         pip install -e .[test]
       displayName: Install autoreject
-    - script: pip install --upgrade https://github.com/mne-tools/mne-python/zipball/main
+    - script: git clone --depth 1 --single-branch --branch main https://github.com/mne-tools/mne-python.git -b main
+      displayName: Clone MNE-Python
+    - bash: source tools/get_testing_version.sh
+      displayName: 'Get testing version'
+    - task: Cache@2
+      inputs:
+        key: $(testing_version)
+        path: /home/vsts/mne_data
+      displayName: 'Cache testing data'
+    - script: python -c "import mne; mne.datasets.testing.data_path(verbose=True)"
+      displayName: 'Get test data'
+    - script: pip install -ve mne-python/
       displayName: Install MNE-Python dev version
       condition: eq(variables['MNE'], 'dev')
     - script: mne sys_info

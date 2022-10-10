@@ -4,22 +4,22 @@ import pytest
 
 import numpy as np
 import mne
-from mne.datasets import sample
+from mne.datasets import testing
 from mne import io
 
 from autoreject import Ransac
 
-import matplotlib
-matplotlib.use('Agg')
-data_path = sample.data_path()
-raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_filt-0-40_raw.fif'
+data_path = testing.data_path(download=False)
+raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 
 
+@testing.requires_testing_data
 def test_ransac():
     """Some basic tests for ransac."""
     raw = io.read_raw_fif(raw_fname, preload=False)
     raw.crop(0, 15)
     raw.del_proj()
+    raw.info['bads'] = []
 
     event_id = {'Visual/Left': 3}
     tmin, tmax = -0.2, 0.5
@@ -27,7 +27,9 @@ def test_ransac():
     events = mne.find_events(raw)
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         baseline=(None, 0), decim=8,
-                        reject=None, preload=True)
+                        reject=None, preload=True, verbose='error')
+    del raw
+
     # normal case
     picks = mne.pick_types(epochs.info, meg='mag', eeg=False, stim=False,
                            eog=False, exclude=[])
@@ -54,12 +56,13 @@ def test_ransac():
     pytest.raises(ValueError, ransac.fit, epochs)
 
     # should not contain other channel types.
-    picks = mne.pick_types(raw.info, meg=False, eeg=True, stim=True,
+    picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=True,
                            eog=False, exclude=[])
     ransac = Ransac(picks=picks)
     pytest.raises(ValueError, ransac.fit, epochs)
 
 
+@testing.requires_testing_data
 def test_ransac_multiprocessing():
     """test on real data
 

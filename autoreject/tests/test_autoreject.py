@@ -15,7 +15,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 import mne
-from mne.datasets import sample
+from mne.datasets import testing
 from mne import io
 from mne.utils import _TempDir
 
@@ -26,19 +26,22 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
-import matplotlib
-matplotlib.use('Agg')
+data_path = testing.data_path(download=False)
+raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
+
+fname_nirx = op.join(
+    data_path, 'NIRx', 'nirscout', 'nirx_15_2_recording_w_short')
+
+ignore_decim = pytest.mark.filterwarnings(
+    'ignore:The measurement information indicates a low-pass.*:RuntimeWarning')
 
 
-data_path = sample.data_path()
-raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_filt-0-40_raw.fif'
-raw = io.read_raw_fif(raw_fname, preload=False)
-raw.crop(0, 60)
-raw.del_proj()
-
-
+@ignore_decim
+@testing.requires_testing_data
 def test_global_autoreject():
     """Test global autoreject."""
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    raw.del_proj()
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -70,8 +73,13 @@ def test_global_autoreject():
                   decim=4, ch_types=5)
 
 
+@ignore_decim
+@testing.requires_testing_data
 def test_autoreject():
     """Test basic _AutoReject functionality."""
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    raw.del_proj()
+    raw.info['bads'] = []
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -221,10 +229,7 @@ def test_autoreject():
         assert_array_equal(
             interp_counts, [len(cc) for cc in interp_channels])
 
-    is_same = epochs_new_clean.get_data() == epochs_new.get_data()
-    if not np.isscalar(is_same):
-        is_same = np.isscalar(is_same)
-    assert not is_same
+    assert len(epochs_new_clean.get_data()) != len(epochs_new.get_data())
 
     # test that transform can take new reject_log
     reject_log1 = ar.get_reject_log(epochs)
@@ -238,8 +243,10 @@ def test_autoreject():
     epochs_with_bads_fit.pick_types(meg='mag', eeg=True, eog=True, exclude=[])
     ar_bads = AutoReject(cv=3, random_state=42,
                          n_interpolate=[1, 2], consensus=[0.5, 1])
-    ar_bads.fit(epochs_with_bads_fit)
-    epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
+    with pytest.warns(UserWarning, match='151 channels are marked as bad'):
+        ar_bads.fit(epochs_with_bads_fit)
+    with pytest.warns(UserWarning, match='151 channels are marked as bad'):
+        epochs_with_bads_clean = ar_bads.transform(epochs_with_bads_fit)
 
     good_w_bads_ix = mne.pick_types(epochs_with_bads_clean.info,
                                     meg='mag', eeg=True, eog=True,
@@ -281,8 +288,12 @@ def test_autoreject():
     assert set(threshes_b.keys()) == set(ch_names)
 
 
+@ignore_decim
+@testing.requires_testing_data
 def test_io():
     """Test IO functionality."""
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    raw.del_proj()
     event_id = None
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
@@ -336,28 +347,24 @@ def test_io():
     assert all(reject_log1.ch_names == reject_log4.ch_names)
 
 
+@testing.requires_testing_data
 def test_fnirs():
     """Test that autoreject runs on fNIRS data."""
-    raw = mne.io.read_raw_nirx(os.path.join(
-        mne.datasets.fnirs_motor.data_path(), 'Participant-1'))
-    raw.crop(tmax=1200)
+    raw = mne.io.read_raw_nirx(fname_nirx)
     raw = mne.preprocessing.nirs.optical_density(raw)
     raw = mne.preprocessing.nirs.beer_lambert_law(raw)
-    events, _ = mne.events_from_annotations(raw, event_id={'1.0': 1,
-                                                           '2.0': 2,
-                                                           '3.0': 3})
-    event_dict = {'Control': 1, 'Tapping/Left': 2, 'Tapping/Right': 3}
-    epochs = mne.Epochs(raw, events, event_id=event_dict,
-                        tmin=-5, tmax=15,
+    events, _ = mne.events_from_annotations(raw)
+    epochs = mne.Epochs(raw, events,
+                        tmin=-1, tmax=1,
                         proj=True, baseline=(None, 0), preload=True,
                         detrend=None, verbose=True)
     # Test autoreject
-    ar = AutoReject()
-    assert len(epochs) == 37
+    ar = AutoReject(cv=3, consensus=[0.1])
+    assert len(epochs) == 3
     epochs_clean = ar.fit_transform(epochs)
     assert len(epochs_clean) < len(epochs)
     # Test threshold extraction
-    reject = get_rejection_threshold(epochs)
+    reject = get_rejection_threshold(epochs, cv=3)
     assert "hbo" in reject.keys()
     assert "hbr" in reject.keys()
     assert reject["hbo"] < 0.001  # This is a very high value as sanity check
@@ -365,31 +372,28 @@ def test_fnirs():
     assert reject["hbr"] > 0.0
 
 
-def test_ecog():
+@testing.requires_testing_data
+@pytest.mark.parametrize('ch_type', ['ecog', 'seeg'])
+def test_ecog(ch_type):
     """Test that autoreject runs on ECoG and sEEG data."""
-    misc_path = mne.datasets.misc.data_path()
-    raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
-    for ch_type in ['ecog', 'seeg']:
-        # setting the channel types
-        ch_dict = {ch: ch_type for ch in raw.ch_names}
-        raw.set_channel_types(ch_dict)
+    raw = mne.io.read_raw(raw_fname).del_proj().pick('eeg')
+    raw.info['bads'] = []
+    # setting the channel types
+    ch_dict = {ch: ch_type for ch in raw.ch_names}
+    raw.set_channel_types(ch_dict)
 
-        # make events
-        events = np.arange(1315, 1365, 2, dtype=int) * 1000  # in samples
-        events = np.array([[e, 0, 0] for e in events])
-        epochs = mne.Epochs(raw, events, event_id=0,
-                            tmin=-1, tmax=1, baseline=None, verbose=True)
-        epochs.load_data()
-        n1 = len(epochs)
-        reject = get_rejection_threshold(epochs)
-        epochs.drop_bad(reject=reject)
-        n2 = len(epochs)
-        assert ch_type in reject.keys()
-        assert reject[ch_type] > 0.0
-        assert reject[ch_type] < 0.01
-        assert n2 < n1
+    # make events
+    epochs = mne.make_fixed_length_epochs(raw).load_data()
+    n1 = len(epochs)
+    reject = get_rejection_threshold(epochs)
+    epochs.drop_bad(reject=reject)
+    n2 = len(epochs)
+    assert ch_type in reject.keys()
+    assert reject[ch_type] > 0.0
+    assert reject[ch_type] < 0.01
+    assert n2 < n1
 
-        # testing that compute_thresholds is working without location data
-        epochs.set_montage(None)
-        rejects = compute_thresholds(epochs, augment=False)
-        assert set(rejects.keys()) == set(raw.ch_names)
+    # testing that compute_thresholds is working without location data
+    epochs.set_montage(None)
+    rejects = compute_thresholds(epochs, augment=False)
+    assert set(rejects.keys()) == set(raw.ch_names)

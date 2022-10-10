@@ -624,7 +624,7 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.sort(bad_sensor_counts)[::-1]
         n_channels = len(picks)
         n_consensus = self.consensus_[ch_type] * n_channels
-        bad_epochs = np.zeros(len(bad_sensor_counts), dtype=np.bool)
+        bad_epochs = np.zeros(len(bad_sensor_counts), dtype=bool)
         if np.max(bad_sensor_counts) >= n_consensus:
             n_epochs_drop = np.sum(bad_sensor_counts >=
                                    n_consensus)
@@ -711,7 +711,7 @@ class _AutoReject(BaseAutoReject):
 
         self.threshes_ = self.thresh_func(
             epochs.copy(), dots=self.dots, picks=self.picks_,
-            verbose=self.verbose)
+            verbose=bool(self.verbose))
 
         reject_log = self.get_reject_log(epochs=epochs, picks=self.picks_)
 
@@ -1042,7 +1042,7 @@ class AutoReject:
                 _run_local_reject_cv(epochs, thresh_func, this_picks,
                                      self.n_interpolate, self.cv_,
                                      self.consensus, self.dots,
-                                     self.verbose)
+                                     bool(self.verbose))
             self.threshes_.update(this_local_reject.threshes_)
 
             best_idx, best_jdx = \
@@ -1100,7 +1100,7 @@ class AutoReject:
         labels.fill(np.nan)
         reject_log = RejectLog(
             labels=labels,
-            bad_epochs=np.zeros(len(epochs), dtype=np.bool),
+            bad_epochs=np.zeros(len(epochs), dtype=bool),
             ch_names=ch_names)
 
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
@@ -1150,7 +1150,7 @@ class AutoReject:
             reject_log = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
         _apply_interp(reject_log, epochs_clean, self.threshes_,
-                      self.picks_, self.dots, self.verbose)
+                      self.picks_, self.dots, bool(self.verbose))
 
         _apply_drop(reject_log, epochs_clean, self.threshes_, self.picks_,
                     self.verbose)
@@ -1425,7 +1425,7 @@ class RejectLog:
                 if not np.isnan(this_label):
                     epoch_color.append(color_map[this_label])
                 else:
-                    epoch_color.append(None)
+                    epoch_color.append('k')
             epoch_colors.append(epoch_color)
 
         return plot_mne_epochs(

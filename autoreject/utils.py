@@ -168,7 +168,7 @@ def _pbar(iterable, desc, verbose=True, **kwargs):
     if (isinstance(verbose, str) and
             verbose not in {"tqdm", "tqdm_notebook", "progressbar"}):
         raise ValueError("verbose must be a boolean value. Got %s" % verbose)
-    elif isinstance(verbose, (int, str)):
+    elif isinstance(verbose, (int, str)) and not isinstance(verbose, bool):
         warnings.warn(
             (f"verbose flag only supports boolean inputs. Option {verbose} "
                 f"coerced into type {bool(verbose)}"), DeprecationWarning)
@@ -300,8 +300,8 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=False):
     else:
         picks = _handle_picks(inst.info, picks)
 
-    bads_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
-    goods_idx = np.zeros(len(inst.ch_names), dtype=np.bool)
+    bads_idx = np.zeros(len(inst.ch_names), dtype=bool)
+    goods_idx = np.zeros(len(inst.ch_names), dtype=bool)
     bads_idx[picks] = [inst.ch_names[ch] in inst.info['bads'] for ch in picks]
 
     if len(picks) == 0 or bads_idx.sum() == 0:

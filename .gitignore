@@ -29,5 +29,5 @@ autoreject.egg-info/
 .tags
 tags
 .coverage
-
+junit-results.xml
 /examples/ds117/
