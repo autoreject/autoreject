@@ -44,10 +44,9 @@ numpydoc_xref_param_type = True
 numpydoc_show_class_members = False  # noqa:E501  https://stackoverflow.com/a/34604043/5201771
 numpydoc_xref_ignore = {
     # words
-    "instance",
-    "of",
-    "shape",
-    "object",
+    "instance", "of", "shape", "object",
+    # shapes
+    "n_interpolate", "consensus", "n_epochs", "n_channels", "n_data_channels",
 }
 
 autodoc_default_options = {
