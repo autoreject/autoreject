@@ -25,6 +25,8 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _get_interp_chs
 
+pytest_plugins = "mne.conftest"
+
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 
@@ -176,7 +178,8 @@ def test_autoreject():
     ar2 = AutoReject(cv=3, picks=picks, random_state=42,
                      n_interpolate=[1, 2], consensus=[0.5, 1],
                      verbose='blah')
-    pytest.raises(ValueError, ar2.fit, epochs_fit)
+    with pytest.raises(ValueError, match='boolean'):
+        ar2.fit(epochs_fit)
 
     ar.fit(epochs_fit)
     reject_log = ar.get_reject_log(epochs_fit)

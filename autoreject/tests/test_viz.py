@@ -11,6 +11,8 @@ from mne import io
 import autoreject
 from autoreject.utils import set_matplotlib_defaults
 
+pytest_plugins = "mne.conftest"
+
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 

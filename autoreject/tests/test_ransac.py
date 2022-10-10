@@ -9,6 +9,8 @@ from mne import io
 
 from autoreject import Ransac
 
+pytest_plugins = "mne.conftest"
+
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 
@@ -124,7 +126,8 @@ def test_ransac_multiprocessing():
     for n_jobs in [1, 2, 3]:
         ransac = Ransac(picks=mag_idx, random_state=np.random.RandomState(42),
                         n_jobs=n_jobs, n_resample=50)
-        ransac.fit(epochs)
+        with pytest.warns(UserWarning, match='2 channels are marked as'):
+            ransac.fit(epochs)
 
         # the corr_ variable should be of shape (n_epochs, n_channels)
         assert ransac.corr_.shape == (len(epochs), len(mag_idx))

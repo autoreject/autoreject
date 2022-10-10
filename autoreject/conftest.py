@@ -2,8 +2,6 @@
 #
 # License: BSD-3-Clause
 
-pytest_plugins = "mne.conftest"
-
 
 def pytest_configure(config):
     """Configure pytest options."""

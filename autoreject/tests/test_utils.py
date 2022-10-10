@@ -13,6 +13,8 @@ from autoreject.utils import clean_by_interp, interpolate_bads
 from autoreject.utils import _interpolate_bads_eeg
 import mne.channels.interpolation
 
+pytest_plugins = "mne.conftest"
+
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 evoked_fname = data_path / 'MEG' / 'sample' / 'sample_audvis-ave.fif'

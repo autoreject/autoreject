@@ -711,7 +711,7 @@ class _AutoReject(BaseAutoReject):
 
         self.threshes_ = self.thresh_func(
             epochs.copy(), dots=self.dots, picks=self.picks_,
-            verbose=bool(self.verbose))
+            verbose=self.verbose)
 
         reject_log = self.get_reject_log(epochs=epochs, picks=self.picks_)
 
@@ -1042,7 +1042,7 @@ class AutoReject:
                 _run_local_reject_cv(epochs, thresh_func, this_picks,
                                      self.n_interpolate, self.cv_,
                                      self.consensus, self.dots,
-                                     bool(self.verbose))
+                                     self.verbose)
             self.threshes_.update(this_local_reject.threshes_)
 
             best_idx, best_jdx = \
@@ -1150,7 +1150,7 @@ class AutoReject:
             reject_log = self.get_reject_log(epochs)
         epochs_clean = epochs.copy()
         _apply_interp(reject_log, epochs_clean, self.threshes_,
-                      self.picks_, self.dots, bool(self.verbose))
+                      self.picks_, self.dots, self.verbose)
 
         _apply_drop(reject_log, epochs_clean, self.threshes_, self.picks_,
                     self.verbose)

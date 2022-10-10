@@ -168,10 +168,12 @@ def _pbar(iterable, desc, verbose=True, **kwargs):
     if (isinstance(verbose, str) and
             verbose not in {"tqdm", "tqdm_notebook", "progressbar"}):
         raise ValueError("verbose must be a boolean value. Got %s" % verbose)
-    elif isinstance(verbose, (int, str)) and not isinstance(verbose, bool):
+    elif isinstance(verbose, int) and verbose in (0, 1):
+        verbose = bool(verbose)  # this can happen with pickling
+    elif isinstance(verbose, (int, str)):
         warnings.warn(
             (f"verbose flag only supports boolean inputs. Option {verbose} "
-                f"coerced into type {bool(verbose)}"), DeprecationWarning)
+             f"coerced into type {bool(verbose)}"), DeprecationWarning)
         verbose = bool(verbose)
     if verbose:
         from mne.utils.progressbar import ProgressBar
@@ -247,31 +249,23 @@ def _clean_by_interp(inst, picks=None, dots=None, verbose=True):
 def interpolate_bads(inst, picks, dots=None, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels."""
     import mne
-    # to prevent cobyla printf error
-    # XXX putting to critical for now unless better solution
-    # emerges
-    verbose = mne.set_log_level('CRITICAL', return_old_level=True)
-
     eeg_picks = set(pick_types(inst.info, meg=False, eeg=True, exclude=[]))
     eeg_picks_interp = [p for p in picks if p in eeg_picks]
-    if len(eeg_picks_interp) > 0:
-        _interpolate_bads_eeg(inst, picks=eeg_picks_interp)
-
     meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
     meg_picks_interp = [p for p in picks if p in meg_picks]
-    if len(meg_picks_interp) > 0:
-        _interpolate_bads_meg_fast(inst, picks=meg_picks_interp,
-                                   dots=dots, mode=mode)
-
+    # to prevent cobyla printf error
+    with mne.utils.use_log_level('error'):
+        if len(eeg_picks_interp) > 0:
+            _interpolate_bads_eeg(inst, picks=eeg_picks_interp)
+        if len(meg_picks_interp) > 0:
+            _interpolate_bads_meg_fast(inst, picks=meg_picks_interp,
+                                       dots=dots, mode=mode)
     if reset_bads is True:
         inst.info['bads'] = []
-
-    mne.set_log_level(verbose)
-
     return inst
 
 
-def _interpolate_bads_eeg(inst, picks=None, verbose=False):
+def _interpolate_bads_eeg(inst, picks=None):
     """ Interpolate bad EEG channels.
 
     Operates in place.
@@ -336,7 +330,7 @@ def _interpolate_bads_eeg(inst, picks=None, verbose=False):
 
 
 def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
-                               dots=None, verbose=False):
+                               dots=None):
     """Interpolate bad channels from data in good channels."""
     # We can have pre-picked instances or not.
     # And we need to handle it.
@@ -428,10 +422,6 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
 
     miss = 1e-4  # Smoothing criterion for MEG
 
-    # XXX: hack to silence _compute_mapping_matrix
-    verbose = mne.get_config('MNE_LOGGING_LEVEL', 'INFO')
-    mne.set_log_level('WARNING')
-
     info_from = pick_info(info, pick_from, copy=True)
     templates = _read_coil_defs()
     coils_from = _create_meg_coils(info_from['chs'], 'normal',
@@ -454,8 +444,9 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
                origin=my_origin, noise=noise, self_dots=self_dots,
                surface_dots=cross_dots, int_rad=int_rad, miss=miss)
 
-    fmd['data'] = _compute_mapping_matrix(fmd, info_from)
-    mne.set_log_level(verbose)
+    # XXX: hack to silence _compute_mapping_matrix
+    with mne.utils.use_log_level('error'):
+        fmd['data'] = _compute_mapping_matrix(fmd, info_from)
 
     return fmd['data']
 
