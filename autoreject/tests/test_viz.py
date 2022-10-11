@@ -5,25 +5,23 @@ import numpy as np
 import pytest
 
 import mne
-from mne.datasets import sample
+from mne.datasets import testing
 from mne import io
 
 import autoreject
 from autoreject.utils import set_matplotlib_defaults
 
-import matplotlib
-matplotlib.use('Agg')
-
-data_path = sample.data_path()
-raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_filt-0-40_raw.fif'
-raw = io.read_raw_fif(raw_fname, preload=False)
-raw.crop(0, 15)
-raw.del_proj()
+data_path = testing.data_path(download=False)
+raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
 
 
-def test_viz():
+@testing.requires_testing_data
+def test_viz(browser_backend):
     """Test viz."""
     import matplotlib.pyplot as plt
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    raw.crop(0, 15)
+    raw.del_proj()
 
     set_matplotlib_defaults(plt)
 
@@ -37,8 +35,10 @@ def test_viz():
     n_epochs, n_channels, _ = epochs.get_data().shape
     bad_epochs = np.zeros(n_epochs, dtype=bool)
     bad_epochs[bad_epochs_idx] = True
+    assert len(bad_epochs) == 15
 
     labels = np.zeros((n_epochs, n_channels))
+    labels[2, 0] = np.nan  # one good epoch has a nan label
     reject_log = autoreject.RejectLog(bad_epochs, labels, epochs.ch_names)
     reject_log.plot_epochs(epochs)
     reject_log.plot()
