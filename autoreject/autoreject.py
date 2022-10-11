@@ -624,7 +624,7 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.sort(bad_sensor_counts)[::-1]
         n_channels = len(picks)
         n_consensus = self.consensus_[ch_type] * n_channels
-        bad_epochs = np.zeros(len(bad_sensor_counts), dtype=np.bool)
+        bad_epochs = np.zeros(len(bad_sensor_counts), dtype=bool)
         if np.max(bad_sensor_counts) >= n_consensus:
             n_epochs_drop = np.sum(bad_sensor_counts >=
                                    n_consensus)
@@ -1014,7 +1014,7 @@ class AutoReject:
             meg_picks = pick_types(epochs.info, meg=True,
                                    eeg=False, exclude=[])
             this_info = mne.pick_info(epochs.info, meg_picks, copy=True)
-            self.dots = _compute_dots(this_info)
+            self.dots = _compute_dots(this_info, templates=None)
 
         thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,
@@ -1100,7 +1100,7 @@ class AutoReject:
         labels.fill(np.nan)
         reject_log = RejectLog(
             labels=labels,
-            bad_epochs=np.zeros(len(epochs), dtype=np.bool),
+            bad_epochs=np.zeros(len(epochs), dtype=bool),
             ch_names=ch_names)
 
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
@@ -1425,7 +1425,7 @@ class RejectLog:
                 if not np.isnan(this_label):
                     epoch_color.append(color_map[this_label])
                 else:
-                    epoch_color.append(None)
+                    epoch_color.append('k')
             epoch_colors.append(epoch_color)
 
         return plot_mne_epochs(

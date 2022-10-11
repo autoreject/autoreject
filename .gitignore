@@ -28,6 +28,7 @@ pip-log.txt
 autoreject.egg-info/
 .tags
 tags
-.coverage
-
+.coverage*
+junit-results.xml
 /examples/ds117/
+.hypothesis
