@@ -43,7 +43,7 @@ def check_verbose(request):
     # ensures that no tests break the global state
     try:
         assert mne.utils.logger.level == starting_level
-    except AssertionError:
+    except AssertionError:  # pragma: no cover
         pytest.fail('.'.join([request.module.__name__,
                               request.function.__name__]) +
                     ' modifies logger.level')
@@ -81,10 +81,7 @@ def matplotlib_config():
     # functionality)
     plt.ioff()
     plt.rcParams['figure.dpi'] = 100
-    try:
-        plt.rcParams['figure.raise_window'] = False
-    except KeyError:  # MPL < 3.3
-        pass
+    plt.rcParams['figure.raise_window'] = False
 
     # Make sure that we always reraise exceptions in handlers
     orig = cbook.CallbackRegistry

@@ -118,6 +118,12 @@ def test_ransac_multiprocessing():
     np.testing.assert_array_equal(corr, np.concatenate([corr_sub1,
                                                         corr_sub2]))
 
+    # we can make it so that none are found
+    ransac = Ransac(random_state=42, n_resample=10)
+    epochs_nobad = epochs[:2].pick(mag_idx[5:20], exclude='bads')
+    ransac.fit(epochs_nobad)
+    assert len(ransac.bad_chs_) == 0
+
     # now test across different jobs
     mappings = dict()
     corrs = dict()

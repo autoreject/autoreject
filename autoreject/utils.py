@@ -165,16 +165,22 @@ def _pprint(params, offset=0, printer=repr):
 
 
 def _pbar(iterable, desc, verbose=True, **kwargs):
-    if (isinstance(verbose, str) and
-            verbose not in {"tqdm", "tqdm_notebook", "progressbar"}):
-        raise ValueError("verbose must be a boolean value. Got %s" % verbose)
-    elif isinstance(verbose, int) and verbose in (0, 1):
+    raise_error = False
+    if isinstance(verbose, str):
+        if verbose not in {"tqdm", "tqdm_notebook", "progressbar"}:
+            raise_error = True
+        verbose = bool(verbose)
+    elif isinstance(verbose, (int, bool)):
         verbose = bool(verbose)  # this can happen with pickling
-    elif isinstance(verbose, (int, str)):
+    else:
+        raise_error = True
         warnings.warn(
             (f"verbose flag only supports boolean inputs. Option {verbose} "
              f"coerced into type {bool(verbose)}"), DeprecationWarning)
         verbose = bool(verbose)
+    if raise_error:
+        raise ValueError(
+            f"verbose must be a boolean value. Got {repr(verbose)}")
     if verbose:
         from mne.utils.progressbar import ProgressBar
         pbar = ProgressBar(iterable, mesg=desc, **kwargs)
