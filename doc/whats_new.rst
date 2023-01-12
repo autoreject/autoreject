@@ -12,7 +12,20 @@ What's new?
 0.5 (unreleased)
 ----------------
 
+Changelog
+~~~~~~~~~
+
 - Nothing yet
+
+.. _0.4.1:
+
+0.4.1 (2022-01-12)
+------------------
+
+Changelog
+~~~~~~~~~
+
+- NumPy 1.24 and Sphinx compatibility updates by `Eric Larson`_ in :github:`#293` and `Stefan Appelhoff`_ in :github:`#292`
 
 .. _0.4:
 
@@ -112,3 +125,4 @@ Changelog
 .. _Alex Rockhill: https://github.com/alexrockhill
 .. _Nikolai Chapochnikov: https://github.com/chapochn
 .. _Simon Kern: https://github.com/skjerns
+.. _Eric Larson: https://larsoner.com
