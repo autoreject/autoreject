@@ -1274,8 +1274,8 @@ class RejectLog:
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(self, orientation='vertical', show_names='auto', show=True,
-             ax=None):
+    def plot(self, orientation='vertical', show_names='auto', aspect='equal',
+             show=True, ax=None):
         """Plot an image of good, bad and interpolated channels for each epoch.
 
         Parameters
@@ -1288,6 +1288,10 @@ class RejectLog:
             If 'auto' (default), show all channel names if fewer than 25
             entries. Otherwise it shows every 5 entries. If int, show every
             show_names entries.
+        aspect : 'equal' | 'auto'
+            If 'equal', the pixels are square. If 'auto', the axis is fixed
+            and the aspect ratio is adjusted for data to fit. See documentation
+            of plt.imshow() for more details.
         show : bool
             If True (default), display the figure immediately.
         ax : matplotlib.axes.Axes | None
@@ -1320,7 +1324,8 @@ class RejectLog:
         cmap = mpl.colors.ListedColormap(['lightgreen', 'blue', 'red'])
         if orientation == 'horizontal':
             img = ax.imshow(image.T, cmap=cmap,
-                            vmin=0, vmax=1, interpolation='nearest')
+                            vmin=0, vmax=1, interpolation='nearest',
+                            aspect=aspect)
             ax.set_xlabel('Epochs')
             ax.set_ylabel('Channels')
             plt.setp(ax, yticks=range(0, self.labels.shape[1], show_names),
