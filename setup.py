@@ -66,6 +66,7 @@ if __name__ == "__main__":
                   'pytest-sugar',
                   'check-manifest',
                   'flake8',
+                  'importlib_resources'  # drop after minimum Py >=3.10
               ],
               'doc': [
                   'sphinx',
