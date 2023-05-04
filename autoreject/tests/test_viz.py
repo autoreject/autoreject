@@ -27,7 +27,8 @@ def test_viz(browser_backend):
 
     events = mne.find_events(raw)
     picks = mne.pick_channels(raw.info['ch_names'],
-                              ['MEG 2443', 'MEG 2442', 'MEG 2441'])
+                              ['MEG 2443', 'MEG 2442', 'MEG 2441'],
+                              ordered=False)
     epochs = mne.Epochs(raw, events, picks=picks, baseline=(None, 0),
                         reject=None, preload=True,
                         event_id={'1': 1, '2': 2, '3': 3, '4': 4})
