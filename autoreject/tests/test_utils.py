@@ -30,7 +30,8 @@ def test_utils():
     tmin, tmax = -0.2, 0.5
     events = mne.find_events(raw)
     picks = mne.pick_channels(raw.info['ch_names'],
-                              ['MEG 2443', 'MEG 2442', 'MEG 2441'])
+                              ['MEG 2443', 'MEG 2442', 'MEG 2441'],
+                              ordered=False)
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
                         picks=picks, baseline=(None, 0),
                         reject=None, preload=True)

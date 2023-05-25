@@ -115,7 +115,7 @@ def test_autoreject():
                     if ix not in pre_picks]
     epochs_with_bads = epochs.copy()
     epochs_with_bads.info['bads'] = bad_ch_names
-    epochs.pick_channels(pick_ch_names)
+    epochs.pick_channels(pick_ch_names, ordered=False)
 
     epochs_fit = epochs[:12]  # make sure to use different size of epochs
     epochs_new = epochs[12:]
