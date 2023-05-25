@@ -52,12 +52,12 @@ if __name__ == "__main__":
                     'meg preprocessing analysis'),
           python_requires='~=3.8',
           install_requires=[
-              'numpy >= 1.20',
-              'scipy >= 1.6',
+              'numpy >= 1.20.2',
+              'scipy >= 1.6.3',
               'mne[hdf5] >= 1.0',
-              'scikit-learn >= 0.24',
+              'scikit-learn >= 0.24.2',
               'joblib',
-              'matplotlib >= 3.3',
+              'matplotlib >= 3.4.0',
           ],
           extras_require={
               'test': [

@@ -17,7 +17,15 @@ Changelog
 
 - Nothing yet
 
-.. _0.4.1:
+.. _0.4.2:
+
+0.4.2 (2023-05-25)
+------------------
+
+Changelog
+~~~~~~~~~
+
+- Updates for MNE-Python compatibility by `Eric Larson`_ and `Stefan Appelhoff`_ in :github:`#302`
 
 0.4.1 (2022-01-12)
 ------------------
