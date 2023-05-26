@@ -43,8 +43,7 @@ subject_id = 'pd14'
 
 target_dir = os.path.join(
     os.path.dirname(autoreject.__file__), '..', 'examples', dataset)
-if not os.path.isdir(target_dir):
-    os.makedirs(target_dir)
+os.makedirs(target_dir, exist_ok=True)
 
 openneuro.download(dataset=dataset, target_dir=target_dir,
                    include=[f'sub-{subject_id}/ses-off'])
