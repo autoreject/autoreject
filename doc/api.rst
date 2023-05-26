@@ -1,6 +1,6 @@
 :orphan:
 
-.. _api_documentation:
+.. _api:
 
 =================
 API Documentation

@@ -9,10 +9,10 @@ autoreject
 .. toctree::
    :hidden:
 
-   Examples<general_examples>
+   Examples<examples>
    Explanation<explanation>
    FAQ<faq>
-   API<api_documentation>
+   API<api>
    What's new<whats_new>
 
 This is a library to automatically reject bad trials and repair bad sensors in magneto-/electroencephalography (M/EEG) data.
