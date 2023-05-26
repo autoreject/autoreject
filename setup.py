@@ -71,7 +71,7 @@ if __name__ == "__main__":
               'doc': [
                   'sphinx',
                   'sphinx-gallery',
-                  'sphinx_bootstrap_theme',
+                  'pydata-sphinx-theme',
                   'sphinx-copybutton',
                   'sphinx-github-role',
                   'numpydoc',

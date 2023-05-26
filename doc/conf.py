@@ -3,8 +3,6 @@ import os
 import sys
 from datetime import date
 
-import sphinx_bootstrap_theme
-
 import autoreject
 
 
@@ -82,34 +80,36 @@ release = version
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output ----------------------------------------------
-
-# see: https://sphinx-bootstrap-theme.readthedocs.io/en/latest/README.html
-# Clean up sidebar: Do not show "Source" link
 html_show_sourcelink = False
+html_copy_source = False
 
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-
+html_theme = 'pydata-sphinx-theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    'navbar_title': 'autoreject',
-    'bootswatch_theme': "united",
-    'navbar_sidebarrel': False,  # no "previous / next" navigation
-    'navbar_pagenav': False,  # no "Page" navigation in sidebar
-    'bootstrap_version': '3',
-    'navbar_links': [
-        ("Examples", "auto_examples/index"),
-        ("Explanation", "explanation"),
-        ("FAQ", "faq"),
-        ("API", "api"),
-        ("What's new", "whats_new"),
-        ("GitHub", "https://github.com/autoreject/autoreject", True)
+    'icon_links': [
+        dict(name='GitHub',
+             url='https://github.com/autoreject/autoreject',
+             icon='fab fa-github-square'),
     ],
-
+    'icon_links_label': 'Quick Links',  # for screen reader
+    'use_edit_page_button': False,
+    'navigation_with_keys': False,
+    'show_toc_level': 1,
 }
+
+html_context = {
+    'versions_dropdown': {
+        'dev': 'v0.5 (devel)',
+        'stable': 'v0.4 (stable)',
+        'v0.3': 'v0.3',
+        'v0.2': 'v0.2',
+    },
+}
+
+html_sidebars = {}
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
