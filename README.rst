@@ -91,7 +91,8 @@ rejection dictionary, simply do:
 	>>> from autoreject import get_rejection_threshold
 	>>> reject = get_rejection_threshold(epochs)  # doctest: +SKIP
 
-We also implement RANSAC from the `PREP pipeline <https://doi.org/10.3389/fninf.2015.00016>`_.
+We also implement RANSAC from the `PREP pipeline <https://doi.org/10.3389/fninf.2015.00016>`_
+(see `PyPREP <https://github.com/sappelhoff/pyprep>`_ for a full implementation of the PREP pipeline).
 The API is the same:
 
 .. code:: python
