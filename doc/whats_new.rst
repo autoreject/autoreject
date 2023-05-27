@@ -2,15 +2,8 @@
 
 .. _whats_new:
 
-What's new?
-===========
-
-.. currentmodule:: autoreject
-
-.. _current:
-
-Current
--------
+0.2
+---
 
 Changelog
 ~~~~~~~~~

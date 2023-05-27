@@ -26,7 +26,7 @@ install:
   - if [ "${MNE_VERSION}" == "stable" ]; then
       pip install mne;
     else
-      pip install https://api.github.com/repos/mne-tools/mne-python/zipball/master;
+      pip install mne<0.20
     fi;
   - python setup.py install
 script:
