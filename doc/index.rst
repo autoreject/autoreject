@@ -9,7 +9,7 @@ autoreject
 .. toctree::
    :hidden:
 
-   Examples<examples>
+   Examples<auto_examples/index.rst>
    Explanation<explanation>
    FAQ<faq>
    API<api>

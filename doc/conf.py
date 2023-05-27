@@ -12,6 +12,12 @@ import autoreject
 curdir = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(curdir, '..', 'autoreject')))
 
+# -- General configuration ------------------------------------------------
+
+# If your documentation needs a minimal Sphinx version, state it here.
+#
+needs_sphinx = '2.0'
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -35,8 +41,6 @@ github_default_org_project = ("autoreject", "autoreject")
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True
 
-autosummary_generate = True  # generate autosummary even if no references
-
 # configure numpydoc
 numpydoc_xref_param_type = True
 numpydoc_show_class_members = False  # noqa:E501  https://stackoverflow.com/a/34604043/5201771
@@ -47,6 +51,8 @@ numpydoc_xref_ignore = {
     "n_interpolate", "consensus", "n_epochs", "n_channels", "n_data_channels",
 }
 
+# generate autosummary even if no references
+autosummary_generate = True
 autodoc_default_options = {
     "members": True,
     "inherited-members": True,
@@ -55,6 +61,8 @@ autodoc_default_options = {
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+html_static_path = ['_static']
+html_css_files = ['style.css']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -88,6 +96,8 @@ html_theme = 'pydata_sphinx_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
+switcher_version_match = "dev" if "dev" in release else version
+
 html_theme_options = {
     'icon_links': [
         dict(name='GitHub',
@@ -98,15 +108,20 @@ html_theme_options = {
     'use_edit_page_button': False,
     'navigation_with_keys': False,
     'show_toc_level': 1,
+    "switcher": {
+        # "json_url": "https://mne.tools/dev/_static/versions.json",
+        "json_url": "https://github.com/sappelhoff/autoreject/blob/pydata/sphinx/doc/_static/versions.json",
+        "version_match": switcher_version_match,
+    },
 }
 
 html_context = {
-    'versions_dropdown': {
-        'dev': 'v0.5 (devel)',
-        'stable': 'v0.4 (stable)',
-        'v0.3': 'v0.3',
-        'v0.2': 'v0.2',
-    },
+    "default_mode": "auto",
+    # next 3 are for the "edit this page" button
+    "github_user": "autoreject",
+    "github_repo": "autoreject",
+    "github_version": "master",
+    "doc_path": "doc",
 }
 
 html_sidebars = {}
