@@ -27,7 +27,7 @@ Changelog
 
 - Updates for MNE-Python compatibility by `Eric Larson`_ and `Stefan Appelhoff`_ in :github:`#302`
 
-0.4.1 (2022-01-12)
+0.4.1 (2023-01-12)
 ------------------
 
 Changelog
