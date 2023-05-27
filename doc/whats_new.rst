@@ -19,13 +19,15 @@ Changelog
 
 .. _0.4.2:
 
-0.4.2 (2023-05-25)
+0.4.2 (2023-05-28)
 ------------------
 
 Changelog
 ~~~~~~~~~
 
 - Updates for MNE-Python compatibility by `Eric Larson`_ and `Stefan Appelhoff`_ in :github:`#302`
+
+.. _0.4.1:
 
 0.4.1 (2023-01-12)
 ------------------
@@ -55,6 +57,11 @@ Changelog
 - Add :meth:`autoreject.RejectLog.save` and :func:`autoreject.read_reject_log` to
   save and load reject logs, by `Alex Rockhill`_ in :github:`#270`
 
+.. _0.3.1:
+
+0.3.1 (2022-03-16)
+------------------
+
 .. _0.3:
 
 0.3 (2022-01-04)
@@ -80,6 +87,16 @@ Bug
 
 API
 ~~~
+
+.. _0.2.2:
+
+0.2.2 (2020-12-23)
+------------------
+
+.. _0.2.1:
+
+0.2.1 (2019-11-07)
+------------------
 
 .. _0.2:
 
@@ -111,6 +128,8 @@ API
 
 - Added `ch_types` argument to :func:`autoreject.get_rejection_threshold` to find
   rejection thresholds for only subset of channel types in the data, by `Mainak Jas`_ in :github:`#140`
+
+.. _0.1:
 
 0.1 (2018-06-11)
 ----------------
