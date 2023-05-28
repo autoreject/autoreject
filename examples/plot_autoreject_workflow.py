@@ -31,7 +31,7 @@ autoreject (local) again.
 # from OpenNeuro. We will do this using ``openneuro-py`` which can be
 # installed with the command ``pip install openneuro-py``.
 
-import os.path as op
+import os
 import matplotlib.pyplot as plt
 import openneuro
 
@@ -41,7 +41,10 @@ import autoreject
 dataset = 'ds002778'  # The id code on OpenNeuro for this example dataset
 subject_id = 'pd14'
 
-target_dir = op.join(op.dirname(autoreject.__file__), '..', 'examples')
+target_dir = os.path.join(
+    os.path.dirname(autoreject.__file__), '..', 'examples', dataset)
+os.makedirs(target_dir, exist_ok=True)
+
 openneuro.download(dataset=dataset, target_dir=target_dir,
                    include=[f'sub-{subject_id}/ses-off'])
 
@@ -53,8 +56,8 @@ openneuro.download(dataset=dataset, target_dir=target_dir,
 # artifact contamination but, overall, the data is typical of
 # resting-state EEG.
 
-raw_fname = op.join(target_dir, f'sub-{subject_id}',
-                    'ses-off', 'eeg', 'sub-pd14_ses-off_task-rest_eeg.bdf')
+raw_fname = os.path.join(target_dir, f'sub-{subject_id}', 'ses-off', 'eeg',
+                         'sub-pd14_ses-off_task-rest_eeg.bdf')
 raw = mne.io.read_raw_bdf(raw_fname, preload=True)
 dig_montage = mne.channels.make_standard_montage('biosemi32')
 raw.drop_channels([ch for ch in raw.ch_names
