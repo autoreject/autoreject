@@ -112,7 +112,7 @@ html_theme_options = {
     "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
     "switcher": {
         # "json_url": "https://mne.tools/dev/_static/versions.json",
-        "json_url": "https://raw.githubusercontent.com/sappelhoff/autoreject/pydata/sphinx/doc/_static/versions.json",  # noqa: E501
+        "json_url": "https://raw.githubusercontent.com/autoreject/autoreject/pydata/sphinx/doc/_static/versions.json",  # noqa: E501
         "version_match": switcher_version_match,
     },
 }
