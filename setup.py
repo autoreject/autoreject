@@ -50,14 +50,14 @@ if __name__ == "__main__":
           platforms='any',
           keywords=('electroencephalography eeg magnetoencephalography '
                     'meg preprocessing analysis'),
-          python_requires='~=3.7',
+          python_requires='~=3.8',
           install_requires=[
-              'numpy >= 1.20',
-              'scipy >= 1.6',
+              'numpy >= 1.20.2',
+              'scipy >= 1.6.3',
               'mne[hdf5] >= 1.0',
-              'scikit-learn >= 0.24',
+              'scikit-learn >= 0.24.2',
               'joblib',
-              'matplotlib >= 3.3',
+              'matplotlib >= 3.4.0',
           ],
           extras_require={
               'test': [
@@ -66,11 +66,12 @@ if __name__ == "__main__":
                   'pytest-sugar',
                   'check-manifest',
                   'flake8',
+                  'importlib_resources'  # drop after minimum Py >=3.10
               ],
               'doc': [
                   'sphinx',
                   'sphinx-gallery',
-                  'sphinx_bootstrap_theme',
+                  'pydata-sphinx-theme',
                   'sphinx-copybutton',
                   'sphinx-github-role',
                   'numpydoc',

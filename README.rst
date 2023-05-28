@@ -35,7 +35,7 @@ Installation
 ------------
 
 We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
-and a **Python version >= 3.7**.
+and a **Python version >= 3.8**.
 To obtain the stable release of ``autoreject``, you can use ``pip``::
 
     pip install -U autoreject
@@ -61,11 +61,11 @@ Below, we list the dependencies for ``autoreject``.
 All required dependencies are installed automatically when you install ``autoreject``.
 
 * ``mne`` (>=1.0)
-* ``numpy`` (>=1.20)
-* ``scipy`` (>=1.6)
-* ``scikit-learn`` (>=0.24)
+* ``numpy`` (>=1.20.2)
+* ``scipy`` (>=1.6.3)
+* ``scikit-learn`` (>=0.24.2)
 * ``joblib``
-* ``matplotlib`` (>=3.3)
+* ``matplotlib`` (>=3.4.0)
 
 Optional dependencies are:
 
@@ -91,7 +91,8 @@ rejection dictionary, simply do:
 	>>> from autoreject import get_rejection_threshold
 	>>> reject = get_rejection_threshold(epochs)  # doctest: +SKIP
 
-We also implement RANSAC from the `PREP pipeline <https://doi.org/10.3389/fninf.2015.00016>`_.
+We also implement RANSAC from the `PREP pipeline <https://doi.org/10.3389/fninf.2015.00016>`_
+(see `PyPREP <https://github.com/sappelhoff/pyprep>`_ for a full implementation of the PREP pipeline).
 The API is the same:
 
 .. code:: python

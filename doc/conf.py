@@ -3,8 +3,6 @@ import os
 import sys
 from datetime import date
 
-import sphinx_bootstrap_theme
-
 import autoreject
 
 
@@ -14,10 +12,17 @@ import autoreject
 curdir = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(curdir, '..', 'autoreject')))
 
+# -- General configuration ------------------------------------------------
+
+# If your documentation needs a minimal Sphinx version, state it here.
+#
+needs_sphinx = '2.0'
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.githubpages',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
@@ -37,8 +42,6 @@ github_default_org_project = ("autoreject", "autoreject")
 copybutton_prompt_text = r">>> |\.\.\. |\$ "
 copybutton_prompt_is_regexp = True
 
-autosummary_generate = True  # generate autosummary even if no references
-
 # configure numpydoc
 numpydoc_xref_param_type = True
 numpydoc_show_class_members = False  # noqa:E501  https://stackoverflow.com/a/34604043/5201771
@@ -49,6 +52,8 @@ numpydoc_xref_ignore = {
     "n_interpolate", "consensus", "n_epochs", "n_channels", "n_data_channels",
 }
 
+# generate autosummary even if no references
+autosummary_generate = True
 autodoc_default_options = {
     "members": True,
     "inherited-members": True,
@@ -57,6 +62,8 @@ autodoc_default_options = {
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+html_static_path = ['_static']
+html_css_files = ['style.css']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -82,34 +89,44 @@ release = version
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Options for HTML output ----------------------------------------------
-
-# see: https://sphinx-bootstrap-theme.readthedocs.io/en/latest/README.html
-# Clean up sidebar: Do not show "Source" link
 html_show_sourcelink = False
+html_copy_source = False
 
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-
+html_theme = 'pydata_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {
-    'navbar_title': 'autoreject',
-    'bootswatch_theme': "united",
-    'navbar_sidebarrel': False,  # no "previous / next" navigation
-    'navbar_pagenav': False,  # no "Page" navigation in sidebar
-    'bootstrap_version': '3',
-    'navbar_links': [
-        ("Examples", "auto_examples/index"),
-        ("Explanation", "explanation"),
-        ("FAQ", "faq"),
-        ("API", "api"),
-        ("What's new", "whats_new"),
-        ("GitHub", "https://github.com/autoreject/autoreject", True)
-    ],
+switcher_version_match = "dev" if "dev" in release else version
 
+html_theme_options = {
+    'icon_links': [
+        dict(name='GitHub',
+             url='https://github.com/autoreject/autoreject',
+             icon='fab fa-github-square'),
+    ],
+    'icon_links_label': 'Quick Links',  # for screen reader
+    'use_edit_page_button': False,
+    'navigation_with_keys': False,
+    'show_toc_level': 1,
+    "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
+    "switcher": {
+        # "json_url": "https://mne.tools/dev/_static/versions.json",
+        "json_url": "https://raw.githubusercontent.com/autoreject/autoreject/master/doc/_static/versions.json",  # noqa: E501
+        "version_match": switcher_version_match,
+    },
 }
+
+html_context = {
+    "default_mode": "auto",
+    # next 3 are for the "edit this page" button
+    "github_user": "autoreject",
+    "github_repo": "autoreject",
+    "github_version": "master",
+    "doc_path": "doc",
+}
+
+html_sidebars = {}
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {

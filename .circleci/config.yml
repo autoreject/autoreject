@@ -7,7 +7,7 @@ jobs:
             - checkout
             - restore_cache:
                 keys:
-                  - data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                  - data-cache-v1-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
             - run:
                 name: Setup python3 environment
                 command: |
@@ -47,11 +47,12 @@ jobs:
                 path: ./doc/_build/html/
                 destination: html
             - save_cache:
-                key: data-cache-v0-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
+                key: data-cache-v1-{{ checksum "./autoreject/__init__.py" }}-{{ checksum "setup.py" }}
                 paths:
                   - ~/.mne
                   - ~/mne_data/MNE-sample-data
                   - ~/project/examples/ds000117
+                  - ~/project/examples/ds002778
 
     docs-deploy:
         # will only be run on master branch
@@ -73,13 +74,12 @@ jobs:
                 git config --global user.name "Circle Ci"
           - add_ssh_keys:
               fingerprints:
-                - "a1:ff:0f:40:b6:23:8f:64:40:5e:70:11:6d:ca:b3:d8"
+                - "cd:36:3e:a5:ca:e5:6e:02:fa:6e:10:97:c5:62:af:65"
 
           - run:
               # push built docs directory on the `gh-pages` branch
               name: Deploy docs to gh-pages branch
               command: |
-                touch doc/_build/html/.nojekyll
                 node_modules/gh-pages/bin/gh-pages.js \
                     --dotfiles \
                     --message "doc updates [skip ci]" \

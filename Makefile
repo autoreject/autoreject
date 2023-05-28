@@ -1,6 +1,6 @@
 .PHONY : clean-pyc clean-so clean-build clean in inplace test-code test-doc test-coverage test-manifest test trailing-spaces doc-plot doc
 
-all: clean test doc-noplot
+all: clean test doc
 
 clean-pyc:
 	find . -name "*.pyc" | xargs rm -f
@@ -13,11 +13,11 @@ clean-so:
 clean-build:
 	rm -rf build
 
-clean: clean-build clean-pyc clean-so clean-ctags
+clean: clean-build clean-pyc clean-so
 
 in: inplace # just a shortcut
 inplace:
-	python setup.py build_ext -i
+	python -e .[test,doc]
 
 test-code:
 	pytest ./autoreject
