@@ -1,0 +1,22 @@
+[
+    {
+        "name": "0.5 (devel)",
+        "version": "dev",
+        "url": "https://autoreject.github.io/dev/"
+    },
+    {
+        "name": "0.4 (stable)",
+        "version": "stable",
+        "url": "https://autoreject.github.io/stable/"
+    },
+    {
+        "name": "0.3",
+        "version": "0.3",
+        "url": "https://autoreject.github.io/v0.3/"
+    },
+    {
+        "name": "0.2",
+        "version": "0.2",
+        "url": "https://autoreject.github.io/v0.2/"
+    }
+]
