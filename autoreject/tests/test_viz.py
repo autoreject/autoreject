@@ -41,7 +41,7 @@ def test_viz(browser_backend):
     labels = np.zeros((n_epochs, n_channels))
     labels[2, 0] = np.nan  # one good epoch has a nan label
     reject_log = autoreject.RejectLog(bad_epochs, labels, epochs.ch_names)
-    reject_log.plot_epochs(epochs, events=False)
+    reject_log.plot_epochs(epochs)
     reject_log.plot()
     reject_log.plot(orientation='horizontal')
     pytest.raises(ValueError, reject_log.plot_epochs, epochs[:2])
