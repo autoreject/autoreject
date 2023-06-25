@@ -1435,7 +1435,7 @@ class RejectLog:
 
         return plot_mne_epochs(
             epochs=epochs,
-            events=False,
+            events=True,
             epoch_colors=epoch_colors, scalings=scalings,
             title=title)
 
