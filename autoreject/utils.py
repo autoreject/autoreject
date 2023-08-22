@@ -462,7 +462,7 @@ def _get_channel_type(epochs, picks):
     """return whether a set of picks are all meg or all eeg channels."""
     picked_info = pick_info(epochs.info, picks)
     ch_types_picked = {channel_type(picked_info, idx)
-        for idx in range(len(picks))}
+                       for idx in range(len(picks))}
     invalid_ch_types_present = [key for key in ch_types_picked
                                 if key not in ['mag', 'grad', 'eeg'] and
                                 key in epochs]
