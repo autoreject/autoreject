@@ -95,7 +95,7 @@ class Ransac(object):
         # occurs. However, all subsets are precomputed outside of Parallel,
         # therefore, we can simply compute them once
         rng = check_random_state(self.random_state)
-        picked_info = mne.io.pick.pick_info(info, self.picks)
+        picked_info = mne.pick_info(info, self.picks)
         n_channels = len(picked_info['ch_names'])
 
         # number of channels to interpolate from
@@ -120,7 +120,7 @@ class Ransac(object):
     def _get_mappings(self, inst, ch_subsets):
         from .utils import _fast_map_meg_channels
 
-        picked_info = mne.io.pick.pick_info(inst.info, self.picks)
+        picked_info = mne.pick_info(inst.info, self.picks)
         pos = np.array([ch['loc'][:3] for ch in picked_info['chs']])
         ch_names = picked_info['ch_names']
         n_channels = len(ch_names)
