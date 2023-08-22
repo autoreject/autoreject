@@ -25,6 +25,7 @@ def pytest_configure(config):
     warning_lines = r"""
     error::
     ignore:Matplotlib is currently using agg.*:UserWarning
+    ignore:FigureCanvasAgg is non-interactive.*:UserWarning
     ignore:`np.MachAr` is deprecated.*:DeprecationWarning
     ignore:`product` is deprecated as of NumPy.*:DeprecationWarning
     """
