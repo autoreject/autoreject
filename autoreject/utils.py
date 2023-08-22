@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 import mne
-from mne import pick_types, pick_info
+from mne import pick_types, pick_info, channel_type
 from mne.io.pick import _picks_to_idx
 from mne.channels.interpolation import _do_interp_dots
 from mne.forward._field_interpolation import _setup_dots
@@ -39,9 +39,9 @@ def _check_data(epochs, picks, ch_constraint='data_channels', check_loc=True,
         raise ValueError('Data must be preloaded.')
     n_bads = len(epochs.info['bads'])
 
-    picked_info = mne.io.pick.pick_info(epochs.info, picks)
+    picked_info = pick_info(epochs.info, picks)
     ch_types_picked = {
-        mne.io.meas_info.channel_type(picked_info, idx)
+        channel_type(picked_info, idx)
         for idx in range(len(picks))}
 
     if check_loc and not _check_ch_locs(picked_info['chs']):
@@ -85,7 +85,7 @@ def _get_picks_by_type(info, picks):
     sub_picks_ = defaultdict(list)
     keys = list()
     for pp in picks:
-        key = mne.io.pick.channel_type(info=info, idx=pp)
+        key = channel_type(info=info, idx=pp)
         sub_picks_[key].append(pp)
         if key not in keys:
             keys.append(key)
@@ -422,7 +422,6 @@ def _pick_dots(dots, pick_from, pick_to):
 
 def _fast_map_meg_channels(info, pick_from, pick_to,
                            dots=None, mode='fast'):
-    from mne.io.pick import pick_info
     from mne.forward._field_interpolation import _compute_mapping_matrix
     from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
     from mne.bem import _check_origin
@@ -461,10 +460,9 @@ def _fast_map_meg_channels(info, pick_from, pick_to,
 
 def _get_channel_type(epochs, picks):
     """return whether a set of picks are all meg or all eeg channels."""
-    picked_info = mne.io.pick.pick_info(epochs.info, picks)
-    ch_types_picked = {
-        mne.io.meas_info.channel_type(picked_info, idx)
-        for idx in range(len(picks))}
+    picked_info = pick_info(epochs.info, picks)
+    ch_types_picked = {channel_type(picked_info, idx)
+                       for idx in range(len(picks))}
     invalid_ch_types_present = [key for key in ch_types_picked
                                 if key not in ['mag', 'grad', 'eeg'] and
                                 key in epochs]
