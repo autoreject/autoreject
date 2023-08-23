@@ -160,6 +160,12 @@ def test_autoreject():
 
     ar = _AutoReject(picks=picks)  # XXX : why do we need this??
 
+    # Confirm that flipping the channel order does not yield errors
+    flipped_picks = pick_ch_names[::-1]
+    ar = AutoReject(cv=3, picks=flipped_picks, random_state=42,
+                    n_interpolate=[1, 2], consensus=[0.5, 1])
+    pytest.raises(AssertionError, ar.fit, epochs)
+
     ar = AutoReject(cv=3, picks=picks, random_state=42,
                     n_interpolate=[1, 2], consensus=[0.5, 1])
     pytest.raises(AttributeError, ar.fit, X)
