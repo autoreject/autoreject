@@ -1001,6 +1001,7 @@ class AutoReject:
             The instance.
         """
         self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
+        self.picks_.sort()
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
         self.cv_ = self.cv
         if isinstance(self.cv_, int):
