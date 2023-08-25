@@ -17,6 +17,11 @@ Changelog
 
 - Nothing yet
 
+Bug
+~~~
+
+- Fix related to specifying `picks` with unsorted lists by `Paul Bogdan`_ in :github:`#312`
+
 .. _0.4.2:
 
 0.4.2 (2023-05-28)
@@ -153,3 +158,4 @@ Changelog
 .. _Nikolai Chapochnikov: https://github.com/chapochn
 .. _Simon Kern: https://github.com/skjerns
 .. _Eric Larson: https://larsoner.com
+.. _Paul Bogdan: http://pbogdan.com/
