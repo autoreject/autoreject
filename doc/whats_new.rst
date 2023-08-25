@@ -17,6 +17,11 @@ Changelog
 
 - Nothing yet
 
+Bug
+~~~
+
+- Fixed bug that arose if `picks` was specified with an unsorted list, by `Paul Bogdan`_ in :github:`#312`
+
 .. _0.4.2:
 
 0.4.2 (2023-05-28)
