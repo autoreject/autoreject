@@ -20,7 +20,7 @@ Changelog
 Bug
 ~~~
 
-- Fix related to specifying `picks` with unsorted lists by `Paul Bogdan`_ in :github:`#312`
+- Fixed bug that arose if `picks` was specified with an unsorted list, by `Paul Bogdan`_ in :github:`#312`
 
 .. _0.4.2:
 
