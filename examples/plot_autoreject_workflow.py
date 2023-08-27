@@ -10,7 +10,7 @@ with :mod:`autoreject` and discusses decisions about when and which
 other preprocessing steps to use in combination.
 
 **tldr**: We recommend that you first highpass filter the data,
-then run autoreject (local) and supply the bad epochs detected by it
+then run autoreject (local) and supply the artifact-free epochs
 to the ICA algorithm for a robust fit, and finally run
 autoreject (local) again.
 """
