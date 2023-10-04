@@ -61,6 +61,7 @@ if __name__ == "__main__":
           ],
           extras_require={
               'test': [
+                  'mne_qt_browser',
                   'pytest',
                   'pytest-cov',
                   'pytest-sugar',
