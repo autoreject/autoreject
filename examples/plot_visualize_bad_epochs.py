@@ -110,7 +110,7 @@ import matplotlib.pyplot as plt  # noqa
 import matplotlib.patches as patches  # noqa
 from autoreject import set_matplotlib_defaults  # noqa
 
-set_matplotlib_defaults(plt, style='seaborn-white')
+set_matplotlib_defaults(plt, style='white')
 loss = ar.loss_['eeg'].mean(axis=-1)  # losses are stored by channel type.
 
 plt.matshow(loss.T * 1e6, cmap=plt.get_cmap('viridis'))
