@@ -117,7 +117,9 @@ jobs:
       run: git clone --depth 1 --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (master|stable)
       if: "matrix.os == 'ubuntu-latest'"
-      run: python -m pip install -e mne-python/
+      run: |
+        sudo apt update && sudo apt install libegl1 -y
+        python -m pip install -e mne-python/
     - name: Display versions and environment information
       run: |
         echo $TZ
