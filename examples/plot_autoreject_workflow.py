@@ -122,7 +122,9 @@ epochs[reject_log.bad_epochs].plot(scalings=dict(eeg=100e-6))
 
 # %%
 # and the reject log. As we can see in the plot, high-pass filtering reduced
-# the number of epochs marked as bad by autoreject substantially.
+# the number of epochs marked as bad by autoreject. This is because
+# low-frequency drifts can inflate peak-to-peak amplitude when an upward
+# drift aligns with a peak.
 reject_log.plot('horizontal')
 
 # %%
