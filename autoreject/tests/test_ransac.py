@@ -10,7 +10,7 @@ from mne.datasets import testing
 from mne import io
 
 from autoreject import Ransac
-from autoreject.autoreject import _GDKW
+from autoreject._utils import _GDKW
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'

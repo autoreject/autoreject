@@ -5,14 +5,13 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
 
 import mne
+import mne.channels.interpolation
 from mne.datasets import testing
 from mne.bem import _check_origin
 from mne import io
 
-from autoreject.autoreject import _GDKW
-from autoreject.utils import clean_by_interp, interpolate_bads
+from autoreject.utils import clean_by_interp, interpolate_bads, _GDKW
 from autoreject.utils import _interpolate_bads_eeg
-import mne.channels.interpolation
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'

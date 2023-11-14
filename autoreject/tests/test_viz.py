@@ -9,8 +9,7 @@ from mne.datasets import testing
 from mne import io
 
 import autoreject
-from autoreject.autoreject import _GDKW
-from autoreject.utils import set_matplotlib_defaults
+from autoreject.utils import set_matplotlib_defaults, _GDKW
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'

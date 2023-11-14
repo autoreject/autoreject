@@ -4,7 +4,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
-import inspect
 import os.path as op
 from functools import partial
 
@@ -26,14 +25,9 @@ from sklearn.model_selection import cross_val_score, check_cv
 
 from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,
-                    _get_picks_by_type, _pprint)
+                    _get_picks_by_type, _pprint, _GDKW)
 from .bayesopt import expected_improvement, bayes_opt
 
-
-_GDKW = dict()
-# MNE >= 1.6
-if "copy" in inspect.getfullargspec(mne.Epochs.get_data).kwonlyargs:
-    _GDKW["copy"] = False
 
 _INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
                 'verbose', 'n_jobs', 'cv', 'random_state',

@@ -22,8 +22,8 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold, read_auto_reject,
                         read_reject_log)
-from autoreject.utils import _get_picks_by_type
-from autoreject.autoreject import _get_interp_chs, _GDKW
+from autoreject.utils import _get_picks_by_type, _GDKW
+from autoreject.autoreject import _get_interp_chs
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
