@@ -94,7 +94,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         raise ValueError('Only accepts MNE epochs objects.')
 
     data_picks = _handle_picks(info=epochs.info, picks=None)
-    X = epochs.get_data(data_picks)
+    X = epochs.get_data(data_picks, **_GDKW)
     n_epochs, n_channels, n_times = X.shape
 
     if param_range is None:
@@ -268,7 +268,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         elif ch_type == 'seeg':
             picks = pick_types(epochs.info, seeg=True)
 
-        X = epochs.get_data(picks)
+        X = epochs.get_data(picks, **_GDKW)
         n_epochs, n_channels, n_times = X.shape
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         all_threshes = np.sort(deltas.max(axis=1))
@@ -577,7 +577,7 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.zeros((len(epochs),))
 
         this_ch_names = [epochs.ch_names[p] for p in picks]
-        deltas = np.ptp(epochs.get_data(picks), axis=-1).T
+        deltas = np.ptp(epochs.get_data(picks, **_GDKW), axis=-1).T
         threshes = [self.threshes_[ch_name] for ch_name in this_ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
@@ -837,7 +837,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
             def __iter__(self):
                 return self.gen
 
-        X = epochs.get_data(picks_)
+        X = epochs.get_data(picks_, **_GDKW)
         cv_splits = CVSplits(cv.split(X), n_folds)
         pbar = _pbar(cv_splits, desc='Fold',
                      position=3, verbose=verbose)
@@ -857,7 +857,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                 good_epochs_idx = np.nonzero(np.invert(bad_epochs))[0]
 
                 local_reject.mean_ = _slicemean(
-                    epochs_interp[train].get_data(picks_),
+                    epochs_interp[train].get_data(picks_, **_GDKW),
                     good_epochs_idx, axis=0)
                 loss[idx, jdx, fold] = -local_reject.score(X[test])
 
