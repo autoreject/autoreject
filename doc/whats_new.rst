@@ -20,6 +20,17 @@ Changelog
 Bug
 ~~~
 
+- Nothing yet
+
+.. _0.4.3:
+
+0.4.3 (2023-11-14)
+------------------
+
+Bug
+~~~
+
+- Updates for MNE-Python compatibility by `Eric Larson`_ in :github:`#324`
 - Fixed bug that arose if `picks` was specified with an unsorted list, by `Paul Bogdan`_ in :github:`#312`
 
 .. _0.4.2:
@@ -27,8 +38,8 @@ Bug
 0.4.2 (2023-05-28)
 ------------------
 
-Changelog
-~~~~~~~~~
+Bug
+~~~
 
 - Updates for MNE-Python compatibility by `Eric Larson`_ and `Stefan Appelhoff`_ in :github:`#302`
 
