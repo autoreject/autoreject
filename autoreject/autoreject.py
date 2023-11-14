@@ -4,6 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
+import inspect
 import os.path as op
 from functools import partial
 
@@ -12,10 +13,7 @@ from scipy.stats.distributions import uniform
 
 from joblib import Parallel, delayed
 
-try:  # for mne < 1.0
-    from mne.externals.h5io import read_hdf5, write_hdf5
-except (ImportError, ModuleNotFoundError):
-    from h5io import read_hdf5, write_hdf5
+from h5io import read_hdf5, write_hdf5
 
 import mne
 from mne import pick_types
@@ -30,6 +28,12 @@ from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,
                     _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
+
+
+_GDKW = dict()
+# MNE >= 1.6
+if "copy" in inspect.getfullargspec(mne.Epochs.get_data).kwonlyargs:
+    _GDKW["copy"] = False
 
 _INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
                 'verbose', 'n_jobs', 'cv', 'random_state',
@@ -90,7 +94,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         raise ValueError('Only accepts MNE epochs objects.')
 
     data_picks = _handle_picks(info=epochs.info, picks=None)
-    X = epochs.get_data()[:, data_picks, :]
+    X = epochs.get_data(data_picks)
     n_epochs, n_channels, n_times = X.shape
 
     if param_range is None:
@@ -264,7 +268,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         elif ch_type == 'seeg':
             picks = pick_types(epochs.info, seeg=True)
 
-        X = epochs.get_data()[:, picks, :]
+        X = epochs.get_data(picks)
         n_epochs, n_channels, n_times = X.shape
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         all_threshes = np.sort(deltas.max(axis=1))
@@ -462,13 +466,13 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
                 verbose=verbose, n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
-        data, y = epochs.get_data(), np.ones((n_epochs, ))
+        data, y = epochs.get_data(**_GDKW), np.ones((n_epochs, ))
         if augment:
             epochs_interp = _clean_by_interp(epochs, picks=picks,
                                              dots=dots, verbose=verbose)
             # non-data channels will be duplicate
-            data = np.concatenate((epochs.get_data(),
-                                   epochs_interp.get_data()), axis=0)
+            data = np.concatenate((epochs.get_data(**_GDKW),
+                                   epochs_interp.get_data(**_GDKW)), axis=0)
             y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
         cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2,
                                     random_state=random_state)
@@ -573,7 +577,7 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.zeros((len(epochs),))
 
         this_ch_names = [epochs.ch_names[p] for p in picks]
-        deltas = np.ptp(epochs.get_data()[:, picks], axis=-1).T
+        deltas = np.ptp(epochs.get_data(picks), axis=-1).T
         threshes = [self.threshes_[ch_name] for ch_name in this_ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
@@ -601,7 +605,7 @@ class _AutoReject(BaseAutoReject):
                     interp_chs_mask = labels[epoch_idx] == 1
                 else:
                     # get peak-to-peak for channels in that epoch
-                    data = epochs[epoch_idx].get_data()[0]
+                    data = epochs[epoch_idx].get_data(**_GDKW)[0]
                     peaks = np.ptp(data, axis=-1)
                     peaks[non_picks] = -np.inf
                     # find channels which are bad by rejection threshold
@@ -724,7 +728,7 @@ class _AutoReject(BaseAutoReject):
             epochs_copy, interp_channels=interp_channels,
             picks=self.picks_, verbose=self.verbose)
         self.mean_ = _slicemean(
-            epochs_copy.get_data(),
+            epochs_copy.get_data(**_GDKW),
             np.nonzero(np.invert(reject_log.bad_epochs))[0], axis=0)
         del epochs_copy  # I can't wait for garbage collection.
         return self
@@ -833,7 +837,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
             def __iter__(self):
                 return self.gen
 
-        X = epochs.get_data()[:, picks_]
+        X = epochs.get_data(picks_)
         cv_splits = CVSplits(cv.split(X), n_folds)
         pbar = _pbar(cv_splits, desc='Fold',
                      position=3, verbose=verbose)
@@ -853,7 +857,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                 good_epochs_idx = np.nonzero(np.invert(bad_epochs))[0]
 
                 local_reject.mean_ = _slicemean(
-                    epochs_interp[train].get_data()[:, picks_],
+                    epochs_interp[train].get_data(picks_),
                     good_epochs_idx, axis=0)
                 loss[idx, jdx, fold] = -local_reject.score(X[test])
 
