@@ -261,7 +261,7 @@ def test_autoreject():
                                      meg='mag', eeg=True, eog=True,
                                      exclude='bads')
     assert_array_equal(epochs_with_bads_clean.get_data(good_w_bads_ix, **_GDKW),
-                       epochs_clean.get_data(good_wo_bads_ix, **_GDKW)
+                       epochs_clean.get_data(good_wo_bads_ix, **_GDKW))
 
     bad_ix = [epochs_with_bads_clean.ch_names.index(ch)
               for ch in epochs_with_bads_clean.info['bads']]
