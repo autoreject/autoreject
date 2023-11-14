@@ -10,6 +10,7 @@ from mne.datasets import testing
 from mne import io
 
 from autoreject import Ransac
+from autoreject.autoreject import _GDKW
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
@@ -48,7 +49,7 @@ def test_ransac():
     assert (expected == ransac.picks).all()
 
     # Pass numpy instead of epochs
-    X = epochs.get_data()
+    X = epochs.get_data(**_GDKW)
     pytest.raises(AttributeError, ransac.fit, X)
 
     # should not contain both channel types

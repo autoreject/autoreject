@@ -23,7 +23,7 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         get_rejection_threshold, read_auto_reject,
                         read_reject_log)
 from autoreject.utils import _get_picks_by_type
-from autoreject.autoreject import _get_interp_chs
+from autoreject.autoreject import _get_interp_chs, _GDKW
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
@@ -121,7 +121,7 @@ def test_autoreject():
     epochs_new = epochs[12:]
     epochs_with_bads_fit = epochs_with_bads[:12]
 
-    X = epochs_fit.get_data()
+    X = epochs_fit.get_data(**_GDKW)
     n_epochs, n_channels, n_times = X.shape
     X = X.reshape(n_epochs, -1)
 
@@ -235,7 +235,7 @@ def test_autoreject():
         assert_array_equal(
             interp_counts, [len(cc) for cc in interp_channels])
 
-    assert len(epochs_new_clean.get_data()) != len(epochs_new.get_data())
+    assert len(epochs_new_clean) != len(epochs_new)
 
     # test that transform can take new reject_log
     reject_log1 = ar.get_reject_log(epochs)
@@ -260,15 +260,15 @@ def test_autoreject():
     good_wo_bads_ix = mne.pick_types(epochs_clean.info,
                                      meg='mag', eeg=True, eog=True,
                                      exclude='bads')
-    assert_array_equal(epochs_with_bads_clean.get_data()[:, good_w_bads_ix, :],
-                       epochs_clean.get_data()[:, good_wo_bads_ix, :])
+    assert_array_equal(epochs_with_bads_clean.get_data(good_w_bads_ix, **_GDKW),
+                       epochs_clean.get_data(good_wo_bads_ix, **_GDKW)
 
     bad_ix = [epochs_with_bads_clean.ch_names.index(ch)
               for ch in epochs_with_bads_clean.info['bads']]
     epo_ix = ~ar_bads.get_reject_log(epochs_with_bads_fit).bad_epochs
     assert_array_equal(
-        epochs_with_bads_clean.get_data()[:, bad_ix, :],
-        epochs_with_bads_fit.get_data()[epo_ix, :, :][:, bad_ix, :])
+        epochs_with_bads_clean.get_data(bad_ix, **_GDKW),
+        epochs_with_bads_fit.get_data(bad_ix, **_GDKW)[epo_ix])
 
     assert epochs_clean.ch_names == epochs_fit.ch_names
 
@@ -341,8 +341,8 @@ def test_io():
     epochs_clean2, reject_log2 = ar4.transform(epochs, return_log=True)
     epochs_clean3, reject_log3 = ar5.transform(epochs, return_log=True)
 
-    assert_array_equal(epochs_clean1.get_data(), epochs_clean2.get_data())
-    assert_array_equal(epochs_clean1.get_data(), epochs_clean3.get_data())
+    assert_array_equal(epochs_clean1.get_data(**_GDKW), epochs_clean2.get_data(**_GDKW))
+    assert_array_equal(epochs_clean1.get_data(**_GDKW), epochs_clean3.get_data(**_GDKW))
     assert_array_equal(reject_log1.labels, reject_log2.labels)
     assert_array_equal(reject_log1.labels, reject_log3.labels)
 
