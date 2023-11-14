@@ -1,5 +1,5 @@
 """Automated rejection and repair of epochs in M/EEG."""
-__version__ = '0.5.dev2'
+__version__ = '0.4.3'
 
 from .autoreject import _GlobalAutoReject, _AutoReject, AutoReject
 from .autoreject import RejectLog, read_auto_reject, read_reject_log
