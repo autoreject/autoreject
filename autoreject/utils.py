@@ -4,6 +4,7 @@
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
 from collections import defaultdict
+import inspect
 import warnings
 
 import numpy as np
@@ -13,6 +14,12 @@ from mne import pick_types, pick_info, channel_type
 from mne.io.pick import _picks_to_idx
 from mne.channels.interpolation import _do_interp_dots
 from mne.forward._field_interpolation import _setup_dots
+
+
+_GDKW = dict()
+# MNE >= 1.6
+if "copy" in inspect.getfullargspec(mne.Epochs.get_data).kwonlyargs:
+    _GDKW["copy"] = False
 
 
 def _check_ch_locs(chs):

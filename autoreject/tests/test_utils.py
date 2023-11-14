@@ -5,13 +5,13 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
 
 import mne
+import mne.channels.interpolation
 from mne.datasets import testing
 from mne.bem import _check_origin
 from mne import io
 
-from autoreject.utils import clean_by_interp, interpolate_bads
+from autoreject.utils import clean_by_interp, interpolate_bads, _GDKW
 from autoreject.utils import _interpolate_bads_eeg
-import mne.channels.interpolation
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
@@ -40,9 +40,12 @@ def test_utils():
     assert this_epoch.info['bads'] == ['MEG 2443']
     epochs_clean = clean_by_interp(this_epoch)
     assert this_epoch.info['bads'] == ['MEG 2443']
-    assert_array_equal(this_epoch.get_data(), epochs.get_data())
-    pytest.raises(AssertionError, assert_array_equal, epochs_clean.get_data(),
-                  this_epoch.get_data())
+    assert_array_equal(this_epoch.get_data(**_GDKW), epochs.get_data(**_GDKW))
+    with pytest.raises(AssertionError):
+        assert_array_equal(
+            epochs_clean.get_data(**_GDKW),
+            this_epoch.get_data(**_GDKW),
+        )
 
     picks_meg = mne.pick_types(evoked.info, meg='grad', eeg=False, exclude=[])
     picks_eeg = mne.pick_types(evoked.info, meg=False, eeg=True, exclude=[])
