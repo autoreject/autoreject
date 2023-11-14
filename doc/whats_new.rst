@@ -7,23 +7,6 @@ What's new?
 
 .. currentmodule:: autoreject
 
-.. _0.5:
-
-0.5 (unreleased)
-----------------
-
-Changelog
-~~~~~~~~~
-
-- Nothing yet
-
-Bug
-~~~
-
-- Nothing yet
-
-.. _0.4.3:
-
 0.4.3 (2023-11-14)
 ------------------
 
@@ -169,3 +152,4 @@ Changelog
 .. _Nikolai Chapochnikov: https://github.com/chapochn
 .. _Simon Kern: https://github.com/skjerns
 .. _Eric Larson: https://larsoner.com
+.. _Paul Bogdan: http://pbogdan.com/
