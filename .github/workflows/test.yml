@@ -119,7 +119,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -e .[test] lazy_loader
     - name: Clone MNE-Python
-      run: git clone --depth 1 --single-branch --branch main https://github.com/mne-tools/mne-python.git
+      run: git clone --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (master|stable)
       if: matrix.os == 'ubuntu-latest'
       run: |
