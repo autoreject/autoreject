@@ -28,6 +28,7 @@ def pytest_configure(config):
     ignore:FigureCanvasAgg is non-interactive.*:UserWarning
     ignore:`np.MachAr` is deprecated.*:DeprecationWarning
     ignore:`product` is deprecated as of NumPy.*:DeprecationWarning
+    ignore:datetime\.datetime\.utcfromtimestamp.* is deprecated and.*:DeprecationWarning
     """
     for warning_line in warning_lines.split('\n'):
         warning_line = warning_line.strip()
