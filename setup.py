@@ -50,14 +50,14 @@ if __name__ == "__main__":
           platforms='any',
           keywords=('electroencephalography eeg magnetoencephalography '
                     'meg preprocessing analysis'),
-          python_requires='~=3.8',
+          python_requires='~=3.9',
           install_requires=[
-              'numpy >= 1.20.2',
-              'scipy >= 1.6.3',
-              'mne[hdf5] >= 1.0',
-              'scikit-learn >= 0.24.2',
+              'numpy >= 1.21.2',
+              'scipy >= 1.7.1',
+              'mne[hdf5] >= 1.5.0',
+              'scikit-learn >= 1.0.0',
               'joblib',
-              'matplotlib >= 3.4.0',
+              'matplotlib >= 3.5.0',
           ],
           extras_require={
               'test': [

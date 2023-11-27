@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.12']
     name: "Flake8 and check-manifest ${{ matrix.python-version }}"
     steps:
     - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.11']
+        python-version: ['3.9', '3.12']
 
     steps:
     - name: Set up Python ${{ matrix.python-version }}
@@ -55,11 +55,11 @@ jobs:
     - name: Update pip and wheel
       run: |
         python -m pip install --upgrade pip
-        python -m pip install --upgrade wheel
+        python -m pip install --upgrade setuptools wheel build
 
     - uses: actions/checkout@v4
     - name: Build sdist
-      run: python setup.py sdist
+      run: python -m build --sdist
     - name: Install sdist
       run: python -m pip install ./dist/autoreject-*
     - name: Clean up working directory
@@ -71,7 +71,7 @@ jobs:
 
     - uses: actions/checkout@v4
     - name: Build wheel
-      run: python setup.py bdist_wheel
+      run: python -m build --wheel
     - name: Install wheel
       run: python -m pip install ./dist/autoreject-*.whl
     - name: Clean up working directory
@@ -84,11 +84,11 @@ jobs:
     - uses: actions/checkout@v4
     - name: Test extras install
       run: |
-        python -m pip install .
+        python -m pip install .[test,doc]
         python -c 'import autoreject; print(autoreject.__version__)'
-        python -c 'import tqdm; print(tqdm.__version__)'
         python -c 'import h5io; print(h5io.__version__)'
-
+        python -c 'import sphinx; print(sphinx.__version__)'
+        python -c 'import pytest; print(pytest.__version__)'
 
   test:
     runs-on: ${{ matrix.os }}
@@ -96,7 +96,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.8', '3.11']
+        python-version: ['3.9', '3.12']
         mne-version: [stable, main]
     env:
       TZ: Europe/Berlin
@@ -119,9 +119,9 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -e .[test] lazy_loader
     - name: Clone MNE-Python
-      run: git clone --depth 1 --single-branch --branch main https://github.com/mne-tools/mne-python.git
+      run: git clone --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (master|stable)
-      if: "matrix.os == 'ubuntu-latest'"
+      if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt update && sudo apt install libegl1 -y
         python -m pip install -e mne-python/

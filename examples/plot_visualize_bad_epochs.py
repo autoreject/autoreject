@@ -63,7 +63,7 @@ for run in range(3, 7):
                              consecutive='increasing',
                              min_duration=0.003, verbose=True)
     # Read epochs
-    mne.io.set_eeg_reference(raw)
+    mne.set_eeg_reference(raw)
 
     epoch = mne.Epochs(raw, events, events_id, tmin, tmax, proj=True,
                        baseline=None,
