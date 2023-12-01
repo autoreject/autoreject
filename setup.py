@@ -63,6 +63,7 @@ if __name__ == "__main__":
               'test': [
                   'mne_qt_browser',
                   'PyQt6',
+                  'PyQt6-Qt6 != 6.6.1',  # see: https://github.com/mne-tools/mne-python/pull/12251
                   'pytest',
                   'pytest-cov',
                   'pytest-sugar',
