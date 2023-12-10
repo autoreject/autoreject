@@ -5,6 +5,7 @@ recursive-include examples *.txt
 
 ### Exclude
 
+exclude .git_archival.txt
 exclude Makefile
 exclude .coveragerc
 exclude *.yml
