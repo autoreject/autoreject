@@ -74,7 +74,6 @@ Homepage = "http://autoreject.github.io/"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["autoreject/**/*"]
 namespaces = false
 
 [tool.setuptools_scm]

@@ -1,6 +1,4 @@
-include *.yml
 include LICENSE
-include conftest.py
 recursive-include autoreject *.py
 recursive-include examples *.py
 recursive-include examples *.txt
@@ -15,3 +13,5 @@ exclude .mailmap
 recursive-exclude .circleci *
 recursive-exclude autoreject *.pyc
 recursive-exclude doc *
+recursive-exclude autoreject.egg-info *
+recursive-exclude .github *
