@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e.[test]
+        python -m pip install -e ".[test]"
     - name: Display versions and environment information
       run: |
         python --version
@@ -84,7 +84,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Test extras install
       run: |
-        python -m pip install .[test,doc]
+        python -m pip install ".[test,doc]"
         python -c 'import autoreject; print(autoreject.__version__)'
         python -c 'import h5io; print(h5io.__version__)'
         python -c 'import sphinx; print(sphinx.__version__)'
@@ -115,9 +115,9 @@ jobs:
         pyvista: false
     # Have to install any extra `main` MNE deps here because we use get_testing_version.sh below
     - name: Install autoreject
-      run: |
+      run: |g
         python -m pip install --upgrade pip
-        python -m pip install -e .[test] lazy_loader
+        python -m pip install -e ".[test]" lazy_loader
     - name: Clone MNE-Python
       run: git clone --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (master|stable)
