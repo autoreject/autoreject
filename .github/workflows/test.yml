@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e ".[test]"
+        python -m pip install -e .[test]
     - name: Display versions and environment information
       run: |
         python --version
@@ -117,7 +117,7 @@ jobs:
     - name: Install autoreject
       run:
         python -m pip install --upgrade pip
-        python -m pip install -e ".[test]" lazy_loader
+        python -m pip install -e .[test] lazy_loader
     - name: Clone MNE-Python
       run: git clone --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (master|stable)
