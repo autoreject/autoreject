@@ -92,4 +92,6 @@ exclude_lines = [
     # Don't complain if non-runnable code isn't run:
     "if __name__ == .__main__.:",
 ] # Regexes for lines to exclude from consideration
-omit = "*tests*" # Do not include test script in coverage report
+omit = [
+    "*tests*", # Do not include test script in coverage report
+]
