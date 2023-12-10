@@ -150,7 +150,7 @@ jobs:
     - name: Run pytest
       shell: bash
       run: |
-        pytest --cov=autoreject --cov-report=xml --cov-config=setup.cfg -v autoreject/
+        pytest --cov=autoreject --cov-report=xml -v autoreject/
     - name: Upload coverage stats to codecov
       uses: codecov/codecov-action@v3
       with:
