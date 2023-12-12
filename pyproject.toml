@@ -72,7 +72,6 @@ Homepage = "http://autoreject.github.io/"
 "Bug Tracker" = "https://github.com/autoreject/autoreject/issues"
 "Source Code" = "https://github.com/autoreject/autoreject"
 
-
 [tool.setuptools.packages.find]
 where = ["."]
 namespaces = false
