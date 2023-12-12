@@ -52,6 +52,7 @@ test = [
     "pytest-sugar",
     "check-manifest",
     "flake8",
+    "flake8-pyproject",
     "importlib_resources", # drop after minimum Py >=3.10
 ]
 doc = [
@@ -78,6 +79,11 @@ namespaces = false
 
 [tool.setuptools_scm]
 version_scheme = "release-branch-semver"
+
+[tool.flake8]
+exclude = ["__init__.py"]
+ignore = ["E241", "W504"]
+max_line_length = 88
 
 [tool.pytest.ini_options]
 addopts = """--durations=10 -ra --cov-report= --tb=short
