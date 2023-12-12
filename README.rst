@@ -3,14 +3,14 @@ autoreject
 
 |CircleCI|_ |GitHub Actions|_ |Codecov|_ |PyPI|_ |Conda-Forge|_
 
-.. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/master.svg?style=shield&circle-token=:circle-token
+.. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/main.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/autoreject/autoreject
 
 .. |GitHub Actions| image:: https://github.com/autoreject/autoreject/actions/workflows/test.yml/badge.svg
 .. _GitHub Actions: https://github.com/autoreject/autoreject/actions/workflows/test.yml
 
-.. |Codecov| image:: http://codecov.io/github/autoreject/autoreject/coverage.svg?branch=master
-.. _Codecov: http://codecov.io/github/autoreject/autoreject?branch=master
+.. |Codecov| image:: http://codecov.io/github/autoreject/autoreject/coverage.svg?branch=main
+.. _Codecov: http://codecov.io/github/autoreject/autoreject?branch=main
 
 .. |PyPI| image:: https://badge.fury.io/py/autoreject.svg
 .. _PyPI: https://badge.fury.io/py/autoreject
@@ -46,7 +46,7 @@ Or ``conda``::
 
 If you want the latest (development) version of ``autoreject``, use::
 
-    pip install https://api.github.com/repos/autoreject/autoreject/zipball/master
+    pip install https://api.github.com/repos/autoreject/autoreject/zipball/main
 
 If you do not have admin privileges on the computer, use the ``--user`` flag
 with `pip`.

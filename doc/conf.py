@@ -112,7 +112,7 @@ html_theme_options = {
     "navbar_end": ["theme-switcher", "version-switcher", "navbar-icon-links"],
     "switcher": {
         # "json_url": "https://mne.tools/dev/_static/versions.json",
-        "json_url": "https://raw.githubusercontent.com/autoreject/autoreject/master/doc/_static/versions.json",  # noqa: E501
+        "json_url": "https://raw.githubusercontent.com/autoreject/autoreject/main/doc/_static/versions.json",  # noqa: E501
         "version_match": switcher_version_match,
     },
 }
@@ -122,7 +122,7 @@ html_context = {
     # next 3 are for the "edit this page" button
     "github_user": "autoreject",
     "github_repo": "autoreject",
-    "github_version": "master",
+    "github_version": "main",
     "doc_path": "doc",
 }
 

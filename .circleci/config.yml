@@ -55,7 +55,7 @@ jobs:
                   - ~/project/examples/ds002778
 
     docs-deploy:
-        # will only be run on master branch
+        # will only be run on main branch
         docker:
           - image: cimg/node:lts
         steps:
@@ -84,7 +84,7 @@ jobs:
                     --dotfiles \
                     --message "doc updates [skip ci]" \
                     --repo="https://github.com/autoreject/autoreject.github.io" \
-                    --branch master \
+                    --branch main \
                     --dist doc/_build/html \
                     --dest ./dev
 
@@ -97,7 +97,7 @@ workflows:
             - build
           filters:
             branches:
-              only: master
+              only: main
 
   weekly:
     jobs:
@@ -108,4 +108,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
