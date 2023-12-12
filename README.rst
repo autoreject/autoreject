@@ -46,7 +46,7 @@ Or ``conda``::
 
 If you want the latest (development) version of ``autoreject``, use::
 
-    pip install https://api.github.com/repos/autoreject/autoreject/zipball/main
+    pip install https://github.com/autoreject/autoreject/archive/refs/heads/main.zip
 
 If you do not have admin privileges on the computer, use the ``--user`` flag
 with `pip`.
