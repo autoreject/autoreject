@@ -49,14 +49,16 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Update pip and wheel
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel build
+        python -m pip install --upgrade build twine
 
     - uses: actions/checkout@v4
     - name: Build sdist
       run: python -m build --sdist
+    - name: Check sdist
+      run: twine check --strict dist/*
     - name: Install sdist
       run: python -m pip install ./dist/autoreject-*
     - name: Clean up working directory
@@ -69,6 +71,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build wheel
       run: python -m build --wheel
+    - name: Check wheel
+      run: twine check --strict dist/*
     - name: Install wheel
       run: python -m pip install ./dist/autoreject-*.whl
     - name: Clean up working directory
@@ -110,11 +114,12 @@ jobs:
       with:
         qt: true
         pyvista: false
-    # Have to install any extra `main` MNE deps here because we use get_testing_version.sh below
     - name: Install autoreject
+      # lazy_loader needed for get_testing_version.sh
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -e .[test] lazy_loader
+        python -m pip install -e .[test]
+        python -m pip install lazy_loader
     - name: Clone MNE-Python
       run: git clone --single-branch --branch main https://github.com/mne-tools/mne-python.git
     - name: Install mne (main|stable)

@@ -15,9 +15,11 @@ jobs:
                     echo "source /home/circleci/autoreject_env/bin/activate" >> $BASH_ENV
             - run:
                 name: Install packages
+                # psutil needed for `mne sys_info`
                 command: |
-                    python3 -m pip install --progress-bar off --upgrade pip setuptools wheel psutil
+                    python3 -m pip install --progress-bar off --upgrade pip
                     python3 -m pip install --progress-bar off -e .[doc]
+                    python3 -m pip install --progress-bar off psutil
             - run:
                 name: Print system information
                 command: |
