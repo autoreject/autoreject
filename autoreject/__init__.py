@@ -1,5 +1,11 @@
 """Automated rejection and repair of epochs in M/EEG."""
-__version__ = '0.5.0.dev3'
+
+try:
+    from importlib.metadata import version
+
+    __version__ = version("autoreject")
+except Exception:
+    __version__ = "0.0.0"
 
 from .autoreject import _GlobalAutoReject, _AutoReject, AutoReject
 from .autoreject import RejectLog, read_auto_reject, read_reject_log

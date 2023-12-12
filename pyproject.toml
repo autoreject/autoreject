@@ -1,0 +1,103 @@
+[build-system]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoreject"
+description = "Automated rejection and repair of epochs in M/EEG."
+maintainers = [{ name = "Mainak Jas", email = "mainakjas@gmail.com" }]
+license = { text = "BSD-3-Clause" }
+dynamic = ["version"]
+readme = { file = "README.rst", content-type = "text/x-rst" }
+requires-python = ">=3.9"
+keywords = [
+    "electroencephalography",
+    "eeg",
+    "magnetoencephalography",
+    "meg",
+    "preprocessing",
+    "analysis",
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "numpy >= 1.21.2",
+    "scipy >= 1.7.1",
+    "mne[hdf5] >= 1.5.0",
+    "scikit-learn >= 1.0.0",
+    "joblib",
+    "matplotlib >= 3.5.0",
+]
+
+[project.optional-dependencies]
+# Variants with dependencies that will get installed on top of those listed unter
+# project.dependencies
+test = [
+    "mne_qt_browser",
+    "PyQt6!=6.6.1",        # see line below
+    "PyQt6-Qt6 != 6.6.1",  # see: https://github.com/mne-tools/mne-python/pull/12251
+    "pytest",
+    "pytest-cov",
+    "pytest-sugar",
+    "check-manifest",
+    "flake8",
+    "flake8-pyproject",
+    "importlib_resources", # drop after minimum Py >=3.10
+]
+doc = [
+    "sphinx",
+    "sphinx-gallery",
+    "pydata-sphinx-theme",
+    "sphinx-copybutton",
+    "sphinx-github-role",
+    "numpydoc",
+    "cython",
+    "pillow",
+    "openneuro-py >= 2021.10.1",
+]
+
+[project.urls]
+Homepage = "http://autoreject.github.io/"
+"Bug Tracker" = "https://github.com/autoreject/autoreject/issues"
+"Source Code" = "https://github.com/autoreject/autoreject"
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+namespaces = false
+
+[tool.setuptools_scm]
+version_scheme = "release-branch-semver"
+
+[tool.flake8]
+exclude = ["__init__.py"]
+ignore = ["E241", "W504"]
+max_line_length = 88
+
+[tool.pytest.ini_options]
+addopts = """--durations=10 -ra --cov-report= --tb=short
+    --doctest-ignore-import-errors --junit-xml=junit-results.xml
+    --color=yes --capture=sys
+"""
+
+[tool.coverage.report]
+exclude_lines = [
+    # Have to re-enable the standard pragma
+    "pragma: no cover",
+    # Don't complain if non-runnable code isn't run:
+    "if __name__ == .__main__.:",
+] # Regexes for lines to exclude from consideration
+omit = [
+    "*tests*", # Do not include test script in coverage report
+]
