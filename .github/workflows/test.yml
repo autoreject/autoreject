@@ -140,7 +140,7 @@ jobs:
       working-directory: mne-python
       shell: bash
       name: 'Get testing version'
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       with:
         key: ${{ env.TESTING_VERSION }}
         path: ~/mne_data
