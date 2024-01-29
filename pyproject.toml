@@ -47,7 +47,7 @@ test = [
     "mne_qt_browser",
     "PyQt6!=6.6.1",        # see line below
     "PyQt6-Qt6 != 6.6.1",  # see: https://github.com/mne-tools/mne-python/pull/12251
-    "pytest",
+    "pytest < 8",
     "pytest-cov",
     "pytest-sugar",
     "check-manifest",
