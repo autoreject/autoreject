@@ -15,7 +15,7 @@ What's new?
 Changelog
 ~~~~~~~~~
 
-- Nothing yet
+- The package build backend was switched from ``setuptools`` to ``hatchling``. For users, nothing should change, by `Richard Höchenberger`_ in :github:`#335`
 
 Bug
 ~~~
@@ -170,3 +170,4 @@ Changelog
 .. _Simon Kern: https://github.com/skjerns
 .. _Eric Larson: https://larsoner.com
 .. _Paul Bogdan: http://pbogdan.com/
+.. _Richard Höchenberger: https://github.com/hoechenberger

@@ -1,4 +1,4 @@
-.PHONY : clean-pyc clean-so clean-build clean in inplace test-code test-doc test-coverage test-manifest test trailing-spaces doc-plot doc
+.PHONY : clean-pyc clean-so clean-build clean in inplace test-code test-doc test-coverage test trailing-spaces doc-plot doc
 
 all: clean test doc
 
@@ -29,10 +29,7 @@ test-coverage:
 	rm -rf .coverage
 	pytest --cov=autoreject/tests
 
-test-manifest:
-	check-manifest --ignore doc;
-
-test: test-code test-doc test-manifest
+test: test-code test-doc
 
 trailing-spaces:
 	find . -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
