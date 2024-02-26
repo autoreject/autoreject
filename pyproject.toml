@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
 name = "autoreject"
@@ -50,7 +50,6 @@ test = [
     "pytest < 8",
     "pytest-cov",
     "pytest-sugar",
-    "check-manifest",
     "flake8",
     "flake8-pyproject",
     "importlib_resources", # drop after minimum Py >=3.10
@@ -72,12 +71,19 @@ Homepage = "http://autoreject.github.io/"
 "Bug Tracker" = "https://github.com/autoreject/autoreject/issues"
 "Source Code" = "https://github.com/autoreject/autoreject"
 
-[tool.setuptools.packages.find]
-where = ["."]
-namespaces = false
+[tool.hatch.build]
+exclude = [
+    "/.*",
+    "/*.toml",
+    "/doc",
+    "/examples",
+    "/Makefile",
+    "/autoreject/tests/"
+] # tracked by git, but we don't want to ship those files
 
-[tool.setuptools_scm]
-version_scheme = "release-branch-semver"
+[tool.hatch.version]
+source = "vcs"
+raw-options = { version_scheme = "release-branch-semver" }
 
 [tool.flake8]
 exclude = ["__init__.py"]

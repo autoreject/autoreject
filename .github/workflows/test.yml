@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ['3.12']
-    name: "Flake8 and check-manifest ${{ matrix.python-version }}"
+    name: "Flake8 ${{ matrix.python-version }}"
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -33,7 +33,6 @@ jobs:
         python --version
         which python
     - run: flake8 autoreject
-    - run: check-manifest
 
   build:
     runs-on: ${{ matrix.os }}
