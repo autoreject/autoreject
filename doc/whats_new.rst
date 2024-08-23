@@ -16,6 +16,7 @@ Changelog
 ~~~~~~~~~
 
 - The package build backend was switched from ``setuptools`` to ``hatchling``. For users, nothing should change, by `Richard Höchenberger`_ in :github:`#335`
+- ``autoreject`` now requires a minimum Python version of 3.10, by `Stefan Appelhoff`_ in :github:`#339`
 
 Bug
 ~~~

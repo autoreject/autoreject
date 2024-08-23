@@ -35,7 +35,7 @@ Installation
 ------------
 
 We recommend the `Anaconda Python distribution <https://www.anaconda.com/>`_
-and a **Python version >= 3.9**.
+and a **Python version >= 3.10**.
 We furthermore recommend that you install ``autoreject`` into an isolated
 Python environment.
 To obtain the stable release of ``autoreject``, you can use ``pip``::
