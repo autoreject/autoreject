@@ -29,6 +29,7 @@ def pytest_configure(config):
     ignore:`np.MachAr` is deprecated.*:DeprecationWarning
     ignore:`product` is deprecated as of NumPy.*:DeprecationWarning
     ignore:datetime\.datetime\.utcfromtimestamp.* is deprecated and.*:DeprecationWarning
+    ignore:__array__ implementation doesn.*:DeprecationWarning
     """
     for warning_line in warning_lines.split('\n'):
         warning_line = warning_line.strip()
