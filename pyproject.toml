@@ -9,7 +9,7 @@ maintainers = [{ name = "Mainak Jas", email = "mainakjas@gmail.com" }]
 license = { text = "BSD-3-Clause" }
 dynamic = ["version"]
 readme = { file = "README.rst", content-type = "text/x-rst" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = [
     "electroencephalography",
     "eeg",
