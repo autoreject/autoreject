@@ -4,11 +4,9 @@ concurrency:
   cancel-in-progress: true
 on:
   push:
-    branches: ['**']
+    branches: ['main', 'maint/*']
   pull_request:
-    branches: ['**']
-  schedule:
-    - cron: "0 4 * * *"
+    branches: ['main', 'maint/*']
 
 jobs:
   style:
@@ -154,7 +152,7 @@ jobs:
         pytest --cov=autoreject --cov-report=xml -v autoreject/
 
     - name: Upload coverage stats to codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
         token: ${{ secrets.CODECOV_TOKEN }}
