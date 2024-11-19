@@ -4,9 +4,9 @@ concurrency:
   cancel-in-progress: true
 on:
   push:
-    branches: ['**']
+    branches: ['main', 'maint/*']
   pull_request:
-    branches: ['**']
+    branches: ['main', 'maint/*']
 
 jobs:
   style:
