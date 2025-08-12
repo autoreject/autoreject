@@ -17,7 +17,7 @@ jobs:
         python-version: ['3.12']
     name: "Flake8 ${{ matrix.python-version }}"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -51,7 +51,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade build twine
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Build sdist
       run: python -m build --sdist
     - name: Check sdist
@@ -65,7 +65,7 @@ jobs:
     - name: Remove sdist install
       run: python -m pip uninstall -y autoreject
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Build wheel
       run: python -m build --wheel
     - name: Check wheel
@@ -79,7 +79,7 @@ jobs:
     - name: Remove wheel install
       run: python -m pip uninstall -y autoreject
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Test extras install
       run: |
         python -m pip install .[test,doc]
@@ -101,7 +101,7 @@ jobs:
       FORCE_COLOR: true
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
