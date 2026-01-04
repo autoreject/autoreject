@@ -290,8 +290,9 @@ def get_backend(prefer=None):
 
     Returns
     -------
-    backend : BaseBackend
-        A backend instance with methods for array operations.
+    backend : object
+        A backend instance (NumpyBackend or TorchBackend) with methods
+        for array operations.
 
     Notes
     -----
