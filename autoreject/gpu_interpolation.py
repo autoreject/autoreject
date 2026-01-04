@@ -10,6 +10,8 @@ The implementation is based on:
     Electroencephalography Clinical Neurophysiology, Feb; 72(2):184-7.
 """
 
+# Author: Rémy Ramadour <remy.ramadour.labs@gmail.com>
+
 import numpy as np
 from .backends import get_backend, is_device_array, DeviceArray
 

@@ -82,7 +82,6 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         Only returned if `return_param_range` is True.
     """
     from sklearn.model_selection import validation_curve
-
     estimator = _GlobalAutoReject()
 
     BaseEpochs = _get_epochs_type()
@@ -242,9 +241,8 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     reject = dict()
 
     if ch_types is not None and not isinstance(ch_types, (list, str)):
-        raise ValueError(
-            "ch_types must be of type None, list," "or str. Got %s" % type(ch_types)
-        )
+        raise ValueError("ch_types must be of type None, list,"
+                         "or str. Got %s" % type(ch_types))
 
     if ch_types is None:
         ch_types = ["mag", "grad", "eeg", "eog", "hbo", "hbr", "ecog", "seeg"]
@@ -297,20 +295,16 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
             return cache[thresh]
 
         n_epochs = all_threshes.shape[0]
-        idx = np.concatenate(
-            (np.linspace(0, n_epochs, 5, endpoint=False, dtype=int), [n_epochs - 1])
-        )  # ensure last point is in init
+        idx = np.concatenate((
+            np.linspace(0, n_epochs, 5, endpoint=False, dtype=int),
+            [n_epochs - 1]))  # ensure last point is in init
         idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 5
         initial_x = all_threshes[idx]
-        best_thresh, _ = bayes_opt(
-            func,
-            initial_x,
-            all_threshes,
-            expected_improvement,
-            max_iter=10,
-            debug=False,
-            random_state=random_state,
-        )
+        best_thresh, _ = bayes_opt(func, initial_x,
+                                   all_threshes,
+                                   expected_improvement,
+                                   max_iter=10, debug=False,
+                                   random_state=random_state)
         reject[ch_type] = best_thresh
 
     return reject
@@ -349,9 +343,8 @@ class _ChannelAutoReject(BaseAutoReject):
         return self
 
 
-def _compute_thresh(
-    this_data, method="bayesian_optimization", cv=10, y=None, random_state=None
-):
+def _compute_thresh(this_data, method="bayesian_optimization",
+                    cv=10, y=None, random_state=None):
     """Compute the rejection threshold for one channel.
 
     Parameters
@@ -382,14 +375,12 @@ def _compute_thresh(
     all_threshes = np.sort(backend.ptp(this_data, axis=1))
 
     if method == "random_search":
-        param_dist = dict(thresh=uniform(all_threshes[0], all_threshes[-1]))
-        rs = RandomizedSearchCV(
-            est,
-            param_distributions=param_dist,
-            n_iter=20,
-            cv=cv,
-            random_state=random_state,
-        )
+        param_dist = dict(thresh=uniform(all_threshes[0],
+                                         all_threshes[-1]))
+        rs = RandomizedSearchCV(est,
+                                param_distributions=param_dist,
+                                n_iter=20, cv=cv,
+                                random_state=random_state)
         rs.fit(this_data, y)
         best_thresh = rs.best_estimator_.thresh
     elif method == "bayesian_optimization":
@@ -405,33 +396,23 @@ def _compute_thresh(
             return cache[thresh]
 
         n_epochs = all_threshes.shape[0]
-        idx = np.concatenate(
-            (np.linspace(0, n_epochs, 40, endpoint=False, dtype=int), [n_epochs - 1])
-        )  # ensure last point is in init
+        idx = np.concatenate((
+            np.linspace(0, n_epochs, 40, endpoint=False, dtype=int),
+            [n_epochs - 1]))  # ensure last point is in init
         idx = np.unique(idx)  # linspace may be non-unique if n_epochs < 40
         initial_x = all_threshes[idx]
-        best_thresh, _ = bayes_opt(
-            func,
-            initial_x,
-            all_threshes,
-            expected_improvement,
-            max_iter=10,
-            debug=False,
-            random_state=random_state,
-        )
+        best_thresh, _ = bayes_opt(func, initial_x,
+                                   all_threshes,
+                                   expected_improvement,
+                                   max_iter=10, debug=False,
+                                   random_state=random_state)
 
     return best_thresh
 
 
-def compute_thresholds(
-    epochs,
-    method="bayesian_optimization",
-    random_state=None,
-    picks=None,
-    augment=True,
-    verbose=True,
-    n_jobs=1,
-):
+def compute_thresholds(epochs, method="bayesian_optimization",
+                       random_state=None, picks=None, augment=True,
+                       verbose=True, n_jobs=1):
     """Compute thresholds for each channel.
 
     Parameters
@@ -473,65 +454,40 @@ def compute_thresholds(
 
     >>> compute_thresholds(epochs)
     """
-    return _compute_thresholds(
-        epochs,
-        method=method,
-        random_state=random_state,
-        picks=picks,
-        augment=augment,
-        verbose=verbose,
-        n_jobs=n_jobs,
-    )
+    return _compute_thresholds(epochs, method=method,
+                               random_state=random_state, picks=picks,
+                               augment=augment, verbose=verbose, n_jobs=n_jobs)
 
 
-def _compute_thresholds(
-    epochs,
-    method="bayesian_optimization",
-    random_state=None,
-    picks=None,
-    augment=True,
-    dots=None,
-    verbose=True,
-    n_jobs=1,
-):
+def _compute_thresholds(epochs, method="bayesian_optimization",
+                        random_state=None, picks=None, augment=True,
+                        dots=None, verbose=True,n_jobs=1):
     if method not in ["bayesian_optimization", "random_search"]:
         raise ValueError("`method` param not recognized")
     picks = _handle_picks(info=epochs.info, picks=picks)
-    _check_data(
-        epochs, picks, verbose=verbose, check_loc=augment, ch_constraint="data_channels"
-    )
+    _check_data(epochs, picks, verbose=verbose, check_loc=augment,
+                ch_constraint="data_channels")
     picks_by_type = _get_picks_by_type(picks=picks, info=epochs.info)
     picks_by_type = None if len(picks_by_type) == 1 else picks_by_type  # XXX
     if picks_by_type is not None:
         threshes = dict()
         for ch_type, this_picks in picks_by_type:
-            threshes.update(
-                _compute_thresholds(
-                    epochs=epochs,
-                    method=method,
-                    random_state=random_state,
-                    picks=this_picks,
-                    augment=augment,
-                    dots=dots,
-                    verbose=verbose,
-                    n_jobs=n_jobs,
-                )
-            )
+            threshes.update(_compute_thresholds(
+                    epochs=epochs, method=method, random_state=random_state,
+                    picks=this_picks, augment=augment, dots=dots,
+                    verbose=verbose, n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
         data, y = epochs.get_data(**_GDKW), np.ones((n_epochs,))
         if augment:
-            epochs_interp = _clean_by_interp(
-                epochs, picks=picks, dots=dots, verbose=verbose
-            )
+            epochs_interp = _clean_by_interp(epochs, picks=picks,
+                                             dots=dots, verbose=verbose)
             # non-data channels will be duplicate
-            data = np.concatenate(
-                (epochs.get_data(**_GDKW), epochs_interp.get_data(**_GDKW)), axis=0
-            )
+            data = np.concatenate((epochs.get_data(**_GDKW),
+                                   epochs_interp.get_data(**_GDKW)), axis=0)
             y = np.r_[np.zeros((n_epochs,)), np.ones((n_epochs,))]
-        cv = StratifiedShuffleSplit(
-            n_splits=10, test_size=0.2, random_state=random_state
-        )
+        cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2,
+                                    random_state=random_state)
 
         ch_names = epochs.ch_names
 
@@ -539,11 +495,9 @@ def _compute_thresholds(
         parallel = Parallel(n_jobs=n_jobs, verbose=0)
         desc = "Computing thresholds ..."
         threshes = parallel(
-            my_thresh(
-                data[:, pick], cv=cv, method=method, y=y, random_state=random_state
-            )
-            for pick in _pbar(picks, desc=desc, verbose=verbose)
-        )
+            my_thresh(data[:, pick], cv=cv, method=method, y=y,
+                      random_state=random_state)
+            for pick in _pbar(picks, desc=desc, verbose=verbose))
         threshes = {ch_names[p]: thresh for p, thresh in zip(picks, threshes)}
     return threshes
 
@@ -595,24 +549,15 @@ class _AutoReject(BaseAutoReject):
         and the peak-to-peak thresholds as the values.
     """
 
-    def __init__(
-        self,
-        n_interpolate=0,
-        consensus=0.1,
-        thresh_func=None,
-        picks=None,
-        thresh_method="bayesian_optimization",
-        dots=None,
-        verbose=True,
-        device=None,
-    ):
+    def __init__(self, n_interpolate=0, consensus=0.1, thresh_func=None,
+                 picks=None, thresh_method="bayesian_optimization", dots=None,
+                 verbose=True, device=None):
         """Init it."""
         if thresh_func is None:
             thresh_func = _compute_thresholds
         if not (0 <= consensus <= 1):
-            raise ValueError(
-                '"consensus" must be between 0 and 1. ' "You gave me %s." % consensus
-            )
+            raise ValueError('"consensus" must be between 0 and 1. '
+                             'You gave me %s.' % consensus)
         self.consensus = consensus
         self.n_interpolate = n_interpolate
         self.thresh_func = thresh_func
@@ -624,19 +569,12 @@ class _AutoReject(BaseAutoReject):
     def __repr__(self):
         """repr."""
         class_name = self.__class__.__name__
-        params = dict(
-            n_interpolate=self.n_interpolate,
-            consensus=self.consensus,
-            verbose=self.verbose,
-            picks=self.picks,
-        )
+        params = dict(n_interpolate=self.n_interpolate,
+                      consensus=self.consensus,
+                      verbose=self.verbose, picks=self.picks)
         return "%s(%s)" % (
-            class_name,
-            _pprint(
-                params,
-                offset=len(class_name),
-            ),
-        )
+            class_name, _pprint(params,
+                                offset=len(class_name)))
 
     def _vote_bad_epochs(self, epochs, picks, backend=None):
         """Each channel votes for an epoch as good or bad.
@@ -673,8 +611,7 @@ class _AutoReject(BaseAutoReject):
         use_f32_thresh = (
             backend.name == "torch" and
             hasattr(backend, "device") and
-            backend.device == "mps"
-        )
+            backend.device == "mps")
 
         threshes = [self.threshes_[ch_name] for ch_name in this_ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
@@ -688,9 +625,9 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.sum(labels == 1, axis=1)
         return labels, bad_sensor_counts
 
-    def _get_epochs_interpolation(
-        self, epochs, labels, picks, n_interpolate, verbose=True, data=None
-    ):
+    def _get_epochs_interpolation(self, epochs, labels,
+                                  picks, n_interpolate,
+                                  verbose=True, data=None):
         """Interpolate the bad epochs.
 
         Parameters
@@ -744,8 +681,7 @@ class _AutoReject(BaseAutoReject):
                         # This should not happen if needs_ptp logic is correct
                         raise RuntimeError(
                             "Unexpected fallback to individual epoch data extraction. "
-                            "This indicates a bug in needs_ptp computation logic."
-                        )
+                            "This indicates a bug in needs_ptp computation logic.")
                     backend = get_backend()
                     peaks = backend.ptp(epoch_data, axis=-1)
                     peaks[non_picks] = -np.inf
@@ -756,7 +692,8 @@ class _AutoReject(BaseAutoReject):
                     # find the ordering of channels amongst the bad channels
                     sorted_ch_idx_picks = np.argsort(peaks)[::-1]
                     # then select only the worst n_interpolate channels
-                    interp_chs_mask[sorted_ch_idx_picks[n_interpolate:]] = False
+                    interp_chs_mask[
+                        sorted_ch_idx_picks[n_interpolate:]] = False
 
             labels[epoch_idx][interp_chs_mask] = 2
         return labels
@@ -770,7 +707,8 @@ class _AutoReject(BaseAutoReject):
         n_consensus = self.consensus_[ch_type] * n_channels
         bad_epochs = np.zeros(len(bad_sensor_counts), dtype=bool)
         if np.max(bad_sensor_counts) >= n_consensus:
-            n_epochs_drop = np.sum(bad_sensor_counts >= n_consensus)
+            n_epochs_drop = np.sum(bad_sensor_counts >=
+                                   n_consensus)
             bad_epochs_idx = sorted_epoch_idx[:n_epochs_drop]
             bad_epochs[bad_epochs_idx] = True
         return bad_epochs
@@ -802,26 +740,24 @@ class _AutoReject(BaseAutoReject):
         reject_log : instance of autoreject.RejectLog
             The rejection log.
         """
-        picks = self.picks_ if picks is None else _handle_picks(epochs.info, picks)
+        picks = (self.picks_ if picks is None else 
+                 _handle_picks(epochs.info, picks))
         picks_by_type = _get_picks_by_type(picks=picks, info=epochs.info)
         assert len(picks_by_type) == 1
         ch_type, this_picks = picks_by_type[0]
         del picks
 
-        labels, bad_sensor_counts = self._vote_bad_epochs(epochs, picks=this_picks)
+        labels, bad_sensor_counts = self._vote_bad_epochs(
+            epochs, picks=this_picks)
 
         labels = self._get_epochs_interpolation(
-            epochs,
-            labels=labels,
-            picks=this_picks,
-            n_interpolate=self.n_interpolate_[ch_type],
-        )
+            epochs, labels=labels, picks=this_picks,
+            n_interpolate=self.n_interpolate_[ch_type])
 
         assert len(labels) == len(epochs)
 
         bad_epochs = self._get_bad_epochs(
-            bad_sensor_counts, ch_type=ch_type, picks=this_picks
-        )
+            bad_sensor_counts, ch_type=ch_type, picks=this_picks)
 
         reject_log = RejectLog(labels=labels, bad_epochs=bad_epochs,
                                ch_names=epochs.ch_names)
@@ -842,12 +778,8 @@ class _AutoReject(BaseAutoReject):
             The instance.
         """
         self.picks_ = _handle_picks(info=epochs.info, picks=self.picks)
-        _check_data(
-            epochs,
-            picks=self.picks_,
-            verbose=self.verbose,
-            ch_constraint="single_channel_type",
-        )
+        _check_data(epochs, picks=self.picks_, verbose=self.verbose,
+            ch_constraint="single_channel_type")
 
         picks_by_type = _get_picks_by_type(picks=self.picks_, info=epochs.info)
         assert len(picks_by_type) == 1
@@ -859,32 +791,24 @@ class _AutoReject(BaseAutoReject):
         self.consensus_[ch_type] = self.consensus
 
         self.threshes_ = self.thresh_func(
-            epochs.copy(), dots=self.dots, picks=self.picks_, verbose=self.verbose
-        )
+            epochs.copy(), dots=self.dots, picks=self.picks_,
+            verbose=self.verbose)
 
         reject_log = self.get_reject_log(epochs=epochs, picks=self.picks_)
 
         epochs_copy = epochs.copy()
         interp_channels = _get_interp_chs(
-            reject_log.labels, reject_log.ch_names, this_picks
-        )
+            reject_log.labels, reject_log.ch_names, this_picks)
 
         # interpolate copy to compute the clean .mean_
         # Use GPU if device is set
         use_gpu = self.device is not None and self.device != "cpu"
-        _interpolate_bad_epochs(
-            epochs_copy,
-            interp_channels=interp_channels,
-            picks=self.picks_,
-            verbose=self.verbose,
-            use_gpu=use_gpu,
-            device=self.device,
-        )
+        _interpolate_bad_epochs(epochs_copy, interp_channels=interp_channels,
+                                picks=self.picks_, verbose=self.verbose,
+                                use_gpu=use_gpu,device=self.device)
         self.mean_ = _slicemean(
             epochs_copy.get_data(**_GDKW),
-            np.nonzero(np.invert(reject_log.bad_epochs))[0],
-            axis=0,
-        )
+            np.nonzero(np.invert(reject_log.bad_epochs))[0], axis=0)
         del epochs_copy  # I can't wait for garbage collection.
         return self
 
@@ -907,12 +831,8 @@ class _AutoReject(BaseAutoReject):
         reject_log : instance of autoreject.RejectLog
             If not None, override the reject log determined by autoreject.
         """
-        _check_data(
-            epochs,
-            picks=self.picks,
-            verbose=self.verbose,
-            ch_constraint="data_channels",
-        )
+        _check_data(epochs, picks=self.picks, verbose=self.verbose,
+                    ch_constraint="data_channels")
 
         reject_log = self.get_reject_log(epochs, picks=None)
         if np.all(reject_log.bad_epochs):
@@ -920,19 +840,11 @@ class _AutoReject(BaseAutoReject):
 
         epochs_clean = epochs.copy()
         # this one knows how to handle picks.
-        _apply_interp(
-            reject_log,
-            self,
-            epochs_clean,
-            self.threshes_,
-            self.picks_,
-            self.dots,
-            self.verbose,
-        )
+        _apply_interp(reject_log, self, epochs_clean, self.threshes_,
+                      self.picks_, self.dots,   self.verbose)
 
-        _apply_drop(
-            reject_log, self, epochs_clean, self.threshes_, self.picks_, self.verbose
-        )
+        _apply_drop(reject_log, self, epochs_clean, self.threshes_,
+                    self.picks_, self.verbose)
 
         if return_log:
             return epochs_clean, reject_log
@@ -968,9 +880,8 @@ def _interpolate_single_epoch(epoch_data, info, interp_chs, dots, picks):
     return epoch._data[0]
 
 
-def _interpolate_bad_epochs_gpu(
-    epochs, interp_channels, picks, device=None, verbose=True
-):
+def _interpolate_bad_epochs_gpu(epochs, interp_channels, picks,
+                                device=None, verbose=True):
     """GPU-accelerated epoch interpolation - works on arrays directly.
 
     This is a fast alternative to _interpolate_bad_epochs that:
@@ -1024,24 +935,15 @@ def _interpolate_bad_epochs_gpu(
     data = epochs._data  # (n_epochs, n_channels, n_times)
 
     # GPU interpolation - returns tensor
-    data_gpu = gpu_interpolate_bad_epochs(
-        data, interp_ch_indices, picks, pos, device=device
-    )
+    data_gpu = gpu_interpolate_bad_epochs(data, interp_ch_indices,
+                                          picks, pos, device=device)
 
     # Copy back to epochs (only picked channels were interpolated)
     epochs._data = data_gpu.cpu().numpy()
 
 
-def _interpolate_bad_epochs(
-    epochs,
-    interp_channels,
-    picks,
-    dots=None,
-    verbose=True,
-    n_jobs=1,
-    use_gpu=False,
-    device=None,
-):
+def _interpolate_bad_epochs(epochs, interp_channels, picks, dots=None, verbose=True,
+                            n_jobs=1, use_gpu=False, device=None):
     """Actually do the interpolation.
 
     Parameters
@@ -1068,9 +970,8 @@ def _interpolate_bad_epochs(
     # Try GPU path if requested
     if use_gpu:
         try:
-            _interpolate_bad_epochs_gpu(
-                epochs, interp_channels, picks, device=device, verbose=verbose
-            )
+            _interpolate_bad_epochs_gpu(epochs, interp_channels,
+                                        picks, device=device, verbose=verbose)
             return
         except Exception as e:
             if verbose:
@@ -1087,20 +988,15 @@ def _interpolate_bad_epochs(
         for epoch_idx, interp_chs in _pbar(
             list(enumerate(interp_channels)),
             desc="Repairing epochs",
-            position=pos,
-            leave=True,
-            verbose=verbose,
-        )
-    )
+            position=pos, leave=True, verbose=verbose))
 
     # Update epochs data with interpolated results
     for epoch_idx, interpolated_data in enumerate(results):
         epochs._data[epoch_idx] = interpolated_data
 
 
-def _run_local_reject_cv(
-    epochs, thresh_func, picks_, n_interpolate, cv, consensus, dots, verbose, n_jobs=1
-):
+def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
+                         consensus, dots, verbose, n_jobs=1):
     """Run local reject with cross-validation.
 
     Parameters
@@ -1132,12 +1028,13 @@ def _run_local_reject_cv(
         Loss array of shape (n_consensus, n_interpolate, n_folds).
     """
     n_folds = cv.get_n_splits()
-    loss = np.zeros((len(consensus), len(n_interpolate), n_folds))
+    loss = np.zeros((len(consensus), len(n_interpolate),
+                     n_folds))
 
     # The thresholds must be learnt from the entire data
-    local_reject = _AutoReject(
-        thresh_func=thresh_func, verbose=verbose, picks=picks_, dots=dots
-    )
+    local_reject = _AutoReject(thresh_func=thresh_func,
+                               verbose=verbose, picks=picks_,
+                               dots=dots)
     local_reject.fit(epochs)
 
     assert len(local_reject.consensus_) == 1  # works with one ch_type
@@ -1147,28 +1044,21 @@ def _run_local_reject_cv(
         local_reject._vote_bad_epochs(epochs, picks=picks_)
     desc = 'n_interp'
 
-    for jdx, n_interp in enumerate(
-        _pbar(n_interpolate, desc=desc, position=1, verbose=verbose)
-    ):
+    for jdx, n_interp in enumerate(_pbar(n_interpolate, desc=desc,
+                                         position=1, verbose=verbose)):
         # we can interpolate before doing cross-valida(tion
         # because interpolation is independent across trials.
         local_reject.n_interpolate_[ch_type] = n_interp
         labels = local_reject._get_epochs_interpolation(
-            epochs, labels=labels, picks=picks_, n_interpolate=n_interp
-        )
+            epochs, labels=labels, picks=picks_, n_interpolate=n_interp)
 
         interp_channels = _get_interp_chs(labels, epochs.ch_names, picks_)
         epochs_interp = epochs.copy()
         # for learning we need to go by channnel type, even for meg
         # Use n_jobs for parallel interpolation
         _interpolate_bad_epochs(
-            epochs_interp,
-            interp_channels=interp_channels,
-            picks=picks_,
-            dots=dots,
-            verbose=verbose,
-            n_jobs=n_jobs,
-        )
+            epochs_interp, interp_channels=interp_channels,
+            picks=picks_, dots=dots, verbose=verbose, n_jobs=n_jobs)
 
         # Hack to allow len(self.cv_.split(X)) as ProgressBar
         # assumes an iterable whereas self.cv_.split(X) is a
@@ -1186,7 +1076,8 @@ def _run_local_reject_cv(
 
         X = epochs.get_data(picks_, **_GDKW)
         cv_splits = CVSplits(cv.split(X), n_folds)
-        pbar = _pbar(cv_splits, desc="Fold", position=3, verbose=verbose)
+        pbar = _pbar(cv_splits, desc="Fold",
+                     position=3, verbose=verbose)
 
         for fold, (train, test) in enumerate(pbar):
             for idx, this_consensus in enumerate(consensus):
@@ -1198,16 +1089,13 @@ def _run_local_reject_cv(
 
                 local_reject.consensus_[ch_type] = this_consensus
                 bad_epochs = local_reject._get_bad_epochs(
-                    bad_sensor_counts[train], picks=picks_, ch_type=ch_type
-                )
+                    bad_sensor_counts[train], picks=picks_, ch_type=ch_type)
 
                 good_epochs_idx = np.nonzero(np.invert(bad_epochs))[0]
 
                 local_reject.mean_ = _slicemean(
                     epochs_interp[train].get_data(picks_, **_GDKW),
-                    good_epochs_idx,
-                    axis=0,
-                )
+                    good_epochs_idx, axis=0)
                 loss[idx, jdx, fold] = -local_reject.score(X[test])
 
     return local_reject, loss
@@ -1291,19 +1179,11 @@ class AutoReject:
         beneficial.
     """
 
-    def __init__(
-        self,
-        n_interpolate=None,
-        consensus=None,
-        thresh_func=None,
-        cv=10,
-        picks=None,
-        thresh_method="bayesian_optimization",
-        n_jobs=1,
-        random_state=None,
-        verbose=True,
-        device="auto",
-    ):
+    def __init__(self, n_interpolate=None, consensus=None,
+                 thresh_func=None, cv=10, picks=None,
+                 thresh_method="bayesian_optimization",
+                 n_jobs=1, random_state=None, verbose=True,
+                 device="auto"):
         """Initialize the AutoReject class."""
         self.n_interpolate = n_interpolate
         self.consensus = consensus
@@ -1362,20 +1242,16 @@ class AutoReject:
             try:
                 import torch
 
-                if (
-                    device == "mps" and
+                if (device == "mps" and
                     hasattr(torch.backends, "mps") and
-                    torch.backends.mps.is_available()
-                ):
+                    torch.backends.mps.is_available()):
                     return True, "mps"
                 elif device in ("gpu", "cuda") and torch.cuda.is_available():
                     return True, "cuda"
                 elif device == "gpu":
                     # Try MPS if CUDA not available
-                    if (
-                        hasattr(torch.backends, "mps") and
-                        torch.backends.mps.is_available()
-                    ):
+                    if (hasattr(torch.backends, "mps") and
+                        torch.backends.mps.is_available()):
                         return True, "mps"
                 return False, "cpu"
             except ImportError:
@@ -1386,23 +1262,13 @@ class AutoReject:
     def __repr__(self):
         """repr."""
         class_name = self.__class__.__name__
-        params = dict(
-            n_interpolate=self.n_interpolate,
-            consensus=self.consensus,
-            cv=self.cv,
-            verbose=self.verbose,
-            picks=self.picks,
-            thresh_method=self.thresh_method,
-            random_state=self.random_state,
-            n_jobs=self.n_jobs,
-        )
-        return "%s(%s)" % (
-            class_name,
-            _pprint(
-                params,
-                offset=len(class_name),
-            ),
-        )
+        params = dict(n_interpolate=self.n_interpolate,
+                      consensus=self.consensus,
+                      cv=self.cv, verbose=self.verbose, picks=self.picks,
+                      thresh_method=self.thresh_method,
+                      random_state=self.random_state, n_jobs=self.n_jobs)
+        return "%s(%s)" % (class_name, _pprint(params,
+                                               offset=len(class_name)))
 
     def __getstate__(self):
         """Get the state of autoreject as a dictionary."""
@@ -1419,9 +1285,8 @@ class AutoReject:
             for ch_type in self.local_reject_:
                 state["local_reject_"][ch_type] = dict()
                 for param in _INIT_PARAMS[:4] + _FIT_PARAMS[:4]:
-                    state["local_reject_"][ch_type][param] = getattr(
-                        self.local_reject_[ch_type], param
-                    )
+                    state["local_reject_"][ch_type][param] = \
+                        getattr(self.local_reject_[ch_type], param)
         return state
 
     def __setstate__(self, state):
@@ -1436,11 +1301,8 @@ class AutoReject:
                     }
                     local_reject_[ch_type] = _AutoReject(**init_kwargs)
                     for key in _FIT_PARAMS[:4]:
-                        setattr(
-                            local_reject_[ch_type],
-                            key,
-                            state["local_reject_"][ch_type][key],
-                        )
+                        setattr(local_reject_[ch_type], key,
+                                state["local_reject_"][ch_type][key])
                 self.local_reject_ = local_reject_
             elif param in _INIT_PARAMS + _FIT_PARAMS:
                 setattr(self, param, state[param])
@@ -1473,7 +1335,8 @@ class AutoReject:
         ch_types = [ch_type for ch_type, _ in picks_by_type]
         self.dots = None
         if "mag" in ch_types or "grad" in ch_types:
-            meg_picks = pick_types(epochs.info, meg=True, eeg=False, exclude=[])
+            meg_picks = pick_types(epochs.info, meg=True,
+                                   eeg=False, exclude=[])
             this_info = mne.pick_info(epochs.info, meg_picks, copy=True)
             self.dots = _compute_dots(this_info, templates=None)
 
@@ -1481,28 +1344,22 @@ class AutoReject:
         if use_gpu:
             from .gpu_pipeline import compute_thresholds_gpu
 
-            thresh_func = partial(
-                compute_thresholds_gpu,
-                method=self.thresh_method,
-                random_state=self.random_state,
-                device=device,
-            )
+            thresh_func = partial(compute_thresholds_gpu,
+                                  method=self.thresh_method,
+                                  random_state=self.random_state,
+                                  device=device)
             if self.verbose:
                 print(f"Using GPU acceleration (device={device})")
         else:
-            thresh_func = partial(
-                _compute_thresholds,
-                n_jobs=self.n_jobs,
-                method=self.thresh_method,
-                random_state=self.random_state,
-                dots=self.dots,
-            )
+            thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
+                                  method=self.thresh_method,
+                                  random_state=self.random_state,
+                                  dots=self.dots)
 
         if self.n_interpolate is None:
             if len(self.picks_) < 4:
-                raise ValueError(
-                    "Too few channels. autoreject is unlikely" " to be effective"
-                )
+                raise ValueError("Too few channels. autoreject is unlikely"
+                                 " to be effective")
             # XXX: dont interpolate all channels
             max_interp = min(len(self.picks_) - 1, 32)
             self.n_interpolate = np.array([1, 4, max_interp])
@@ -1521,35 +1378,24 @@ class AutoReject:
             if use_gpu:
                 from .gpu_pipeline import run_local_reject_cv_gpu_batch
 
-                this_local_reject, this_loss = run_local_reject_cv_gpu_batch(
-                    epochs,
-                    thresh_func,
-                    this_picks,
-                    self.n_interpolate,
-                    self.cv_,
-                    self.consensus,
-                    self.dots,
-                    self.verbose,
-                    n_jobs=self.n_jobs,
-                    device=device,
-                )
+                this_local_reject, this_loss = \
+                    run_local_reject_cv_gpu_batch(epochs, thresh_func,this_picks,
+                                                  self.n_interpolate, self.cv_,
+                                                  self.consensus, self.dots,
+                                                  self.verbose, n_jobs=self.n_jobs,
+                                                  device=device)
             else:
-                this_local_reject, this_loss = _run_local_reject_cv(
-                    epochs,
-                    thresh_func,
-                    this_picks,
-                    self.n_interpolate,
-                    self.cv_,
-                    self.consensus,
-                    self.dots,
-                    self.verbose,
-                    n_jobs=self.n_jobs,
-                )
+                this_local_reject, this_loss = \
+                    _run_local_reject_cv(epochs, thresh_func, this_picks,
+                                         self.n_interpolate, self.cv_,
+                                         self.consensus, self.dots,
+                                         self.verbose, n_jobs=self.n_jobs)
+            
             self.threshes_.update(this_local_reject.threshes_)
 
-            best_idx, best_jdx = np.unravel_index(
-                this_loss.mean(axis=-1).argmin(), this_loss.shape[:2]
-            )
+            best_idx, best_jdx = \
+                np.unravel_index(this_loss.mean(axis=-1).argmin(),
+                                 this_loss.shape[:2])
 
             self.consensus_[ch_type] = self.consensus[best_idx]
             self.n_interpolate_[ch_type] = self.n_interpolate[best_jdx]
@@ -1557,16 +1403,16 @@ class AutoReject:
 
             # update local reject with best and store it
             this_local_reject.consensus_[ch_type] = self.consensus_[ch_type]
-            this_local_reject.n_interpolate_[ch_type] = self.n_interpolate_[ch_type]
+            this_local_reject.n_interpolate_[ch_type] = \
+                self.n_interpolate_[ch_type]
 
             # needed for generating reject logs by channel
             self.local_reject_[ch_type] = this_local_reject
 
             if self.verbose is not False:
-                print(
-                    "\n\n\n\nEstimated consensus=%0.2f and n_interpolate=%d"
-                    % (self.consensus_[ch_type], self.n_interpolate_[ch_type])
-                )
+                print("\n\n\n\nEstimated consensus=%0.2f and n_interpolate=%d"
+                    % (self.consensus_[ch_type],
+                       self.n_interpolate_[ch_type]))
         return self
 
     def get_reject_log(self, epochs, picks=None):
@@ -1600,19 +1446,19 @@ class AutoReject:
         ch_names = [cc for cc in epochs.ch_names]
         labels = np.ones((len(epochs), len(ch_names)))
         labels.fill(np.nan)
-        reject_log = RejectLog(labels=labels,
-                               bad_epochs=np.zeros(len(epochs), dtype=bool),
-                               ch_names=ch_names)
+        reject_log = RejectLog(
+            labels=labels,
+            bad_epochs=np.zeros(len(epochs), dtype=bool),
+            ch_names=ch_names)
 
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
         for ch_type, this_picks in picks_by_type:
             this_reject_log = self.local_reject_[ch_type].get_reject_log(
-                epochs, threshes=self.threshes_, picks=this_picks
-            )
-            reject_log.labels[:, this_picks] = this_reject_log.labels[:, this_picks]
+                epochs, threshes=self.threshes_, picks=this_picks)
+            reject_log.labels[:, this_picks] = \
+                this_reject_log.labels[:, this_picks]
             reject_log.bad_epochs = np.logical_or(
-                reject_log.bad_epochs, this_reject_log.bad_epochs
-            )
+                reject_log.bad_epochs, this_reject_log.bad_epochs)
             reject_log.ch_names = this_reject_log.ch_names
         return reject_log
 
@@ -1645,10 +1491,8 @@ class AutoReject:
 
         _check_data(epochs, picks=self.picks_, verbose=self.verbose)
         if reject_log is not None and not isinstance(reject_log, RejectLog):
-            raise ValueError(
-                "reject_log must be an instance of RejectLog, "
-                f"got {type(reject_log)}"
-            )
+            raise ValueError("reject_log must be an instance of RejectLog, "
+                             f"got {type(reject_log)}")
 
         if reject_log is None:
             reject_log = self.get_reject_log(epochs)
@@ -1658,25 +1502,14 @@ class AutoReject:
         use_gpu, device = self._should_use_gpu(epochs)
 
         if use_gpu:
-            _apply_interp_gpu(
-                reject_log,
-                epochs_clean,
-                self.threshes_,
-                self.picks_,
-                device,
-                self.verbose,
-            )
+            _apply_interp_gpu(reject_log, epochs_clean, self.threshes_,
+                              self.picks_, device, self.verbose)
         else:
-            _apply_interp(
-                reject_log,
-                epochs_clean,
-                self.threshes_,
-                self.picks_,
-                self.dots,
-                self.verbose,
-            )
+            _apply_interp(reject_log, epochs_clean, self.threshes_,
+                          self.picks_, self.dots, self.verbose)
 
-        _apply_drop(reject_log, epochs_clean, self.threshes_, self.picks_, self.verbose)
+        _apply_drop(reject_log, epochs_clean, self.threshes_, self.picks_,
+                    self.verbose)
 
         if return_log:
             return epochs_clean, reject_log
@@ -1717,34 +1550,30 @@ class AutoReject:
         """
         fname = op.realpath(fname)
         if not overwrite and op.isfile(fname):
-            raise ValueError(
-                "%s already exists. Please make overwrite=True"
-                "if you want to overwrite this file" % fname
-            )
+            raise ValueError("%s already exists. Please make overwrite=True"
+                             "if you want to overwrite this file" % fname)
 
-        write_hdf5(fname, self.__getstate__(), overwrite=overwrite, title="autoreject")
+        write_hdf5(fname, self.__getstate__(), overwrite=overwrite,
+                   title="autoreject")
 
 
 def _check_fit(epochs, threshes_, picks_):
-    msg = (
-        "You are passing channels which were not present "
+    msg = ("You are passing channels which were not present "
         "at fit-time. Please fit it again, this time "
-        "correctly."
-    )
-    if not all(epochs.ch_names[pp] in threshes_ for pp in picks_):
+        "correctly.")
+    if not all(epochs.ch_names[pp] in threshes_
+               for pp in picks_):
         raise ValueError(msg)
 
 
-def _apply_interp(reject_log, epochs, threshes_, picks_, dots, verbose):
+def _apply_interp(reject_log, epochs, threshes_, picks_, dots,
+                  verbose):
     _check_fit(epochs, threshes_, picks_)
-    interp_channels = _get_interp_chs(reject_log.labels, reject_log.ch_names, picks_)
+    interp_channels = _get_interp_chs(
+        reject_log.labels, reject_log.ch_names, picks_)
     _interpolate_bad_epochs(
-        epochs,
-        interp_channels=interp_channels,
-        picks=picks_,
-        dots=dots,
-        verbose=verbose,
-    )
+        epochs, interp_channels=interp_channels,
+        picks=picks_, dots=dots, verbose=verbose)
 
 
 def _apply_interp_gpu(reject_log, epochs, threshes_, picks_, device, verbose):
@@ -1789,23 +1618,22 @@ def _apply_interp_gpu(reject_log, epochs, threshes_, picks_, device, verbose):
 
     # Run GPU interpolation
     data_gpu = gpu_interpolate_bad_epochs(
-        epochs._data, interp_ch_indices, picks_, pos_normalized, device=device
-    )
+        epochs._data, interp_ch_indices, picks_, pos_normalized, device=device)
 
     # Copy back to epochs (transfer from GPU)
     epochs._data[:] = data_gpu.cpu().numpy()
 
 
-def _apply_drop(reject_log, epochs, threshes_, picks_, verbose):
+def _apply_drop(reject_log, epochs, threshes_, picks_,
+                verbose):
     _check_fit(epochs, threshes_, picks_)
     if np.any(reject_log.bad_epochs):
-        epochs.drop(np.nonzero(reject_log.bad_epochs)[0], reason="AUTOREJECT")
+        epochs.drop(np.nonzero(reject_log.bad_epochs)[0],
+                    reason="AUTOREJECT")
     elif verbose:
-        print(
-            "No bad epochs were found for your data. Returning "
+        print("No bad epochs were found for your data. Returning "
             "a copy of the data you wanted to clean. Interpolation "
-            "may have been done."
-        )
+            "may have been done.")
 
 
 def _get_interp_chs(labels, ch_names, picks):
@@ -1850,14 +1678,8 @@ class RejectLog:
         assert len(bad_epochs) == labels.shape[0]
         assert len(ch_names) == labels.shape[1]
 
-    def plot(
-        self,
-        orientation="vertical",
-        show_names="auto",
-        aspect="equal",
-        show=True,
-        ax=None,
-    ):
+    def plot(self, orientation="vertical", show_names="auto", aspect="equal",
+             show=True, ax=None):
         """Plot an image of good, bad and interpolated channels for each epoch.
 
         Parameters
@@ -1905,82 +1727,49 @@ class RejectLog:
         legend_label = {0: "good", 0.5: "interpolated", 1: "bad"}
         cmap = mpl.colors.ListedColormap(["lightgreen", "blue", "red"])
         if orientation == "horizontal":
-            img = ax.imshow(
-                image.T,
-                cmap=cmap,
-                vmin=0,
-                vmax=1,
-                interpolation="nearest",
-                aspect=aspect,
-            )
+            img = ax.imshow(image.T, cmap=cmap,
+                            vmin=0, vmax=1, interpolation="nearest",
+                            aspect=aspect)
             ax.set_xlabel("Epochs")
             ax.set_ylabel("Channels")
-            plt.setp(
-                ax,
-                yticks=range(0, self.labels.shape[1], show_names),
-                yticklabels=ch_names_,
-            )
+            plt.setp(ax, yticks=range(0, self.labels.shape[1], show_names),
+                     yticklabels=ch_names_)
             plt.setp(ax.get_yticklabels(), fontsize=8)
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
-                ax.add_patch(
-                    patches.Rectangle(
-                        (idx - 0.5, -0.5),
-                        1,
-                        len(self.ch_names),
-                        linewidth=1,
-                        edgecolor="r",
-                        facecolor="none",
-                    )
-                )
+                ax.add_patch(patches.Rectangle(
+                    (idx - 0.5, -0.5), 1, len(self.ch_names), linewidth=1,
+                    edgecolor="r", facecolor="none"))
 
             # add legend
-            handles = [
-                patches.Patch(color=img.cmap(img.norm(i)), label=label)
-                for i, label in legend_label.items()
-            ]
-            ax.legend(
-                handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3, borderaxespad=0.0
-            )
+            handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
+                       for i, label in legend_label.items()]
+            ax.legend(handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3,
+                      borderaxespad=0.0)
 
         elif orientation == "vertical":
-            img = ax.imshow(image, cmap=cmap, vmin=0, vmax=1, interpolation="nearest")
+            img = ax.imshow(image, cmap=cmap,
+                            vmin=0, vmax=1, interpolation="nearest")
             ax.set_xlabel("Channels")
             ax.set_ylabel("Epochs")
-            plt.setp(
-                ax,
-                xticks=range(0, self.labels.shape[1], show_names),
-                xticklabels=ch_names_,
-            )
+            plt.setp(ax, xticks=range(0, self.labels.shape[1], show_names),
+                     xticklabels=ch_names_)
             plt.setp(ax.get_xticklabels(), fontsize=8, rotation="vertical")
             # add red box around rejected epochs
             for idx in np.where(self.bad_epochs)[0]:
-                ax.add_patch(
-                    patches.Rectangle(
-                        (-0.5, idx - 0.5),
-                        len(self.ch_names),
-                        1,
-                        linewidth=1,
-                        edgecolor="r",
-                        facecolor="none",
-                    )
-                )
+                ax.add_patch(patches.Rectangle(
+                    (-0.5, idx - 0.5), len(self.ch_names), 1, linewidth=1,
+                    edgecolor="r", facecolor="none"))
 
             # add legend
-            handles = [
-                patches.Patch(color=img.cmap(img.norm(i)), label=label)
-                for i, label in legend_label.items()
-            ]
-            ax.legend(
-                handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3, borderaxespad=0.0
-            )
+            handles = [patches.Patch(color=img.cmap(img.norm(i)), label=label)
+                for i, label in legend_label.items()]
+            ax.legend(handles=handles, bbox_to_anchor=(0.7, 1.2), ncol=3,
+                      borderaxespad=0.0)
 
         else:
-            msg = (
-                """orientation can be only \
-                  'horizontal' or 'vertical'. Got %s"""
-                % orientation
-            )
+            msg = ("""orientation can be only \
+                   'horizontal' or 'vertical'. Got %s""" % orientation)
             raise ValueError(msg)
 
         # XXX to be fixed
@@ -2017,24 +1806,21 @@ class RejectLog:
         n_epochs, n_channels = labels.shape
 
         if not labels.shape[0] == len(epochs.events):
-            raise ValueError(
-                "The number of epochs should match the number of"
-                "epochs *before* autoreject. Please provide"
-                "the epochs object before running autoreject"
-            )
+            raise ValueError("The number of epochs should match the number of"
+                             "epochs *before* autoreject. Please provide"
+                             "the epochs object before running autoreject")
         if not labels.shape[1] == len(epochs.ch_names):
-            raise ValueError(
-                "The number of channels should match the number"
-                " of channels before running autoreject."
-            )
+            raise ValueError("The number of channels should match the number"
+                             " of channels before running autoreject.")
         bad_epochs_idx = np.where(self.bad_epochs)[0]
-        if len(bad_epochs_idx) > 0 and bad_epochs_idx.max() > len(epochs.events):
-            raise ValueError(
-                "You had a bad_epoch with index"
-                "%d but there are only %d epochs. Make sure"
-                " to provide the epochs *before* running"
-                "autoreject." % (bad_epochs_idx.max(), len(epochs.events))
-            )
+        if len(bad_epochs_idx) > 0 and \
+            bad_epochs_idx.max() > len(epochs.events):
+            raise ValueError("You had a bad_epoch with index"
+                             "%d but there are only %d epochs. Make sure"
+                             " to provide the epochs *before* running"
+                             "autoreject."
+                             % (bad_epochs_idx.max(),
+                                len(epochs.events)))
 
         color_map = {0: "k", 1: "r", 2: (0.6, 0.6, 0.6, 1.0)}
         epoch_colors = list()
@@ -2054,10 +1840,8 @@ class RejectLog:
         return plot_mne_epochs(
             epochs=epochs,
             events=epochs.events,
-            epoch_colors=epoch_colors,
-            scalings=scalings,
-            title=title,
-        )
+            epoch_colors=epoch_colors, scalings=scalings,
+            title=title)
 
     def save(self, fname, overwrite=False):
         """Save a reject log.
@@ -2071,14 +1855,8 @@ class RejectLog:
         """
         fname = op.realpath(fname)
         if not overwrite and op.isfile(fname):
-            raise ValueError(
-                f"{fname} already exists. Please set "
-                "overwrite=True if you want to overwrite it."
-            )
+            raise ValueError(f"{fname} already exists. Please set "
+                             "overwrite=True if you want to overwrite it.")
 
-        np.savez_compressed(
-            fname,
-            ch_names=self.ch_names,
-            bad_epochs=self.bad_epochs,
-            labels=self.labels,
-        )
+        np.savez_compressed(fname, ch_names=self.ch_names,
+                            bad_epochs=self.bad_epochs, labels=self.labels)

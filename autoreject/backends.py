@@ -36,7 +36,7 @@ AUTOREJECT_BACKEND : str
     'numpy', 'torch'
 """
 
-# Authors: autoreject contributors
+# Author: Rémy Ramadour <remy.ramadour.labs@gmail.com>
 
 import os
 import warnings
