@@ -48,7 +48,9 @@ def bayes_opt(f, initial_x, all_x, acquisition, max_iter=100, debug=False,
 
     best_x = X[np.argmin(y)]
     best_f = y[np.argmin(y)]
-    gp = gaussian_process.GaussianProcessRegressor(random_state=random_state)
+    gp = gaussian_process.GaussianProcessRegressor(
+        random_state=random_state, optimizer=None
+    )
 
     if debug:  # pragma: no cover
         print("iter", -1, "best_x", best_x, best_f)
