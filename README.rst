@@ -69,6 +69,29 @@ All required dependencies are installed automatically when you install ``autorej
 Optional dependencies are:
 
 * ``openneuro-py`` (>= 2021.10.1, for fetching data from `OpenNeuro.org <https://openneuro.org>`_)
+* ``torch`` (>= 2.0, for GPU acceleration)
+
+GPU Acceleration
+----------------
+
+For faster processing on large datasets, GPU acceleration is available via PyTorch::
+
+    pip install autoreject[gpu]
+
+To enable GPU acceleration, you can either set an environment variable::
+
+    export AUTOREJECT_BACKEND=torch
+
+Or use the context manager in Python (recommended)::
+
+    from autoreject import AutoReject
+    from autoreject.backends import use_backend
+
+    with use_backend('torch'):
+        ar = AutoReject()
+        epochs_clean = ar.fit_transform(epochs)
+
+The backend automatically detects and uses available GPU hardware (CUDA on Linux/Windows, MPS on macOS with Apple Silicon).
 
 Quickstart
 ==========

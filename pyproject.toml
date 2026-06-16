@@ -43,6 +43,17 @@ dependencies = [
 [project.optional-dependencies]
 # Variants with dependencies that will get installed on top of those listed unter
 # project.dependencies
+
+# Acceleration backends for improved performance
+gpu = [
+    "torch >= 2.0",  # GPU acceleration (CUDA/MPS)
+]
+benchmark = [
+    "pytest-benchmark",  # Performance benchmarking
+    "psutil",  # System resource monitoring
+    "memory-profiler",  # Memory usage profiling
+]
+
 test = [
     "mne_qt_browser",
     "PyQt6!=6.6.1",  # see line below
@@ -86,9 +97,19 @@ source = "vcs"
 raw-options = { version_scheme = "release-branch-semver" }
 
 [tool.flake8]
-exclude = ["__init__.py"]
+max-line-length = 88
+exclude = [
+    "__init__.py",
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    "venv",
+]
 ignore = ["E241", "W504"]
-max_line_length = 88
 
 [tool.pytest.ini_options]
 addopts = """--durations=10 -ra --cov-report= --tb=short
