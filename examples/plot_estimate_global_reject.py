@@ -54,5 +54,12 @@ print('The rejection dictionary is %s' % reject)
 
 ###############################################################################
 # Finally, the cleaned epochs
+epochs_all = epochs.copy()
 epochs.drop_bad(reject=reject)
 epochs.average().plot()
+
+###############################################################################
+# Make sure to plot the bad epochs blah
+drop_log = [d for d in epochs.drop_log if d != ('IGNORED',)]
+bad_idx = [idx for idx, ch_log in enumerate(drop_log) if ch_log != ()]
+epochs_all[bad_idx].plot(butterfly=True)
