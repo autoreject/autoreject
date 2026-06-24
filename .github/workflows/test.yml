@@ -17,9 +17,9 @@ jobs:
         python-version: ['3.12']
     name: "Flake8 ${{ matrix.python-version }}"
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -42,7 +42,7 @@ jobs:
 
     steps:
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -51,7 +51,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install --upgrade build twine
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Build sdist
       run: python -m build --sdist
     - name: Check sdist
@@ -65,7 +65,7 @@ jobs:
     - name: Remove sdist install
       run: python -m pip uninstall -y autoreject
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Build wheel
       run: python -m build --wheel
     - name: Check wheel
@@ -79,7 +79,7 @@ jobs:
     - name: Remove wheel install
       run: python -m pip uninstall -y autoreject
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Test extras install
       run: |
         python -m pip install .[test,doc]
@@ -101,9 +101,9 @@ jobs:
       FORCE_COLOR: true
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
     # for plotting headless
@@ -137,7 +137,7 @@ jobs:
       working-directory: mne-python
       shell: bash
       name: 'Get testing version'
-    - uses: actions/cache@v5
+    - uses: actions/cache@v5.0.5
       with:
         key: ${{ env.TESTING_VERSION }}
         path: ~/mne_data
