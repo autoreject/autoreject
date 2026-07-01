@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v6.3.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -42,7 +42,7 @@ jobs:
 
     steps:
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v6.3.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -103,7 +103,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v6.3.0
       with:
         python-version: ${{ matrix.python-version }}
     # for plotting headless
@@ -137,7 +137,7 @@ jobs:
       working-directory: mne-python
       shell: bash
       name: 'Get testing version'
-    - uses: actions/cache@v5.0.5
+    - uses: actions/cache@v6.1.0
       with:
         key: ${{ env.TESTING_VERSION }}
         path: ~/mne_data
