@@ -35,3 +35,20 @@ tags
 junit-results.xml
 /examples/ds117/
 .hypothesis
+
+# Virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+junit-results.xml
+
+# Benchmarks outputs (keep scripts, ignore results)
+benchmarks/results/
+benchmarks/logs/
+benchmarks/figures/
+benchmarks/orchestrator_log_*.json
+
+# Claude Code user-specific settings
+.claude/settings.local.json

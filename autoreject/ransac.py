@@ -17,6 +17,7 @@ from mne.parallel import parallel_func
 from mne.utils import check_random_state
 
 from .utils import _pbar, _handle_picks, _check_data, _get_channel_type, _GDKW
+from .backends import get_backend
 
 
 class Ransac(object):
@@ -143,8 +144,25 @@ class Ransac(object):
         mappings = np.concatenate(mappings)
         return mappings
 
-    def _compute_correlations(self, data):
-        """Compute correlation between prediction and real data."""
+    def _compute_correlations(self, data, backend=None):
+        """Compute correlation between prediction and real data.
+
+        Parameters
+        ----------
+        data : ndarray, shape (n_channels, n_times)
+            The epoch data.
+        backend : Backend | None
+            Compute backend to use for correlation computation.
+            If None, auto-detect the best available backend.
+
+        Returns
+        -------
+        corr : ndarray, shape (n_channels,)
+            Correlation between predicted and actual data for each channel.
+        """
+        if backend is None:
+            backend = get_backend()
+
         mappings = self.mappings_
         n_channels, n_times = data.shape
 
@@ -155,14 +173,14 @@ class Ransac(object):
         # pool them using median
         # XXX: weird that original implementation sorts and takes middle value.
         # Isn't really the median if n_resample even
-        y_pred = np.median(y_pred, axis=-1)
-        # compute correlation
-        num = np.sum(data.T * y_pred, axis=0)
-        denom = (np.sqrt(np.sum(data.T ** 2, axis=0)) *
-                 np.sqrt(np.sum(y_pred ** 2, axis=0)))
+        y_pred = backend.median(y_pred, axis=-1)
+        y_pred = backend.to_numpy(y_pred)
 
-        corr = num / denom
-        return corr
+        # compute correlation using backend
+        # data.T shape: (n_times, n_channels)
+        # y_pred shape: (n_times, n_channels)
+        corr = backend.correlation(data.T, y_pred)
+        return backend.to_numpy(corr)
 
     def fit(self, epochs):
         """Perform RANSAC on the given epochs.

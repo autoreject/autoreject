@@ -16,6 +16,24 @@ def pytest_configure(config):
     """Configure pytest options."""
     # Markers
     config.addinivalue_line('markers', 'pgtest')
+    config.addinivalue_line(
+        'markers',
+        'retrocompat: mark test as retrocompatibility test '
+        '(validates optimizations do not change results)'
+    )
+    config.addinivalue_line(
+        'markers',
+        'backends: mark test as backend infrastructure test '
+        '(tests for compute backend abstraction layer)'
+    )
+    config.addinivalue_line(
+        'markers',
+        'slow: mark test as slow running (deselect with -m "not slow")'
+    )
+    config.addinivalue_line(
+        'markers',
+        'legacy_parity: mark test as legacy parity validation test'
+    )
 
     # Fixtures
     for fixture in ('matplotlib_config', 'close_all', 'check_verbose'):

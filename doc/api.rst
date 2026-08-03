@@ -50,3 +50,23 @@ Functions:
    :toctree: generated/
 
    set_matplotlib_defaults
+
+Compute Backends
+================
+
+.. automodule:: autoreject.backends
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: autoreject.backends
+
+Functions:
+
+.. autosummary::
+   :toctree: generated/
+
+   use_backend
+   force_cpu_backend
+   get_backend
+   detect_hardware
+   get_backend_names
