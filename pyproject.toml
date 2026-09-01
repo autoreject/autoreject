@@ -53,8 +53,8 @@ test = [
     "flake8-pyproject",
 ]
 doc = [
-    "sphinx",
-    "sphinx-gallery",
+    "sphinx >= 7.2",
+    "sphinx-gallery >= 0.17",  # parallel=True
     "pydata-sphinx-theme",
     "sphinx-copybutton",
     "sphinx-github-role",

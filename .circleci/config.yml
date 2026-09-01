@@ -2,7 +2,13 @@ version: 2.1
 jobs:
     build:
         machine:
-            image: ubuntu-2404:current
+            image: ubuntu-2604:current
+        # large.gen3: 4 vCPUs, 16 GiB RAM -- the doc build runs `sphinx-build
+        # -j auto` and sphinx-gallery with parallel=True, so cores translate to
+        # wall time. gen3 is cheaper per minute than gen1 large (14 vs 20
+        # credits/min) but is still an open beta; fall back to plain `large` if
+        # queue times or reliability become a problem.
+        resource_class: large.gen3
         steps:
             - checkout
             - restore_cache:
