@@ -16,7 +16,7 @@ from mne.channels.interpolation import _make_interpolation_matrix
 from mne.parallel import parallel_func
 from mne.utils import check_random_state
 
-from .utils import _pbar, _handle_picks, _check_data, _get_channel_type, _GDKW
+from .utils import _pbar, _handle_picks, _check_data, _get_channel_type
 
 
 class Ransac(object):
@@ -84,7 +84,7 @@ class Ransac(object):
         corrs = np.zeros((len(idxs), n_channels))
         for i, idx in enumerate(_pbar(idxs, desc='Iterating epochs',
                                       verbose=self.verbose)):
-            data = epochs.get_data(self.picks, item=[idx], **_GDKW)[0]
+            data = epochs.get_data(self.picks, item=[idx], copy=False)[0]
             corrs[i, :] = self._compute_correlations(data)
         return corrs
 

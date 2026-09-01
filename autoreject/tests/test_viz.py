@@ -9,7 +9,7 @@ from mne.datasets import testing
 from mne import io
 
 import autoreject
-from autoreject.utils import set_matplotlib_defaults, _GDKW
+from autoreject.utils import set_matplotlib_defaults
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
@@ -33,7 +33,7 @@ def test_viz(browser_backend):
                         reject=None, preload=True,
                         event_id={'1': 1, '2': 2, '3': 3, '4': 4})
     bad_epochs_idx = [0, 1, 3]
-    n_epochs, n_channels, _ = epochs.get_data(**_GDKW).shape
+    n_epochs, n_channels, _ = epochs.get_data(copy=False).shape
     bad_epochs = np.zeros(n_epochs, dtype=bool)
     bad_epochs[bad_epochs_idx] = True
     assert len(bad_epochs) == 15

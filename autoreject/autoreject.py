@@ -25,7 +25,7 @@ from sklearn.model_selection import cross_val_score, check_cv
 
 from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,
-                    _get_picks_by_type, _pprint, _GDKW)
+                    _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 
 
@@ -86,7 +86,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         raise ValueError('Only accepts MNE epochs objects.')
 
     data_picks = _handle_picks(info=epochs.info, picks=None)
-    X = epochs.get_data(data_picks, **_GDKW)
+    X = epochs.get_data(data_picks, copy=False)
     n_epochs, n_channels, n_times = X.shape
 
     if param_range is None:
@@ -260,7 +260,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         elif ch_type == 'seeg':
             picks = pick_types(epochs.info, seeg=True)
 
-        X = epochs.get_data(picks, **_GDKW)
+        X = epochs.get_data(picks, copy=False)
         n_epochs, n_channels, n_times = X.shape
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         all_threshes = np.sort(deltas.max(axis=1))
@@ -344,10 +344,6 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
     Notes
     -----
-    For method='random_search', the random_state parameter gives deterministic
-    results only for scipy versions >= 0.16. This is why we recommend using
-    autoreject with scipy version 0.16 or greater.
-
     For method='bayesian_optimization', all candidate thresholds are scored
     against a single cross-validation split. With ``random_state=None`` this
     differs from the (irreproducible) behavior of drawing a fresh split per
@@ -474,13 +470,13 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
                 verbose=verbose, n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
-        data, y = epochs.get_data(**_GDKW), np.ones((n_epochs, ))
+        data, y = epochs.get_data(copy=False), np.ones((n_epochs, ))
         if augment:
             epochs_interp = _clean_by_interp(epochs, picks=picks,
                                              dots=dots, verbose=verbose)
             # non-data channels will be duplicate
             data = np.concatenate((data,
-                                   epochs_interp.get_data(**_GDKW)), axis=0)
+                                   epochs_interp.get_data(copy=False)), axis=0)
             y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
         cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2,
                                     random_state=random_state)
@@ -585,7 +581,7 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.zeros((len(epochs),))
 
         this_ch_names = [epochs.ch_names[p] for p in picks]
-        deltas = np.ptp(epochs.get_data(picks, **_GDKW), axis=-1).T
+        deltas = np.ptp(epochs.get_data(picks, copy=False), axis=-1).T
         threshes = [self.threshes_[ch_name] for ch_name in this_ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
@@ -616,7 +612,7 @@ class _AutoReject(BaseAutoReject):
                     # get peak-to-peak for channels in that epoch
                     if all_peaks is None:  # computed once for all epochs
                         all_peaks = np.ptp(
-                            epochs.get_data(**_GDKW), axis=-1)
+                            epochs.get_data(copy=False), axis=-1)
                     peaks = all_peaks[epoch_idx].copy()
                     peaks[non_picks] = -np.inf
                     # find channels which are bad by rejection threshold
@@ -740,7 +736,7 @@ class _AutoReject(BaseAutoReject):
             epochs_copy, interp_channels=interp_channels,
             picks=self.picks_, verbose=self.verbose)
         self.mean_ = _slicemean(
-            epochs_copy.get_data(**_GDKW),
+            epochs_copy.get_data(copy=False),
             np.nonzero(np.invert(reject_log.bad_epochs))[0], axis=0)
         del epochs_copy  # I can't wait for garbage collection.
         return self
@@ -829,7 +825,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
     desc = 'n_interp'
 
     n_channels = len(picks_)
-    X = epochs.get_data(picks_, **_GDKW)
+    X = epochs.get_data(picks_, copy=False)
     # the split and the test-fold medians depend on neither n_interpolate nor
     # consensus, so draw and compute them once
     splits = list(cv.split(X))
@@ -850,7 +846,7 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
         _interpolate_bad_epochs(
             epochs_interp, interp_channels=interp_channels,
             picks=picks_, dots=dots, verbose=verbose)
-        X_interp = epochs_interp.get_data(picks_, **_GDKW)
+        X_interp = epochs_interp.get_data(picks_, copy=False)
 
         pbar = _pbar(splits, desc='Fold', position=3, verbose=verbose)
         for fold, (train, test) in enumerate(pbar):
