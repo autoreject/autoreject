@@ -17,6 +17,8 @@ Changelog
 
 - The package build backend was switched from ``setuptools`` to ``hatchling``. For users, nothing should change, by `Richard Höchenberger`_ in :github:`#335`
 - ``autoreject`` now requires a minimum Python version of 3.10, by `Stefan Appelhoff`_ in :github:`#339`
+- :class:`autoreject.AutoReject` is now about 5x faster, with unchanged results: the cross-validation splits, test-fold medians and train-fold peak-to-peaks are hoisted out of the threshold and parameter searches, the peak-to-peaks needed to pick the channels to interpolate are computed for all epochs at once, and epochs that need the same set of channels interpolated are now repaired together instead of one at a time, by `Eric Larson`_ in :github:`#359`
+- The channel-level thresholds computed with ``thresh_method='bayesian_optimization'`` are now compared on a single cross-validation split rather than on a freshly drawn one per candidate threshold. This only affects ``random_state=None``, where the results were not reproducible to begin with, by `Eric Larson`_ in :github:`#359`
 
 Bug
 ~~~
