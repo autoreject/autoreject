@@ -10,7 +10,7 @@ from mne.datasets import testing
 from mne.bem import _check_origin
 from mne import io
 
-from autoreject.utils import clean_by_interp, interpolate_bads, _GDKW
+from autoreject.utils import clean_by_interp, interpolate_bads
 from autoreject.utils import _interpolate_bads_eeg
 
 data_path = testing.data_path(download=False)
@@ -40,11 +40,11 @@ def test_utils():
     assert this_epoch.info['bads'] == ['MEG 2443']
     epochs_clean = clean_by_interp(this_epoch)
     assert this_epoch.info['bads'] == ['MEG 2443']
-    assert_array_equal(this_epoch.get_data(**_GDKW), epochs.get_data(**_GDKW))
+    assert_array_equal(this_epoch.get_data(copy=False), epochs.get_data(copy=False))
     with pytest.raises(AssertionError):
         assert_array_equal(
-            epochs_clean.get_data(**_GDKW),
-            this_epoch.get_data(**_GDKW),
+            epochs_clean.get_data(copy=False),
+            this_epoch.get_data(copy=False),
         )
 
     picks_meg = mne.pick_types(evoked.info, meg='grad', eeg=False, exclude=[])

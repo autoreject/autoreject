@@ -9,7 +9,7 @@ maintainers = [{ name = "Mainak Jas", email = "mainakjas@gmail.com" }]
 license = { text = "BSD-3-Clause" }
 dynamic = ["version"]
 readme = { file = "README.rst", content-type = "text/x-rst" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = [
     "electroencephalography",
     "eeg",
@@ -32,12 +32,12 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    "numpy >= 1.21.2",
-    "scipy >= 1.7.1",
-    "mne[hdf5] >= 1.5.0",
-    "scikit-learn >= 1.0.0",
-    "joblib",
-    "matplotlib >= 3.5.0",
+    "numpy >= 1.25.2",
+    "scipy >= 1.11.2",
+    "mne[hdf5] >= 1.6.0",
+    "scikit-learn >= 1.3.0",
+    "joblib >= 1.3.2",
+    "matplotlib >= 3.7.2",
 ]
 
 [project.optional-dependencies]
@@ -45,18 +45,16 @@ dependencies = [
 # project.dependencies
 test = [
     "mne_qt_browser",
-    "PyQt6!=6.6.1",  # see line below
-    "PyQt6-Qt6!=6.6.1,!=6.6.2,!=6.6.3",  # see: https://github.com/mne-tools/mne-python/pull/12251
-    "pytest < 8",
+    "PyQt6",
+    "pytest",
     "pytest-cov",
     "pytest-sugar",
     "flake8",
     "flake8-pyproject",
-    "importlib_resources", # drop after minimum Py >=3.10
 ]
 doc = [
-    "sphinx",
-    "sphinx-gallery",
+    "sphinx >= 7.2",
+    "sphinx-gallery >= 0.17",  # parallel=True
     "pydata-sphinx-theme",
     "sphinx-copybutton",
     "sphinx-github-role",

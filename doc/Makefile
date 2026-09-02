@@ -1,12 +1,14 @@
 # Makefile for Sphinx documentation
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -nWT --keep-going
+SPHINXOPTS    = -nWT --keep-going -j auto
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = autoreject
 PAPER         =
 SOURCEDIR     = .
 BUILDDIR      = _build
+# ALLSPHINXOPTS is used by the targets that don't go through `sphinx-build -M`
+ALLSPHINXOPTS = -d $(BUILDDIR)/doctrees $(SPHINXOPTS)
 
 .PHONY: help Makefile view install
 
@@ -29,6 +31,6 @@ html-noplot:
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 html_dev-pattern:
-	BUILD_DEV_HTML=1 $(SPHINXBUILD) $(SPHINXOPTS) -D sphinx_gallery_conf.filename_pattern=$(PATTERN) -D sphinx_gallery_conf.run_stale_examples=True -b html $(ALLSPHINXOPTS) $(SOURCEDIR) _build/html
+	BUILD_DEV_HTML=1 $(SPHINXBUILD) -D sphinx_gallery_conf.filename_pattern=$(PATTERN) -D sphinx_gallery_conf.run_stale_examples=True -b html $(ALLSPHINXOPTS) $(SOURCEDIR) _build/html
 	@echo
 	@echo "Build finished. The HTML pages are in _build/html"

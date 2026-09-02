@@ -3,6 +3,8 @@ import os
 import sys
 from datetime import date
 
+from sphinx.config import is_serializable
+
 import autoreject
 
 
@@ -16,7 +18,7 @@ sys.path.append(os.path.abspath(os.path.join(curdir, '..', 'autoreject')))
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #
-needs_sphinx = '2.0'
+needs_sphinx = '7.2'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -147,4 +149,8 @@ sphinx_gallery_conf = {
     'backreferences_dir': 'generated',
     'examples_dirs': '../examples',
     'gallery_dirs': 'auto_examples',
+    # True means "use the -j value that sphinx-build was given" (see doc/Makefile)
+    'parallel': True,
 }
+# parallel example execution pickles the config, so make sure it can be
+assert is_serializable(sphinx_gallery_conf)

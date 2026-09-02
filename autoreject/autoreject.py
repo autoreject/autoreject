@@ -25,7 +25,7 @@ from sklearn.model_selection import cross_val_score, check_cv
 
 from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _compute_dots,
-                    _get_picks_by_type, _pprint, _GDKW)
+                    _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 
 
@@ -38,10 +38,8 @@ _FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_',
 
 
 def _slicemean(obj, this_slice, axis):
-    mean = np.nan
-    if len(obj[this_slice]) > 0:
-        mean = np.mean(obj[this_slice], axis=axis)
-    return mean
+    obj = obj[this_slice]  # slice once, this is a copy
+    return np.mean(obj, axis=axis) if len(obj) > 0 else np.nan
 
 
 def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
@@ -88,7 +86,7 @@ def validation_curve(epochs, y=None, param_name="thresh", param_range=None,
         raise ValueError('Only accepts MNE epochs objects.')
 
     data_picks = _handle_picks(info=epochs.info, picks=None)
-    X = epochs.get_data(data_picks, **_GDKW)
+    X = epochs.get_data(data_picks, copy=False)
     n_epochs, n_channels, n_times = X.shape
 
     if param_range is None:
@@ -262,7 +260,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         elif ch_type == 'seeg':
             picks = pick_types(epochs.info, seeg=True)
 
-        X = epochs.get_data(picks, **_GDKW)
+        X = epochs.get_data(picks, copy=False)
         n_epochs, n_channels, n_times = X.shape
         deltas = np.array([np.ptp(d, axis=1) for d in X])
         all_threshes = np.sort(deltas.max(axis=1))
@@ -316,12 +314,9 @@ class _ChannelAutoReject(BaseAutoReject):
         """
         deltas = np.ptp(X, axis=1)
         self.deltas_ = deltas
-        keep = deltas <= self.thresh
         # XXX: actually go over all the folds before setting the min
         # in skopt. Otherwise, may confuse skopt.
-        if self.thresh < np.min(np.ptp(X, axis=1)):
-            assert np.sum(keep) == 0
-            keep = deltas <= np.min(np.ptp(X, axis=1))
+        keep = deltas <= max(self.thresh, deltas.min())
         self.mean_ = _slicemean(X, keep, axis=0)
         return self
 
@@ -349,14 +344,15 @@ def _compute_thresh(this_data, method='bayesian_optimization',
 
     Notes
     -----
-    For method='random_search', the random_state parameter gives deterministic
-    results only for scipy versions >= 0.16. This is why we recommend using
-    autoreject with scipy version 0.16 or greater.
+    For method='bayesian_optimization', all candidate thresholds are scored
+    against a single cross-validation split. With ``random_state=None`` this
+    differs from the (irreproducible) behavior of drawing a fresh split per
+    candidate.
     """
-    est = _ChannelAutoReject()
     all_threshes = np.sort(np.ptp(this_data, axis=1))
 
     if method == 'random_search':
+        est = _ChannelAutoReject()
         param_dist = dict(thresh=uniform(all_threshes[0],
                                          all_threshes[-1]))
         rs = RandomizedSearchCV(est,
@@ -367,14 +363,28 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         best_thresh = rs.best_estimator_.thresh
     elif method == 'bayesian_optimization':
         cache = dict()
+        # none of this depends on the threshold, so hoist it out of ``func``,
+        # which is called once per candidate threshold
+        folds = list()
+        for train, test in check_cv(cv).split(this_data, y):
+            # keep the train indices, not the (much larger) train data
+            deltas = np.ptp(this_data[train], axis=1)
+            folds.append((train, deltas, deltas.min(),
+                          np.median(this_data[test], axis=0)))
 
         def func(thresh):
             idx = np.where(thresh - all_threshes >= 0)[0][-1]
             thresh = all_threshes[idx]
             if thresh not in cache:
-                est.set_params(thresh=thresh)
-                obj = -np.mean(cross_val_score(est, this_data, y=y, cv=cv))
-                cache.update({thresh: obj})
+                scores = list()
+                for train, deltas, delta_min, median in folds:
+                    # _ChannelAutoReject.fit + BaseAutoReject.score, inlined
+                    keep = deltas <= max(thresh, delta_min)
+                    mean_ = _slicemean(this_data, train[keep], axis=0)
+                    scores.append(
+                        -np.inf if np.any(np.isnan(mean_))
+                        else -np.sqrt(np.mean((median - mean_) ** 2)))
+                cache[thresh] = -np.mean(scores)
             return cache[thresh]
 
         n_epochs = all_threshes.shape[0]
@@ -460,13 +470,13 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
                 verbose=verbose, n_jobs=n_jobs))
     else:
         n_epochs = len(epochs)
-        data, y = epochs.get_data(**_GDKW), np.ones((n_epochs, ))
+        data, y = epochs.get_data(copy=False), np.ones((n_epochs, ))
         if augment:
             epochs_interp = _clean_by_interp(epochs, picks=picks,
                                              dots=dots, verbose=verbose)
             # non-data channels will be duplicate
-            data = np.concatenate((epochs.get_data(**_GDKW),
-                                   epochs_interp.get_data(**_GDKW)), axis=0)
+            data = np.concatenate((data,
+                                   epochs_interp.get_data(copy=False)), axis=0)
             y = np.r_[np.zeros((n_epochs, )), np.ones((n_epochs, ))]
         cv = StratifiedShuffleSplit(n_splits=10, test_size=0.2,
                                     random_state=random_state)
@@ -571,7 +581,7 @@ class _AutoReject(BaseAutoReject):
         bad_sensor_counts = np.zeros((len(epochs),))
 
         this_ch_names = [epochs.ch_names[p] for p in picks]
-        deltas = np.ptp(epochs.get_data(picks, **_GDKW), axis=-1).T
+        deltas = np.ptp(epochs.get_data(picks, copy=False), axis=-1).T
         threshes = [self.threshes_[ch_name] for ch_name in this_ch_names]
         for ch_idx, (delta, thresh) in enumerate(zip(deltas, threshes)):
             bad_epochs_idx = np.where(delta > thresh)[0]
@@ -590,6 +600,7 @@ class _AutoReject(BaseAutoReject):
         assert labels.shape[1] == len(epochs.ch_names)
         labels = labels.copy()
         non_picks = np.setdiff1d(range(epochs.info['nchan']), picks)
+        all_peaks = None
         for epoch_idx in range(len(epochs)):
             n_bads = labels[epoch_idx, picks].sum()
             if n_bads == 0:
@@ -599,8 +610,10 @@ class _AutoReject(BaseAutoReject):
                     interp_chs_mask = labels[epoch_idx] == 1
                 else:
                     # get peak-to-peak for channels in that epoch
-                    data = epochs[epoch_idx].get_data(**_GDKW)[0]
-                    peaks = np.ptp(data, axis=-1)
+                    if all_peaks is None:  # computed once for all epochs
+                        all_peaks = np.ptp(
+                            epochs.get_data(copy=False), axis=-1)
+                    peaks = all_peaks[epoch_idx].copy()
                     peaks[non_picks] = -np.inf
                     # find channels which are bad by rejection threshold
                     interp_chs_mask = labels[epoch_idx] == 1
@@ -707,6 +720,7 @@ class _AutoReject(BaseAutoReject):
         self.n_interpolate_[ch_type] = self.n_interpolate
         self.consensus_[ch_type] = self.consensus
 
+        # the copy is needed, _clean_by_interp modifies the instance in place
         self.threshes_ = self.thresh_func(
             epochs.copy(), dots=self.dots, picks=self.picks_,
             verbose=self.verbose)
@@ -722,7 +736,7 @@ class _AutoReject(BaseAutoReject):
             epochs_copy, interp_channels=interp_channels,
             picks=self.picks_, verbose=self.verbose)
         self.mean_ = _slicemean(
-            epochs_copy.get_data(**_GDKW),
+            epochs_copy.get_data(copy=False),
             np.nonzero(np.invert(reject_log.bad_epochs))[0], axis=0)
         del epochs_copy  # I can't wait for garbage collection.
         return self
@@ -772,15 +786,23 @@ def _interpolate_bad_epochs(
     """Actually do the interpolation."""
     assert len(epochs) == len(interp_channels)
     pos = 2
+    # The interpolation depends only on which channels are bad and broadcasts
+    # over epochs, so repair all epochs sharing a set at once. Epochs with
+    # nothing to interpolate were a no-op in the per-epoch loop this replaces.
+    groups = dict()  # insertion ordered, so the iteration is reproducible
+    for epoch_idx, interp_chs in enumerate(interp_channels):
+        if len(interp_chs) > 0:
+            groups.setdefault(tuple(interp_chs), list()).append(epoch_idx)
 
-    for epoch_idx, interp_chs in _pbar(
-            list(enumerate(interp_channels)),
+    for interp_chs, epoch_idxs in _pbar(
+            list(groups.items()),
             desc='Repairing epochs',
             position=pos, leave=True, verbose=verbose):
-        epoch = epochs[epoch_idx]
-        epoch.info['bads'] = interp_chs
-        interpolate_bads(epoch, dots=dots, picks=picks, reset_bads=True)
-        epochs._data[epoch_idx] = epoch._data
+        these_epochs = epochs[epoch_idxs]
+        these_epochs.info['bads'] = list(interp_chs)
+        interpolate_bads(these_epochs, dots=dots, picks=picks,
+                         reset_bads=True)
+        epochs._data[epoch_idxs] = these_epochs._data
 
 
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
@@ -802,6 +824,14 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
         local_reject._vote_bad_epochs(epochs, picks=picks_)
     desc = 'n_interp'
 
+    n_channels = len(picks_)
+    X = epochs.get_data(picks_, copy=False)
+    # the split and the test-fold medians depend on neither n_interpolate nor
+    # consensus, so draw and compute them once
+    splits = list(cv.split(X))
+    medians = [np.median(X[test], axis=0) for _, test in splits]
+    del X  # only the medians are needed below
+
     for jdx, n_interp in enumerate(_pbar(n_interpolate, desc=desc,
                                          position=1, verbose=verbose)):
         # we can interpolate before doing cross-valida(tion
@@ -816,44 +846,31 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
         _interpolate_bad_epochs(
             epochs_interp, interp_channels=interp_channels,
             picks=picks_, dots=dots, verbose=verbose)
+        X_interp = epochs_interp.get_data(picks_, copy=False)
 
-        # Hack to allow len(self.cv_.split(X)) as ProgressBar
-        # assumes an iterable whereas self.cv_.split(X) is a
-        # generator
-        class CVSplits(object):
-            def __init__(self, gen, length):
-                self.gen = gen
-                self.length = length
-
-            def __len__(self):
-                return self.length
-
-            def __iter__(self):
-                return self.gen
-
-        X = epochs.get_data(picks_, **_GDKW)
-        cv_splits = CVSplits(cv.split(X), n_folds)
-        pbar = _pbar(cv_splits, desc='Fold',
-                     position=3, verbose=verbose)
-
+        pbar = _pbar(splits, desc='Fold', position=3, verbose=verbose)
         for fold, (train, test) in enumerate(pbar):
+            X_interp_train = X_interp[train]  # does not depend on consensus
+            counts_train = bad_sensor_counts[train]
+            median = medians[fold]
             for idx, this_consensus in enumerate(consensus):
                 # \kappa must be greater than \rho
-                n_channels = len(picks_)
                 if this_consensus * n_channels <= n_interp:
                     loss[idx, jdx, fold] = np.inf
                     continue
 
                 local_reject.consensus_[ch_type] = this_consensus
                 bad_epochs = local_reject._get_bad_epochs(
-                    bad_sensor_counts[train], picks=picks_, ch_type=ch_type)
+                    counts_train, picks=picks_, ch_type=ch_type)
 
                 good_epochs_idx = np.nonzero(np.invert(bad_epochs))[0]
 
-                local_reject.mean_ = _slicemean(
-                    epochs_interp[train].get_data(picks_, **_GDKW),
-                    good_epochs_idx, axis=0)
-                loss[idx, jdx, fold] = -local_reject.score(X[test])
+                local_reject.mean_ = mean_ = _slicemean(
+                    X_interp_train, good_epochs_idx, axis=0)
+                # BaseAutoReject.score with the median hoisted out
+                loss[idx, jdx, fold] = (
+                    np.inf if np.any(np.isnan(mean_))
+                    else np.sqrt(np.mean((median - mean_) ** 2)))
 
     return local_reject, loss
 
