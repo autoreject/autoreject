@@ -6,8 +6,9 @@
     },
     {
         "name": "0.5 (stable)",
-        "version": "stable",
-        "url": "https://autoreject.github.io/stable/"
+        "version": "0.5",
+        "url": "https://autoreject.github.io/stable/",
+        "preferred": true
     },
     {
         "name": "0.4",

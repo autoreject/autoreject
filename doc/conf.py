@@ -66,6 +66,8 @@ autodoc_default_options = {
 templates_path = ['_templates']
 html_static_path = ['_static']
 html_css_files = ['style.css']
+# Sphinx adds a per-page <link rel="canonical"> pointing at the stable docs
+html_baseurl = 'https://autoreject.github.io/stable/'
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -81,10 +83,12 @@ project = 'autoreject'
 td = date.today()
 copyright = f'2016-{td.year}, {author}. Last updated on {td.isoformat()}'
 
-# The short X.Y version.
-version = autoreject.__version__
 # The full version, including alpha/beta/rc tags.
-release = version
+release = autoreject.__version__
+# The short X.Y version for releases (used to match the "version" entries in
+# versions.json for the version switcher and warning banner); dev builds keep
+# the full version so that the banner flags them as unstable.
+version = release if "dev" in release else ".".join(release.split(".")[:2])
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -105,7 +109,7 @@ html_theme_options = {
     'icon_links': [
         dict(name='GitHub',
              url='https://github.com/autoreject/autoreject',
-             icon='fab fa-github-square'),
+             icon='fa-brands fa-square-github'),
     ],
     'icon_links_label': 'Quick Links',  # for screen reader
     'use_edit_page_button': False,
@@ -117,6 +121,7 @@ html_theme_options = {
         "json_url": "https://raw.githubusercontent.com/autoreject/autoreject/main/doc/_static/versions.json",  # noqa: E501
         "version_match": switcher_version_match,
     },
+    "show_version_warning_banner": True,
 }
 
 html_context = {
