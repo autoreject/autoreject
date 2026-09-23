@@ -51,13 +51,21 @@ for run in range(3, 7):
                              f'sub-{subject_id}_ses-meg_task-facerecognition'
                              '_run-{:02d}_meg.fif'.format(run))
     raw = mne.io.read_raw_fif(run_fname, preload=True)
-    raw.pick_types(eeg=True, meg=False, stim=True)  # less memory + computation
+    # keep EEG061-064 regardless of how the dataset has them typed, since
+    # newer releases of ds000117 already ship them as eog/ecg/misc
+    raw.pick_types(eeg=True, meg=False, stim=True,
+                   eog=True, ecg=True, misc=True)  # less memory + computation
     raw.filter(1., 40., l_trans_bandwidth=0.5, n_jobs=1, verbose='INFO')
 
-    raw.set_channel_types({'EEG061': 'eog', 'EEG062': 'eog',
-                           'EEG063': 'ecg', 'EEG064': 'misc'})
-    raw.rename_channels({'EEG061': 'EOG061', 'EEG062': 'EOG062',
-                         'EEG063': 'ECG063', 'EEG064': 'MISC'})
+    # only retype/rename channels still using the old EEG06x naming
+    ch_types = {ch: t for ch, t in {'EEG061': 'eog', 'EEG062': 'eog',
+                                    'EEG063': 'ecg', 'EEG064': 'misc'}.items()
+                if ch in raw.ch_names}
+    raw.set_channel_types(ch_types)
+    ch_names = {ch: new for ch, new in {'EEG061': 'EOG061', 'EEG062': 'EOG062',
+                                        'EEG063': 'ECG063', 'EEG064': 'MISC'}.items()
+                if ch in raw.ch_names}
+    raw.rename_channels(ch_names)
 
     events = mne.find_events(raw, stim_channel='STI101',
                              consecutive='increasing',
