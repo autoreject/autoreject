@@ -8,17 +8,6 @@ span.option {
   white-space: nowrap;
 }
 
-/* ************************************************* Previous / Next buttons */
-.prev-next-bottom a.left-prev:before {
-  content:"❮\00A0"
-}
-.prev-next-bottom a.right-next:after {
-  content:"\00A0❯"
-}
-.prev-next-bottom a.right-next {
-  text-align: right;
-}
-
 /* ************************************************* truncate version string */
 div.navbar-item:first-child {
   overflow-x: hidden;
