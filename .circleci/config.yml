@@ -63,7 +63,11 @@ jobs:
                   - ~/project/examples/ds002778
 
     docs-deploy:
-        # will only be run on main branch
+        # runs on pushes to main (-> dev) and on version tags (-> stable)
+        parameters:
+          dest:
+            type: string
+            default: "dev"
         docker:
           - image: cimg/node:lts
         steps:
@@ -94,18 +98,32 @@ jobs:
                     --repo="https://github.com/autoreject/autoreject.github.io" \
                     --branch main \
                     --dist doc/_build/html \
-                    --dest ./dev
+                    --dest ./<< parameters.dest >>
 
 workflows:
   commit:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /^v.*/
       - docs-deploy:
+          name: docs-deploy-dev
           requires:
             - build
           filters:
             branches:
               only: main
+      - docs-deploy:
+          name: docs-deploy-stable
+          dest: stable
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*/
 
   weekly:
     jobs:

@@ -3,8 +3,8 @@ autoreject
 
 |CircleCI|_ |GitHub Actions|_ |Codecov|_ |PyPI|_ |Conda-Forge|_
 
-.. |CircleCI| image:: https://circleci.com/gh/autoreject/autoreject/tree/main.svg?style=shield&circle-token=:circle-token
-.. _CircleCI: https://circleci.com/gh/autoreject/autoreject
+.. |CircleCI| image:: https://dl.circleci.com/status-badge/img/gh/autoreject/autoreject/tree/main.svg?style=shield
+.. _CircleCI: https://dl.circleci.com/status-badge/redirect/gh/autoreject/autoreject/tree/main
 
 .. |GitHub Actions| image:: https://github.com/autoreject/autoreject/actions/workflows/test.yml/badge.svg
 .. _GitHub Actions: https://github.com/autoreject/autoreject/actions/workflows/test.yml
@@ -111,7 +111,7 @@ Please use the `GitHub issue tracker <https://github.com/autoreject/autoreject/i
 Cite
 ====
 
-[1] Mainak Jas, Denis Engemann, Federico Raimondo, Yousra Bekhti, and Alexandre Gramfort, "`Automated rejection and repair of bad trials in MEG/EEG <https://hal.archives-ouvertes.fr/hal-01313458/document>`_."
+[1] Mainak Jas, Denis Engemann, Federico Raimondo, Yousra Bekhti, and Alexandre Gramfort, "`Automated rejection and repair of bad trials in MEG/EEG <https://hal.archives-ouvertes.fr/hal-01313458/document>`_".
 In 6th International Workshop on Pattern Recognition in Neuroimaging (PRNI), 2016.
 
 [2] Mainak Jas, Denis Engemann, Yousra Bekhti, Federico Raimondo, and Alexandre Gramfort. 2017.
