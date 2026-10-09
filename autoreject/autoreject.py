@@ -1119,7 +1119,9 @@ class AutoReject:
             bad_epochs=np.zeros(len(epochs), dtype=bool),
             ch_names=ch_names)
 
-        picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
+        picks = (self.picks_ if picks is None else
+                 _handle_picks(epochs.info, picks))
+        picks_by_type = _get_picks_by_type(info=epochs.info, picks=picks)
         for ch_type, this_picks in picks_by_type:
             this_reject_log = self.local_reject_[ch_type].get_reject_log(
                 epochs, threshes=self.threshes_, picks=this_picks)

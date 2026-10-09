@@ -230,6 +230,19 @@ def test_autoreject():
     assert (reject_log_new.labels.shape ==
             (len(epochs_new), len(epochs_new.ch_names)))
 
+    # test that get_reject_log uses the picks argument
+    picks_eeg = mne.pick_types(epochs.info, meg=False, eeg=True,
+                               exclude=[])
+    picks_mag = mne.pick_types(epochs.info, meg='mag', eeg=False,
+                               exclude=[])
+    reject_log_eeg = ar.get_reject_log(epochs_new, picks='eeg')
+    assert np.isnan(reject_log_eeg.labels[:, picks_eeg]).sum() == 0
+    assert np.isnan(reject_log_eeg.labels[:, picks_mag]).sum() > 0
+    assert_array_equal(reject_log_eeg.labels[:, picks_eeg],
+                       reject_log_new.labels[:, picks_eeg])
+    # bad epochs from a single channel type are a subset of the union
+    assert (reject_log_eeg.bad_epochs <= reject_log_new.bad_epochs).all()
+
     # test correct interpolations by type
     for ch_type, this_picks in picks_by_type:
         interp_counts = np.sum(
