@@ -24,7 +24,7 @@ Changelog
 Bug
 ~~~
 
-- Nothing yet
+- :meth:`autoreject.AutoReject.transform` now emits a single warning when all epochs are marked as bad, regardless of the MNE-Python version, by `Eric Larson`_ in :github:`#366`
 
 .. _0.4.3:
 

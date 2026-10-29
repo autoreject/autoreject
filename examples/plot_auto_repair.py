@@ -36,7 +36,6 @@ consensus_percs = np.linspace(0, 1.0, 11)
 # Therefore, let us make some MNE related imports.
 
 import mne  # noqa
-from mne.utils import check_random_state  # noqa
 from mne.datasets import sample  # noqa
 
 # %%
@@ -49,8 +48,6 @@ from autoreject import (AutoReject, set_matplotlib_defaults)  # noqa
 
 # %%
 # Let us now read in the raw `fif` file for MNE sample dataset.
-
-check_random_state(42)
 
 data_path = sample.data_path()
 meg_path = data_path / 'MEG' / 'sample'

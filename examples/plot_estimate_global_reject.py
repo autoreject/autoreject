@@ -45,7 +45,7 @@ from autoreject import get_rejection_threshold  # noqa
 # rates and high decimation parameters, you might not detect "peaky artifacts"
 # (with a fast timecourse) in your data. A low amount of decimation however is
 # almost always beneficial at no decrease of accuracy.
-reject = get_rejection_threshold(epochs, decim=2)
+reject = get_rejection_threshold(epochs, decim=2, random_state=42)
 
 ###############################################################################
 # and print it
