@@ -399,7 +399,7 @@ def test_fnirs():
                         proj=True, baseline=(None, 0), preload=True,
                         detrend=None, verbose=True)
     # Test autoreject
-    ar = AutoReject(cv=3, consensus=[0.1])
+    ar = AutoReject(cv=3, consensus=[0.1], random_state=0)
     assert len(epochs) == 3
     epochs_clean = ar.fit_transform(epochs)
     assert len(epochs_clean) < len(epochs)
