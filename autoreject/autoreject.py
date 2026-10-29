@@ -4,6 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
+import inspect
 import os.path as op
 from functools import partial
 
@@ -16,6 +17,7 @@ from h5io import read_hdf5, write_hdf5
 
 import mne
 from mne import pick_types
+from mne.utils import warn
 from mne.viz import plot_epochs as plot_mne_epochs
 
 from sklearn.base import BaseEstimator
@@ -1242,8 +1244,16 @@ def _apply_drop(reject_log, epochs, threshes_, picks_,
                 verbose):
     _check_fit(epochs, threshes_, picks_)
     if np.any(reject_log.bad_epochs):
+        kwargs = dict()
+        if np.all(reject_log.bad_epochs):
+            warn('All epochs were marked as bad by autoreject and '
+                 'will be dropped.')
+            # MNE 1.14+ also warns about this by default, avoid duplicates
+            # (check the signature, version metadata is stale in dev installs)
+            if 'on_drop_all' in inspect.signature(epochs.drop).parameters:
+                kwargs['on_drop_all'] = 'ignore'
         epochs.drop(np.nonzero(reject_log.bad_epochs)[0],
-                    reason='AUTOREJECT')
+                    reason='AUTOREJECT', **kwargs)
     elif verbose:
         print("No bad epochs were found for your data. Returning "
               "a copy of the data you wanted to clean. Interpolation "

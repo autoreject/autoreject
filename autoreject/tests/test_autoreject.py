@@ -70,7 +70,8 @@ def test_global_autoreject():
     assert_array_equal(_ChannelAutoReject(thresh=0.5).fit(X).mean_, [0., 1.])
     assert_array_equal(_ChannelAutoReject(thresh=2.).fit(X).mean_, [0., 1.])
 
-    reject = get_rejection_threshold(epochs, decim=4, ch_types='eeg')
+    reject = get_rejection_threshold(epochs, decim=4, ch_types='eeg',
+                                     random_state=42)
     assert 'eog' not in reject
     assert 'eeg' in reject
     pytest.raises(ValueError, get_rejection_threshold, epochs,
@@ -319,10 +320,11 @@ def test_autoreject():
     index, ch_names = zip(*[(ii, epochs_fit.ch_names[pp])
                             for ii, pp in enumerate(picks)])
     threshes_a = compute_thresholds(
-        epochs_fit, picks=picks, method='random_search')
+        epochs_fit, picks=picks, method='random_search', random_state=42)
     assert set(threshes_a.keys()) == set(ch_names)
     threshes_b = compute_thresholds(
-        epochs_fit, picks=picks, method='bayesian_optimization')
+        epochs_fit, picks=picks, method='bayesian_optimization',
+        random_state=42)
     assert set(threshes_b.keys()) == set(ch_names)
 
 
@@ -403,8 +405,16 @@ def test_fnirs():
     assert len(epochs) == 3
     epochs_clean = ar.fit_transform(epochs)
     assert len(epochs_clean) < len(epochs)
+    # Dropping all epochs should give a single autoreject warning
+    reject_log = ar.get_reject_log(epochs)
+    reject_log.bad_epochs[:] = True
+    with pytest.warns(RuntimeWarning, match='All epochs') as w:
+        epochs_clean = ar.transform(epochs, reject_log=reject_log)
+    assert len(w) == 1
+    assert 'autoreject' in str(w[0].message)
+    assert len(epochs_clean) == 0
     # Test threshold extraction
-    reject = get_rejection_threshold(epochs, cv=3)
+    reject = get_rejection_threshold(epochs, cv=3, random_state=42)
     assert "hbo" in reject.keys()
     assert "hbr" in reject.keys()
     assert reject["hbo"] < 0.001  # This is a very high value as sanity check
@@ -425,7 +435,7 @@ def test_ecog(ch_type):
     # make events
     epochs = mne.make_fixed_length_epochs(raw).load_data()
     n1 = len(epochs)
-    reject = get_rejection_threshold(epochs)
+    reject = get_rejection_threshold(epochs, random_state=42)
     epochs.drop_bad(reject=reject)
     n2 = len(epochs)
     assert ch_type in reject.keys()
@@ -435,5 +445,5 @@ def test_ecog(ch_type):
 
     # testing that compute_thresholds is working without location data
     epochs.set_montage(None)
-    rejects = compute_thresholds(epochs, augment=False)
+    rejects = compute_thresholds(epochs, augment=False, random_state=42)
     assert set(rejects.keys()) == set(raw.ch_names)
