@@ -5,6 +5,7 @@
 #
 # License: BSD-3-Clause
 
+import functools
 import os.path as op
 import pickle
 import platform
@@ -427,6 +428,52 @@ def test_meg_not_first(interp_data, monkeypatch):
     assert ar_eog.consensus_ == ar.consensus_
     assert_array_equal(labels_eog, labels)
     assert_allclose(data_eog, data, rtol=1e-6, atol=1e-20)
+
+
+@ignore_decim
+@testing.requires_testing_data
+@pytest.mark.parametrize('interp_data', (False, True))
+def test_interpolation_data_once(interp_data, monkeypatch):
+    """Test that compute_thresholds computes the interpolation data once."""
+    if interp_data and not utils._has_interp_data():
+        pytest.skip('Requires MNE-Python 1.14+')
+    monkeypatch.setattr(utils, '_has_interp_data', lambda: interp_data)
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    events = mne.find_events(raw)
+    raw.pick([raw.ch_names[pick] for pick in np.concatenate([
+        mne.pick_types(raw.info, meg='grad', exclude='bads')[::6],
+        mne.pick_types(raw.info, eeg=True, exclude='bads')[::6]])])
+    epochs = mne.Epochs(raw, events, None, -0.2, 0.5, decim=10,
+                        baseline=(None, 0), preload=True, verbose='error')[:20]
+    calls = list()
+
+    def counted(func, kind):
+        @functools.wraps(func)  # keeps the signature
+        def wrapped(*args, **kwargs):
+            calls.append((kind, kwargs.get('n_jobs')))
+            return func(*args, **kwargs)
+        return wrapped
+
+    from mne.forward import _lead_dots
+    monkeypatch.setattr(mne.channels, 'compute_interpolation_data', counted(
+        mne.channels.compute_interpolation_data, 'compute'))
+    monkeypatch.setattr(_lead_dots, '_do_self_dots', counted(
+        _lead_dots._do_self_dots, 'self_dots'))
+    # the dots of the MEG channels with themselves are the self dots
+    monkeypatch.setattr(_lead_dots, '_do_cross_dots', None)
+    threshes = compute_thresholds(epochs, random_state=0, verbose=False,
+                                  n_jobs=2)
+    assert set(threshes) == set(epochs.ch_names)
+    if interp_data:  # one per channel type, EEG then MEG (the self dots)
+        assert calls == [('compute', 2), ('compute', 2), ('self_dots', 2)]
+    else:
+        assert calls == [('self_dots', 2)]
+    # with precomputed dots, no coils are created to interpolate
+    dots = utils._precompute_interp(epochs.info, np.arange(len(epochs.ch_names)))
+    from mne.forward import _make_forward
+    monkeypatch.setattr(_make_forward, '_create_meg_coils', None)
+    epochs_interp = utils._clean_by_interp(epochs, dots=dots, verbose=False)
+    assert not np.allclose(epochs_interp.get_data(), epochs.get_data())
 
 
 @ignore_decim

@@ -128,8 +128,8 @@ def test_interpolation_one_at_a_time(interp_data, monkeypatch):
                                           verbose='error')
     epochs.pick([epochs.ch_names[p] for p in picks] + bads)
     # EOG first, so positions among the MEG channels differ from indices
-    epochs.reorder_channels(epochs.ch_names[-3:-2] + epochs.ch_names[:-3]
-                            + epochs.ch_names[-2:])
+    names = epochs.ch_names
+    epochs.reorder_channels(names[-3:-2] + names[:-3] + names[-2:])
     assert epochs.ch_names[0] == 'EOG 061'
     picks = _handle_picks(epochs.info, None)
     assert not {epochs.ch_names[p] for p in picks} & set(bads)

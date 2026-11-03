@@ -468,6 +468,8 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
     picks = _handle_picks(info=epochs.info, picks=picks)
     _check_data(epochs, picks, verbose=verbose, check_loc=augment,
                 ch_constraint='data_channels')
+    if augment and dots is None:  # compute once rather than for each channel
+        dots = _precompute_interp(epochs.info, picks, n_jobs=n_jobs)
     picks_by_type = _get_picks_by_type(picks=picks, info=epochs.info)
     picks_by_type = None if len(picks_by_type) == 1 else picks_by_type  # XXX
     if picks_by_type is not None:
@@ -1046,7 +1048,8 @@ class AutoReject:
 
         # XXX : maybe use an mne function in pick.py ?
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
-        self.dots = _precompute_interp(epochs.info, self.picks_)
+        self.dots = _precompute_interp(epochs.info, self.picks_,
+                                       n_jobs=self.n_jobs)
 
         thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,
