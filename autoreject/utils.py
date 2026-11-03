@@ -51,7 +51,7 @@ def _check_data(epochs, picks, ch_constraint='data_channels', check_loc=True,
     # XXX : ch_constraint -> allow_many_types=True | False
     supported_channels = ['mag', 'grad', 'eeg', 'hbo', 'hbr', 'ecog', 'seeg']
     channel_text = ', '.join(x for x in supported_channels)
-    message = f'AutoReject only supports {channel_text} currenly.'
+    message = f'AutoReject only supports {channel_text} currently.'
     if ch_constraint == 'data_channels':
         if not all(ch in supported_channels for ch in ch_types_picked):
             raise ValueError(message)
@@ -267,8 +267,7 @@ def _precompute_interp(info, picks, mode='fast'):
         return _get_interp_data(info, picks, mode=mode)
     ch_types = {channel_type(info, pick) for pick in picks}
     if {'mag', 'grad'} & ch_types:
-        meg_picks = pick_types(info, meg=True, eeg=False, exclude=[])
-        this_info = pick_info(info, meg_picks, copy=True)
+        this_info = pick_info(info, _meg_dots_picks(info), copy=True)
         return _compute_dots(this_info, mode=mode, templates=None)
     return None
 
@@ -428,7 +427,9 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
     inst_picked = True
     if len(inst.ch_names) > len(picks):
         picked_info = pick_info(inst.info, picks)
-        dots = _pick_dots(dots, picks, picks)
+        # the dots are those of the MEG channels of inst, in their order
+        pos = np.searchsorted(_meg_dots_picks(inst.info), picks)
+        dots = _pick_dots(dots, pos, pos)
         inst_picked = False
     else:
         picked_info = inst.info.copy()
@@ -473,6 +474,11 @@ def _interpolate_bads_meg_fast(inst, picks, mode='accurate',
     ch_names_b = [inst.info['ch_names'][pp] for pp in picks_good_]
     assert ch_names_a == ch_names_b
     _do_interp_dots(inst, mapping, picks_good_, picks_bad_orig)
+
+
+def _meg_dots_picks(info):
+    """Get the channels that the dots of _precompute_interp are for."""
+    return pick_types(info, meg=True, eeg=False, exclude=[])
 
 
 def _compute_dots(info, mode='fast', *, templates):

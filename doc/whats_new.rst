@@ -27,6 +27,7 @@ Bug
 
 - :meth:`autoreject.AutoReject.transform` now emits a single warning when all epochs are marked as bad, regardless of the MNE-Python version, by `Eric Larson`_ in :github:`#366`
 - :func:`autoreject.read_auto_reject` now restores ``verbose=False`` as ``False`` rather than ``0``, which made a loaded :class:`autoreject.AutoReject` warn about channels marked as bad as if it were verbose, by `Eric Larson`_ in :github:`#368`
+- :meth:`autoreject.AutoReject.fit` no longer raises an ``IndexError`` or silently interpolates MEG channels with the wrong precomputed dot products when other channels come before the MEG channels in the epochs, as in CTF recordings (:github:`#365`), by `Eric Larson`_ in :github:`#368`
 
 .. _0.4.3:
 

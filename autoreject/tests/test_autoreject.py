@@ -396,6 +396,41 @@ def test_io():
 
 @ignore_decim
 @testing.requires_testing_data
+@pytest.mark.parametrize('interp_data', (False, True))
+def test_meg_not_first(interp_data, monkeypatch):
+    """Test that results do not depend on the MEG channels coming first."""
+    if interp_data and not utils._has_interp_data():
+        pytest.skip('Requires MNE-Python 1.14+')
+    monkeypatch.setattr(utils, '_has_interp_data', lambda: interp_data)
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    picks = np.concatenate([
+        mne.pick_types(raw.info, meg=True, exclude='bads')[::3],
+        mne.pick_types(raw.info, meg=False, eog=True)])
+    epochs = mne.Epochs(raw, mne.find_events(raw), None, -0.2, 0.5,
+                        picks=picks, decim=10, baseline=(None, 0),
+                        preload=True, verbose='error')
+    assert epochs.ch_names[-1] == 'EOG 061'
+    epochs_eog_first = epochs.copy().reorder_channels(
+        epochs.ch_names[-1:] + epochs.ch_names[:-1])
+    results = list()
+    for these_epochs in (epochs, epochs_eog_first):
+        ar = AutoReject(n_interpolate=[1, 4], consensus=[0.5, 1.], cv=3,
+                        picks='grad', random_state=0, verbose=False)
+        epochs_clean, reject_log = ar.fit_transform(these_epochs,
+                                                    return_log=True)
+        idx = [reject_log.ch_names.index(ch) for ch in epochs.ch_names]
+        results.append((ar, epochs_clean.get_data(epochs.ch_names),
+                        reject_log.labels[:, idx]))
+    (ar, data, labels), (ar_eog, data_eog, labels_eog) = results
+    assert ar_eog.threshes_ == pytest.approx(ar.threshes_, rel=1e-6)
+    assert ar_eog.n_interpolate_ == ar.n_interpolate_
+    assert ar_eog.consensus_ == ar.consensus_
+    assert_array_equal(labels_eog, labels)
+    assert_allclose(data_eog, data, rtol=1e-6, atol=1e-20)
+
+
+@ignore_decim
+@testing.requires_testing_data
 def test_interpolation_data(monkeypatch, tmp_path):
     """Test that MNE's precomputed interpolation data leaves results as-is."""
     if not utils._has_interp_data():
