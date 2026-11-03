@@ -20,11 +20,13 @@ Changelog
 - The minimum supported versions of the dependencies were raised to roughly three years old: ``numpy >= 1.25.2``, ``scipy >= 1.11.2``, ``mne >= 1.6.0``, ``scikit-learn >= 1.3.0``, ``joblib >= 1.3.2`` and ``matplotlib >= 3.7.2``, by `Eric Larson`_ in :github:`#359`
 - :class:`autoreject.AutoReject` is now about 5x faster, with unchanged results: the cross-validation splits, test-fold medians and train-fold peak-to-peaks are hoisted out of the threshold and parameter searches, the peak-to-peaks needed to pick the channels to interpolate are computed for all epochs at once, and epochs that need the same set of channels interpolated are now repaired together instead of one at a time, by `Eric Larson`_ in :github:`#359`
 - The channel-level thresholds computed with ``thresh_method='bayesian_optimization'`` are now compared on a single cross-validation split rather than on a freshly drawn one per candidate threshold. This only affects ``random_state=None``, where the results were not reproducible to begin with, by `Eric Larson`_ in :github:`#359`
+- With MNE-Python 1.14+, :class:`autoreject.AutoReject` precomputes the EEG and MEG interpolation data once with :func:`mne.channels.compute_interpolation_data` and interpolates via the public :meth:`mne.Epochs.interpolate_bads`, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#368`
 
 Bug
 ~~~
 
 - :meth:`autoreject.AutoReject.transform` now emits a single warning when all epochs are marked as bad, regardless of the MNE-Python version, by `Eric Larson`_ in :github:`#366`
+- :func:`autoreject.read_auto_reject` now restores ``verbose=False`` as ``False`` rather than ``0``, which made a loaded :class:`autoreject.AutoReject` warn about channels marked as bad as if it were verbose, by `Eric Larson`_ in :github:`#368`
 
 .. _0.4.3:
 

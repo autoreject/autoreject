@@ -15,7 +15,6 @@ from joblib import Parallel, delayed
 
 from h5io import read_hdf5, write_hdf5
 
-import mne
 from mne import pick_types
 from mne.utils import warn
 from mne.viz import plot_epochs as plot_mne_epochs
@@ -26,7 +25,8 @@ from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score, check_cv
 
 from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
-                    _pbar, _handle_picks, _check_data, _compute_dots,
+                    _pbar, _handle_picks, _check_data, _precompute_interp,
+                    _get_interp_data, _restore_interp_data,
                     _get_picks_by_type, _pprint)
 from .bayesopt import expected_improvement, bayes_opt
 
@@ -37,6 +37,13 @@ _INIT_PARAMS = ('consensus', 'n_interpolate', 'picks',
 
 _FIT_PARAMS = ('threshes_', 'n_interpolate_', 'consensus_',
                'dots', 'picks_', 'loss_')
+
+
+def _restore_verbose(verbose):
+    """Restore a bool verbose, which HDF5 stores as an integer."""
+    if isinstance(verbose, (int, np.integer)):
+        verbose = bool(verbose)
+    return verbose
 
 
 def _slicemean(obj, this_slice, axis):
@@ -520,8 +527,10 @@ class _AutoReject(BaseAutoReject):
         be included* if their names or indices are explicitly provided.
     thresh_method : str
         'bayesian_optimization' or 'random_search'.
-    dots : tuple
-        2-length tuple returned by utils._compute_dots.
+    dots : tuple | dict | None
+        Precomputed interpolation data returned by utils._precompute_interp:
+        a dict of :class:`mne.channels.InterpolationData` with MNE-Python
+        1.14+, otherwise a 2-length tuple returned by utils._compute_dots.
     verbose : bool
         The verbosity of progress messages.
         If False, suppress all output messages.
@@ -796,6 +805,8 @@ def _interpolate_bad_epochs(
         if len(interp_chs) > 0:
             groups.setdefault(tuple(interp_chs), list()).append(epoch_idx)
 
+    if len(groups) > 0:  # precompute once for MNE-Python 1.14+
+        dots = _get_interp_data(epochs.info, picks, dots, mode='accurate')
     for interp_chs, epoch_idxs in _pbar(
             list(groups.items()),
             desc='Repairing epochs',
@@ -996,11 +1007,19 @@ class AutoReject:
                         key: state['local_reject_'][ch_type][key]
                         for key in _INIT_PARAMS[:4]
                     }
+                    init_kwargs['verbose'] = _restore_verbose(
+                        init_kwargs['verbose'])
                     local_reject_[ch_type] = _AutoReject(**init_kwargs)
                     for key in _FIT_PARAMS[:4]:
-                        setattr(local_reject_[ch_type], key,
-                                state['local_reject_'][ch_type][key])
+                        val = state['local_reject_'][ch_type][key]
+                        if key == 'dots':
+                            val = _restore_interp_data(val)
+                        setattr(local_reject_[ch_type], key, val)
                 self.local_reject_ = local_reject_
+            elif param == 'dots':
+                self.dots = _restore_interp_data(state[param])
+            elif param == 'verbose':
+                self.verbose = _restore_verbose(state[param])
             elif param in _INIT_PARAMS + _FIT_PARAMS:
                 setattr(self, param, state[param])
 
@@ -1026,13 +1045,7 @@ class AutoReject:
 
         # XXX : maybe use an mne function in pick.py ?
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
-        ch_types = [ch_type for ch_type, _ in picks_by_type]
-        self.dots = None
-        if 'mag' in ch_types or 'grad' in ch_types:
-            meg_picks = pick_types(epochs.info, meg=True,
-                                   eeg=False, exclude=[])
-            this_info = mne.pick_info(epochs.info, meg_picks, copy=True)
-            self.dots = _compute_dots(this_info, templates=None)
+        self.dots = _precompute_interp(epochs.info, self.picks_)
 
         thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,
@@ -1233,6 +1246,8 @@ def _check_fit(epochs, threshes_, picks_):
 def _apply_interp(reject_log, epochs, threshes_, picks_, dots,
                   verbose):
     _check_fit(epochs, threshes_, picks_)
+    if dots is not None:  # e.g., read from a file written with MNE < 1.14
+        dots = _get_interp_data(epochs.info, picks_, dots, mode='fast')
     interp_channels = _get_interp_chs(
         reject_log.labels, reject_log.ch_names, picks_)
     _interpolate_bad_epochs(

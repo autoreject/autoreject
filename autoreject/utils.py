@@ -226,6 +226,7 @@ def _clean_by_interp(inst, picks=None, dots=None, verbose=True):
     inst_interp = inst.copy()
     mesg = 'Creating augmented epochs'
     picks = _handle_picks(info=inst_interp.info, picks=picks)
+    dots = _get_interp_data(inst.info, picks, dots, mode='fast')
 
     BaseEpochs = _get_epochs_type()
     ch_names = [inst.info['ch_names'][p] for p in picks]
@@ -249,9 +250,95 @@ def _clean_by_interp(inst, picks=None, dots=None, verbose=True):
     return inst_interp
 
 
+# Origins (head frame, in meters) used for EEG (spherical spline) and MEG
+# (field mapping) interpolation. The EEG origin of zero matches the
+# _make_interpolation_matrix call in _interpolate_bads_eeg below.
+_INTERP_ORIGINS = dict(eeg=(0., 0., 0.), meg=(0., 0., 0.04))
+
+
+def _has_interp_data():
+    """Check if MNE-Python can precompute interpolation data (1.14+)."""
+    return hasattr(mne.channels, 'compute_interpolation_data')
+
+
+def _precompute_interp(info, picks, mode='fast'):
+    """Precompute the interpolation data for the channel types in picks."""
+    if _has_interp_data():
+        return _get_interp_data(info, picks, mode=mode)
+    ch_types = {channel_type(info, pick) for pick in picks}
+    if {'mag', 'grad'} & ch_types:
+        meg_picks = pick_types(info, meg=True, eeg=False, exclude=[])
+        this_info = pick_info(info, meg_picks, copy=True)
+        return _compute_dots(this_info, mode=mode, templates=None)
+    return None
+
+
+def _get_interp_data(info, picks, dots=None, mode='fast'):
+    """Get MNE's precomputed interpolation data, computing what is missing.
+
+    Data for the EEG and MEG channel types in picks is computed for all
+    channels of that type in info, so it can be reused with any picks and
+    bads. With MNE-Python < 1.14, ``dots`` is returned unchanged.
+    """
+    if not _has_interp_data():
+        return dots
+    from mne.channels import compute_interpolation_data, InterpolationData
+    # anything else (e.g., the dot products of files written with
+    # MNE-Python < 1.14) is recomputed
+    dots = {key: val for key, val in (
+        dots.items() if isinstance(dots, dict) else ())
+        if isinstance(val, InterpolationData)}
+    for kind, origin in _INTERP_ORIGINS.items():
+        type_picks = pick_types(info, meg=kind == 'meg', eeg=kind == 'eeg',
+                                ref_meg=False, exclude=())
+        if kind not in dots and np.isin(type_picks, picks).any():
+            dots.update(compute_interpolation_data(
+                pick_info(info, type_picks), origin=origin, mode=mode,
+                verbose='error'))
+    return dots
+
+
+def _restore_interp_data(dots):
+    """Restore the types of interpolation data read from HDF5."""
+    if _has_interp_data() and isinstance(dots, dict):
+        from mne.channels import InterpolationData
+        dots = {key: InterpolationData(val) for key, val in dots.items()}
+    return dots
+
+
+def _interpolate_bads_mne(inst, picks, dots, reset_bads, mode):
+    """Interpolate bad MEG and EEG channels using MNE's interpolate_bads."""
+    picks = set(picks)
+    eeg_meg = pick_types(inst.info, meg=True, eeg=True, ref_meg=False,
+                         exclude=())
+    names = [inst.ch_names[p] for p in eeg_meg if p in picks]
+    # channels not in picks are neither interpolated nor interpolated from
+    exclude = [inst.ch_names[p] for p in eeg_meg if p not in picks]
+    bads = [ch for ch in inst.info['bads'] if ch in names]
+    if len(bads) > 0:
+        dots = _get_interp_data(inst.info, sorted(picks), dots, mode=mode)
+        orig_bads = inst.info['bads']
+        inst.info['bads'] = bads + exclude  # keeps excluded MEG out of goods
+        try:
+            inst.interpolate_bads(
+                reset_bads=False, origin=_INTERP_ORIGINS['eeg'],
+                exclude=exclude, on_bad_position='ignore',
+                interpolation=dots, verbose='error')
+        finally:
+            inst.info['bads'] = orig_bads
+    if reset_bads is True:
+        inst.info['bads'] = []
+    return inst
+
+
 def interpolate_bads(inst, picks, dots=None, reset_bads=True, mode='accurate'):
     """Interpolate bad MEG and EEG channels."""
     import mne
+    if _has_interp_data():
+        return _interpolate_bads_mne(inst, picks, dots=dots,
+                                     reset_bads=reset_bads, mode=mode)
+    if isinstance(dots, dict):  # written with MNE-Python 1.14+
+        dots = None
     eeg_picks = set(pick_types(inst.info, meg=False, eeg=True, exclude=[]))
     eeg_picks_interp = [p for p in picks if p in eeg_picks]
     meg_picks = set(pick_types(inst.info, meg=True, eeg=False, exclude=[]))
