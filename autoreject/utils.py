@@ -4,6 +4,7 @@
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
 from collections import defaultdict
+import contextlib
 import inspect
 import warnings
 
@@ -259,13 +260,17 @@ def _interp_matrices(info, picks, dots, bad_sets, mode, desc, verbose,
         pos = np.searchsorted(meg_picks, picks[np.isin(picks, meg_picks)])
         dots = _pick_dots(dots, pos, pos)
     idx = {name: ii for ii, name in enumerate(evoked.ch_names)}
-    for bads in _pbar(bad_sets, desc=desc, verbose=verbose, **kwargs):
-        bads_idx = [idx[ch] for ch in bads]
-        evoked.info['bads'] = list(bads)
-        interpolate_bads(evoked, picks=np.arange(len(picks)), dots=dots,
-                         reset_bads=True, mode=mode)
-        yield evoked.data[bads_idx]  # a copy, as it is fancy indexing
-        evoked.data[bads_idx] = eye[bads_idx]
+    # the Info was checked when creating evoked, and only its bads change, so
+    # do not let MNE-Python (1.14+) check it again for every set of bads
+    skip_checks = getattr(evoked.info, '_skip_checks', contextlib.nullcontext)
+    with skip_checks():
+        for bads in _pbar(bad_sets, desc=desc, verbose=verbose, **kwargs):
+            bads_idx = [idx[ch] for ch in bads]
+            evoked.info['bads'] = list(bads)
+            interpolate_bads(evoked, picks=np.arange(len(picks)), dots=dots,
+                             reset_bads=True, mode=mode)
+            yield evoked.data[bads_idx]  # a copy, as it is fancy indexing
+            evoked.data[bads_idx] = eye[bads_idx]
 
 
 # Origins (head frame, in meters) used for EEG (spherical spline) and MEG

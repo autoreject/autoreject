@@ -331,6 +331,34 @@ class _ChannelAutoReject(BaseAutoReject):
         return self
 
 
+def _thresh_cv_loss(this_data, cv, y, threshes):
+    """Get the cross-validated loss of channel-level thresholds.
+
+    This is ``-np.mean`` over the folds of the score of a
+    ``_ChannelAutoReject(thresh)`` fit on the train set, for each threshold.
+    The kept train epochs (whose peak-to-peak is at most the threshold) are the
+    first ones when sorted by peak-to-peak, so the means for all thresholds are
+    obtained at once from a cumulative sum.
+    """
+    losses = list()
+    for train, test in check_cv(cv).split(this_data, y):
+        X = this_data[train]
+        deltas = np.ptp(X, axis=1)
+        order = np.argsort(deltas, kind='stable')
+        deltas = deltas[order]
+        # the mean of the first k sorted epochs, for each k
+        means = np.cumsum(X[order], axis=0)
+        means /= np.arange(1, len(means) + 1)[:, np.newaxis]
+        median = np.median(this_data[test], axis=0)
+        loss_k = np.sqrt(np.mean((median - means) ** 2, axis=1))
+        loss_k[np.isnan(loss_k)] = np.inf  # as BaseAutoReject.score does
+        # the epoch with the smallest peak-to-peak is always kept
+        n_keep = np.searchsorted(deltas, np.maximum(threshes, deltas[0]),
+                                 side='right')
+        losses.append(loss_k[n_keep - 1])
+    return np.mean(losses, axis=0)
+
+
 def _compute_thresh(this_data, method='bayesian_optimization',
                     cv=10, y=None, random_state=None):
     """Compute the rejection threshold for one channel.
@@ -372,30 +400,12 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         rs.fit(this_data, y)
         best_thresh = rs.best_estimator_.thresh
     elif method == 'bayesian_optimization':
-        cache = dict()
-        # none of this depends on the threshold, so hoist it out of ``func``,
-        # which is called once per candidate threshold
-        folds = list()
-        for train, test in check_cv(cv).split(this_data, y):
-            # keep the train indices, not the (much larger) train data
-            deltas = np.ptp(this_data[train], axis=1)
-            folds.append((train, deltas, deltas.min(),
-                          np.median(this_data[test], axis=0)))
+        # the loss of every candidate threshold, computed all at once
+        losses = _thresh_cv_loss(this_data, cv, y, all_threshes)
 
         def func(thresh):
-            idx = np.where(thresh - all_threshes >= 0)[0][-1]
-            thresh = all_threshes[idx]
-            if thresh not in cache:
-                scores = list()
-                for train, deltas, delta_min, median in folds:
-                    # _ChannelAutoReject.fit + BaseAutoReject.score, inlined
-                    keep = deltas <= max(thresh, delta_min)
-                    mean_ = _slicemean(this_data, train[keep], axis=0)
-                    scores.append(
-                        -np.inf if np.any(np.isnan(mean_))
-                        else -np.sqrt(np.mean((median - mean_) ** 2)))
-                cache[thresh] = -np.mean(scores)
-            return cache[thresh]
+            # the largest candidate threshold that is not above thresh
+            return losses[np.searchsorted(all_threshes, thresh, 'right') - 1]
 
         n_epochs = all_threshes.shape[0]
         idx = np.concatenate((

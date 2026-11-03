@@ -80,6 +80,28 @@ def test_utils():
 
 
 @testing.requires_testing_data
+def test_interp_matrices_checks(monkeypatch):
+    """Test that the Info is not checked again for every set of bads."""
+    if not hasattr(mne.Info, '_skip_checks'):
+        pytest.skip('Requires MNE-Python 1.14+')
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    raw.pick('eeg', exclude='bads').crop(0, 5).load_data()
+    epochs = mne.make_fixed_length_epochs(raw, duration=1., preload=True)
+    n_checks = [0]
+    check = mne.Info._check_consistency
+
+    def counted(self, *args, **kwargs):
+        if not getattr(self, '_no_check', False):
+            n_checks[0] += 1
+        return check(self, *args, **kwargs)
+
+    monkeypatch.setattr(mne.Info, '_check_consistency', counted)
+    _clean_by_interp(epochs, verbose=False)
+    assert len(epochs.ch_names) > 50
+    assert n_checks[0] < 10  # not once per channel
+
+
+@testing.requires_testing_data
 def test_interpolate_bads():
     """Test interpolate bads."""
     raw = io.read_raw_fif(raw_fname, preload=False)

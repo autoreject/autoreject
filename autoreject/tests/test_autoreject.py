@@ -14,6 +14,7 @@ import platform
 import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 import pytest
+from sklearn.model_selection import StratifiedShuffleSplit, check_cv
 
 import mne
 from mne.datasets import testing
@@ -26,7 +27,8 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         read_reject_log)
 from autoreject import utils
 from autoreject.utils import _get_picks_by_type
-from autoreject.autoreject import _ChannelAutoReject, _get_interp_chs
+from autoreject.autoreject import (_ChannelAutoReject, _get_interp_chs,
+                                   _thresh_cv_loss)
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
@@ -79,6 +81,25 @@ def test_global_autoreject():
     assert 'eeg' in reject
     pytest.raises(ValueError, get_rejection_threshold, epochs,
                   decim=4, ch_types=5)
+
+
+@pytest.mark.parametrize('cv', (StratifiedShuffleSplit(5, test_size=0.2,
+                                                       random_state=0), 3))
+def test_thresh_cv_loss(cv):
+    """Test the cross-validated loss of channel thresholds."""
+    rng = np.random.RandomState(0)
+    data = rng.randn(60, 20) * rng.lognormal(size=(60, 1))  # varied ptp
+    data[1] = data[0]  # a tie
+    y = np.repeat([0, 1], 30)
+    ptps = np.sort(np.ptp(data, axis=1))
+    threshes = np.concatenate([[ptps[0] / 2, ptps[-1] * 2], ptps,
+                               (ptps[:-1] + ptps[1:]) / 2])
+    want = list()
+    for thresh in threshes:
+        scores = [_ChannelAutoReject(thresh=thresh).fit(data[train]).score(
+            data[test]) for train, test in check_cv(cv, y).split(data, y)]
+        want.append(-np.mean(scores))
+    assert_allclose(_thresh_cv_loss(data, cv, y, threshes), want, rtol=1e-12)
 
 
 @ignore_decim
