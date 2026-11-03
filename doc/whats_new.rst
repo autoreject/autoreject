@@ -22,6 +22,9 @@ Changelog
 - The channel-level thresholds computed with ``thresh_method='bayesian_optimization'`` are now compared on a single cross-validation split rather than on a freshly drawn one per candidate threshold. This only affects ``random_state=None``, where the results were not reproducible to begin with, by `Eric Larson`_ in :github:`#359`
 - With MNE-Python 1.14+, :class:`autoreject.AutoReject` precomputes the EEG and MEG interpolation data once with :func:`mne.channels.compute_interpolation_data` and interpolates via the public :meth:`mne.Epochs.interpolate_bads`, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#368`
 - :class:`autoreject.AutoReject` is faster (about 15% for MEG+EEG data), with results unchanged up to floating point precision: the matrices that interpolate the bad channels are obtained by interpolating an identity matrix over the picked channels only, and then applied to all epochs at once, by `Eric Larson`_ in :github:`#369`
+- :func:`autoreject.compute_thresholds` now computes the MEG and EEG interpolation data once instead of once per channel with MNE-Python < 1.14, which made it about 3x faster for 51 gradiometers and many times faster for more channels, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#369`
+- With MNE-Python < 1.14, :class:`autoreject.AutoReject` computes the MEG dot products once instead of twice and no longer recreates the MEG coils for every interpolation, which made it about 25% faster for MEG data, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#369`
+- The ``n_jobs`` parameter of :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` is now also used to compute the MEG interpolation data, by `Eric Larson`_ in :github:`#369`
 
 Bug
 ~~~
@@ -29,7 +32,7 @@ Bug
 - :meth:`autoreject.AutoReject.transform` now emits a single warning when all epochs are marked as bad, regardless of the MNE-Python version, by `Eric Larson`_ in :github:`#366`
 - :func:`autoreject.read_auto_reject` now restores ``verbose=False`` as ``False`` rather than ``0``, which made a loaded :class:`autoreject.AutoReject` warn about channels marked as bad as if it were verbose, by `Eric Larson`_ in :github:`#368`
 - :meth:`autoreject.AutoReject.fit` no longer raises an ``IndexError`` or silently interpolates MEG channels with the wrong precomputed dot products when other channels come before the MEG channels in the epochs, as in CTF recordings (:github:`#365`), by `Eric Larson`_ in :github:`#368`
-- ``autoreject.utils.clean_by_interp`` no longer modifies an :class:`mne.Evoked` passed to it, which also made it interpolate each channel from neighbors that had already been interpolated, by `Eric Larson`_ in :github:`#369`
+- ``autoreject.utils.clean_by_interp`` no longer modifies an :class:`mne.Evoked` passed to it, which also made it interpolate each channel from neighbors that had already been interpolated (:github:`#364`), by `Eric Larson`_ in :github:`#369`
 
 .. _0.4.3:
 
