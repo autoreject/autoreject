@@ -25,6 +25,7 @@ Changelog
 - :func:`autoreject.compute_thresholds` now computes the MEG and EEG interpolation data once instead of once per channel with MNE-Python < 1.14, which made it about 3x faster for 51 gradiometers and many times faster for more channels, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#369`
 - With MNE-Python < 1.14, :class:`autoreject.AutoReject` computes the MEG dot products once instead of twice and no longer recreates the MEG coils for every interpolation, which made it about 25% faster for MEG data, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#369`
 - The ``n_jobs`` parameter of :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` is now also used to compute the MEG interpolation data, by `Eric Larson`_ in :github:`#369`
+- The Bayesian optimization of the thresholds now uses a small NumPy implementation of the Gaussian process regression instead of :class:`sklearn.gaussian_process.GaussianProcessRegressor`, whose input validation dominated the computation time. This makes :class:`autoreject.AutoReject` about 20 to 30% faster, with unchanged results, by `Eric Larson`_ in :github:`#369`
 
 Bug
 ~~~

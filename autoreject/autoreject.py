@@ -210,8 +210,10 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     decim : int
         The decimation factor: Increment for selecting every nth time slice.
     random_state : int | np.random.RandomState | None
-        The seed of the pseudo random number generator to use.
-        Defaults to None.
+        Unused, as the threshold estimation is deterministic. It will be
+        removed in a future release.
+
+        .. deprecated:: 0.5
     ch_types : str | list of str | None
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
@@ -297,8 +299,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         best_thresh, _ = bayes_opt(func, initial_x,
                                    all_threshes,
                                    expected_improvement,
-                                   max_iter=10, debug=False,
-                                   random_state=random_state)
+                                   max_iter=10, debug=False)
         reject[ch_type] = best_thresh
 
     return reject
@@ -405,8 +406,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         best_thresh, _ = bayes_opt(func, initial_x,
                                    all_threshes,
                                    expected_improvement,
-                                   max_iter=10, debug=False,
-                                   random_state=random_state)
+                                   max_iter=10, debug=False)
 
     return best_thresh
 

@@ -6,6 +6,7 @@
 # License: BSD-3-Clause
 
 import functools
+import inspect
 import os.path as op
 import pickle
 import platform
@@ -465,7 +466,11 @@ def test_interpolation_data_once(interp_data, monkeypatch):
                                   n_jobs=2)
     assert set(threshes) == set(epochs.ch_names)
     if interp_data:  # one per channel type, EEG then MEG (the self dots)
-        assert calls == [('compute', 2), ('compute', 2), ('self_dots', 2)]
+        # n_jobs is only passed when MNE-Python supports it
+        n_jobs = 2 if 'n_jobs' in inspect.signature(
+            mne.channels.compute_interpolation_data).parameters else None
+        assert calls == [
+            ('compute', n_jobs), ('compute', n_jobs), ('self_dots', n_jobs)]
     else:
         assert calls == [('self_dots', 2)]
     # with precomputed dots, no coils are created to interpolate
