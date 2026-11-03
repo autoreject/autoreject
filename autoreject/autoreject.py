@@ -24,7 +24,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score, check_cv
 
-from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
+from .utils import (_clean_by_interp, _interp_matrices, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _precompute_interp,
                     _get_interp_data, _restore_interp_data,
                     _get_picks_by_type, _pprint)
@@ -805,17 +805,18 @@ def _interpolate_bad_epochs(
         if len(interp_chs) > 0:
             groups.setdefault(tuple(interp_chs), list()).append(epoch_idx)
 
-    if len(groups) > 0:  # precompute once for MNE-Python 1.14+
-        dots = _get_interp_data(epochs.info, picks, dots, mode='accurate')
-    for interp_chs, epoch_idxs in _pbar(
-            list(groups.items()),
-            desc='Repairing epochs',
-            position=pos, leave=True, verbose=verbose):
-        these_epochs = epochs[epoch_idxs]
-        these_epochs.info['bads'] = list(interp_chs)
-        interpolate_bads(these_epochs, dots=dots, picks=picks,
-                         reset_bads=True)
-        epochs._data[epoch_idxs] = these_epochs._data
+    if len(groups) == 0:
+        return
+    dots = _get_interp_data(epochs.info, picks, dots, mode='accurate')
+    picks = np.asarray(picks)
+    pick_of = {epochs.ch_names[pick]: pick for pick in picks}
+    mats = _interp_matrices(
+        epochs.info, picks, dots, list(groups), mode='accurate',
+        desc='Repairing epochs', verbose=verbose, position=pos, leave=True)
+    for (interp_chs, epoch_idxs), mat in zip(groups.items(), mats):
+        bad_picks = [pick_of[ch] for ch in interp_chs]
+        epochs._data[np.ix_(epoch_idxs, bad_picks)] = np.matmul(
+            mat, epochs._data[epoch_idxs][:, picks])
 
 
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,

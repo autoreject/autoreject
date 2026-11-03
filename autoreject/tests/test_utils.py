@@ -10,8 +10,11 @@ import mne.channels.interpolation
 from mne.datasets import testing
 from mne import io
 
+from autoreject import utils
+from autoreject.autoreject import _interpolate_bad_epochs
 from autoreject.utils import clean_by_interp, interpolate_bads
-from autoreject.utils import _interpolate_bads_eeg
+from autoreject.utils import (_clean_by_interp, _handle_picks,
+                              _interpolate_bads_eeg, _precompute_interp)
 
 data_path = testing.data_path(download=False)
 raw_fname = data_path / 'MEG' / 'sample' / 'sample_audvis_trunc_raw.fif'
@@ -95,3 +98,70 @@ def test_interpolate_bads():
                         reject=None, preload=True, verbose='error')[:10]
     epochs.info['bads'] = ['MEG 2212']
     interpolate_bads(epochs, picks)
+
+
+def _assert_close_by_type(info, got, want):
+    """Compare data with a tolerance relative to the scale of each type."""
+    for kind in ('meg', 'eeg'):
+        picks = mne.pick_types(info, meg=kind == 'meg', eeg=kind == 'eeg')
+        scale = np.abs(want[..., picks, :]).max()
+        assert scale > 0
+        assert_allclose(got[..., picks, :], want[..., picks, :],
+                        rtol=1e-7, atol=1e-10 * scale)
+
+
+@testing.requires_testing_data
+@pytest.mark.parametrize('interp_data', (False, True))
+def test_interpolation_one_at_a_time(interp_data, monkeypatch):
+    """Test the interpolation against doing one channel or epoch at a time."""
+    if interp_data and not utils._has_interp_data():
+        pytest.skip('Requires MNE-Python 1.14+')
+    monkeypatch.setattr(utils, '_has_interp_data', lambda: interp_data)
+    raw = io.read_raw_fif(raw_fname, preload=False).crop(0, 5)
+    bads = ['MEG 2443', 'EEG 053']
+    assert raw.info['bads'] == bads  # kept, but not picked
+    picks = np.concatenate([
+        mne.pick_types(raw.info, meg='grad', exclude=())[::6],
+        mne.pick_types(raw.info, meg=False, eeg=True, exclude=())[::3],
+        mne.pick_types(raw.info, meg=False, eog=True)])
+    epochs = mne.make_fixed_length_epochs(raw, duration=1.0, preload=True,
+                                          verbose='error')
+    epochs.pick([epochs.ch_names[p] for p in picks] + bads)
+    # EOG first, so positions among the MEG channels differ from indices
+    epochs.reorder_channels(epochs.ch_names[-3:-2] + epochs.ch_names[:-3]
+                            + epochs.ch_names[-2:])
+    assert epochs.ch_names[0] == 'EOG 061'
+    picks = _handle_picks(epochs.info, None)
+    assert not {epochs.ch_names[p] for p in picks} & set(bads)
+    dots = _precompute_interp(epochs.info, picks)
+
+    # leave-one-out, for both epochs and evoked
+    for inst in (epochs, epochs.average()):
+        want = inst.copy()
+        for pick in picks:
+            this = inst.copy()
+            this.info['bads'] = [inst.ch_names[pick]]
+            interpolate_bads(this, picks=picks, dots=dots, mode='fast')
+            want._data[..., pick, :] = this._data[..., pick, :]
+        orig = inst._data.copy()
+        got = _clean_by_interp(inst, picks=picks, dots=dots, verbose=False)
+        assert_array_equal(inst._data, orig)  # left as is
+        assert got.info['bads'] == inst.info['bads'] == bads
+        _assert_close_by_type(inst.info, got._data, want._data)
+
+    # repairing epochs, with an epoch to leave as is and a repeated set
+    names = [epochs.ch_names[p] for p in picks]
+    interp_channels = [names[:2], [], names[-3:], names[:2], [names[5]]]
+    want = epochs.copy()
+    for ii, interp_chs in enumerate(interp_channels):
+        if interp_chs:
+            this = epochs[ii]
+            this.info['bads'] = list(interp_chs)
+            interpolate_bads(this, picks=picks, dots=dots)
+            want._data[ii] = this._data[0]
+    got = epochs.copy()
+    _interpolate_bad_epochs(got, interp_channels=interp_channels,
+                            picks=picks, dots=dots, verbose=False)
+    assert got.info['bads'] == bads
+    assert_array_equal(got._data[1], epochs._data[1])
+    _assert_close_by_type(epochs.info, got._data, want._data)
