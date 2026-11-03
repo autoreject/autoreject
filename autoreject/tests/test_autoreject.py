@@ -10,7 +10,7 @@ import pickle
 import platform
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose, assert_array_equal
 import pytest
 
 import mne
@@ -22,6 +22,7 @@ from autoreject import (_GlobalAutoReject, _AutoReject, AutoReject,
                         compute_thresholds, validation_curve,
                         get_rejection_threshold, read_auto_reject,
                         read_reject_log)
+from autoreject import utils
 from autoreject.utils import _get_picks_by_type
 from autoreject.autoreject import _ChannelAutoReject, _get_interp_chs
 
@@ -370,6 +371,10 @@ def test_io():
 
     ar4 = read_auto_reject(fname)
     ar5 = pickle.loads(pkl_ar2)
+    for this_ar in (ar4, ar5):  # used as "verbose is not False"
+        assert this_ar.verbose is False
+        for local_reject in this_ar.local_reject_.values():
+            assert local_reject.verbose is False
 
     epochs_clean1, reject_log1 = ar.transform(epochs, return_log=True)
     epochs_clean2, reject_log2 = ar4.transform(epochs, return_log=True)
@@ -387,6 +392,97 @@ def test_io():
     assert_array_equal(reject_log1.labels, reject_log4.labels)
     assert_array_equal(reject_log1.bad_epochs, reject_log4.bad_epochs)
     assert all(reject_log1.ch_names == reject_log4.ch_names)
+
+
+@ignore_decim
+@testing.requires_testing_data
+@pytest.mark.parametrize('interp_data', (False, True))
+def test_meg_not_first(interp_data, monkeypatch):
+    """Test that results do not depend on the MEG channels coming first."""
+    if interp_data and not utils._has_interp_data():
+        pytest.skip('Requires MNE-Python 1.14+')
+    monkeypatch.setattr(utils, '_has_interp_data', lambda: interp_data)
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    picks = np.concatenate([
+        mne.pick_types(raw.info, meg=True, exclude='bads')[::3],
+        mne.pick_types(raw.info, meg=False, eog=True)])
+    epochs = mne.Epochs(raw, mne.find_events(raw), None, -0.2, 0.5,
+                        picks=picks, decim=10, baseline=(None, 0),
+                        preload=True, verbose='error')
+    assert epochs.ch_names[-1] == 'EOG 061'
+    epochs_eog_first = epochs.copy().reorder_channels(
+        epochs.ch_names[-1:] + epochs.ch_names[:-1])
+    results = list()
+    for these_epochs in (epochs, epochs_eog_first):
+        ar = AutoReject(n_interpolate=[1, 4], consensus=[0.5, 1.], cv=3,
+                        picks='grad', random_state=0, verbose=False)
+        epochs_clean, reject_log = ar.fit_transform(these_epochs,
+                                                    return_log=True)
+        idx = [reject_log.ch_names.index(ch) for ch in epochs.ch_names]
+        results.append((ar, epochs_clean.get_data(epochs.ch_names),
+                        reject_log.labels[:, idx]))
+    (ar, data, labels), (ar_eog, data_eog, labels_eog) = results
+    assert ar_eog.threshes_ == pytest.approx(ar.threshes_, rel=1e-6)
+    assert ar_eog.n_interpolate_ == ar.n_interpolate_
+    assert ar_eog.consensus_ == ar.consensus_
+    assert_array_equal(labels_eog, labels)
+    assert_allclose(data_eog, data, rtol=1e-6, atol=1e-20)
+
+
+@ignore_decim
+@testing.requires_testing_data
+def test_interpolation_data(monkeypatch, tmp_path):
+    """Test that MNE's precomputed interpolation data leaves results as-is."""
+    if not utils._has_interp_data():
+        pytest.skip('Requires MNE-Python 1.14+')
+    raw = io.read_raw_fif(raw_fname, preload=False)
+    bads = ['MEG 2443', 'EEG 053']
+    assert raw.info['bads'] == bads  # kept, but not used by autoreject
+    picks = mne.pick_types(raw.info, meg='grad', eeg=True, exclude=())
+    epochs = mne.Epochs(raw, mne.find_events(raw), None, -0.2, 0.5,
+                        picks=picks, decim=10, baseline=(None, 0),
+                        preload=True, verbose='error')
+    # not all grads, so the others must not be used to interpolate
+    epochs.pick([ch for ii, ch in enumerate(epochs.ch_names)
+                 if ii % 3 == 0 or ch.startswith('EEG') or ch in bads])
+
+    def fit_transform():
+        ar = AutoReject(n_interpolate=[1, 4], consensus=[0.5, 1.], cv=3,
+                        random_state=0, verbose=False)
+        return (ar,) + ar.fit_transform(epochs, return_log=True)
+
+    ar, epochs_clean, reject_log = fit_transform()
+    assert set(ar.dots) == {'eeg', 'meg'}
+    # only computed for the picks, so results cannot depend on other channels
+    for kind, data in ar.dots.items():
+        assert data['ch_names'] == [
+            ch for ch in epochs.ch_names
+            if ch not in bads and ch.startswith(kind.upper())]
+    with monkeypatch.context() as m:
+        m.setattr(utils, '_has_interp_data', lambda: False)
+        ar_old, epochs_clean_old, reject_log_old = fit_transform()
+    assert isinstance(ar_old.dots, tuple)
+    assert ar.threshes_ == pytest.approx(ar_old.threshes_, rel=1e-6)
+    assert ar.n_interpolate_ == ar_old.n_interpolate_
+    assert ar.consensus_ == ar_old.consensus_
+    assert_array_equal(reject_log.labels, reject_log_old.labels)
+    assert_allclose(epochs_clean.get_data(), epochs_clean_old.get_data(),
+                    rtol=1e-6, atol=1e-20)
+    assert epochs_clean.info['bads'] == epochs.info['bads']
+
+    # the precomputed data round-trips through I/O
+    ar.save(tmp_path / 'ar.h5')
+    ar2 = read_auto_reject(tmp_path / 'ar.h5')
+    for dots in [ar2.dots] + [lr.dots for lr in ar2.local_reject_.values()]:
+        assert all(isinstance(val, mne.channels.InterpolationData)
+                   for val in dots.values())
+    epochs_clean2 = ar2.transform(epochs)
+    assert_array_equal(epochs_clean2.get_data(), epochs_clean.get_data())
+    # including old files, which store the dot products as a tuple
+    ar2.dots = ar_old.dots
+    epochs_clean2 = ar2.transform(epochs)
+    assert_allclose(epochs_clean2.get_data(), epochs_clean.get_data(),
+                    rtol=1e-6, atol=1e-20)
 
 
 @testing.requires_testing_data

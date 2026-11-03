@@ -1,13 +1,13 @@
 # Author: Mainak Jas <mainak.jas@telecom-paristech.fr>
 # License: BSD-3-Clause
 
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+import numpy as np
+from numpy.testing import assert_allclose, assert_array_equal
 import pytest
 
 import mne
 import mne.channels.interpolation
 from mne.datasets import testing
-from mne.bem import _check_origin
 from mne import io
 
 from autoreject.utils import clean_by_interp, interpolate_bads
@@ -51,25 +51,29 @@ def test_utils():
     picks_eeg = mne.pick_types(evoked.info, meg=False, eeg=True, exclude=[])
     picks_bad_meg = mne.pick_channels(evoked.ch_names, include=['MEG 2443'])
     picks_bad_eeg = mne.pick_channels(evoked.ch_names, include=['EEG 053'])
-    evoked_orig = evoked.copy()
+    evoked_mne = evoked.copy().interpolate_bads(reset_bads=False)
     for picks, picks_bad in zip([picks_meg, picks_eeg],
                                 [picks_bad_meg, picks_bad_eeg]):
-        evoked_autoreject = interpolate_bads(evoked, picks=picks,
-                                             reset_bads=False)
-        evoked.interpolate_bads(reset_bads=False)
-        assert_array_equal(evoked.data[picks_bad],
-                           evoked_autoreject.data[picks_bad])
-        pytest.raises(AssertionError, assert_array_equal,
-                      evoked_orig.data[picks_bad], evoked.data[picks_bad])
+        evoked_ar = interpolate_bads(evoked.copy(), picks=picks,
+                                     reset_bads=False)
+        assert evoked_ar.info['bads'] == evoked.info['bads']
+        others = np.setdiff1d(np.arange(len(evoked.ch_names)), picks_bad)
+        if picks is picks_eeg:  # MEG 2443 is in picks_meg, but not in picks
+            assert_array_equal(evoked_ar.data[others], evoked.data[others])
+        assert not np.array_equal(evoked_ar.data[picks_bad],
+                                  evoked.data[picks_bad])
+        # MNE uses a different origin (and all MEG channels, not only grads)
+        corr = np.corrcoef(evoked_ar.data[picks_bad[0]],
+                           evoked_mne.data[picks_bad[0]])[0, 1]
+        assert corr > 0.99
 
-    # test that autoreject EEG interpolation code behaves the same as MNE
-    evoked_ar = evoked_orig.copy()
-    evoked_mne = evoked_orig.copy()
-
-    origin = _check_origin('auto', evoked_ar.info)
+    # autoreject's EEG interpolation is MNE's with the origin at zero
+    evoked_ar = evoked.copy()
+    evoked_mne = evoked.copy()
     _interpolate_bads_eeg(evoked_ar, picks=None)
-    mne.channels.interpolation._interpolate_bads_eeg(evoked_mne, origin=origin)
-    assert_array_almost_equal(evoked_ar.data, evoked_mne.data)
+    mne.channels.interpolation._interpolate_bads_eeg(
+        evoked_mne, origin=(0., 0., 0.))
+    assert_allclose(evoked_ar.data, evoked_mne.data, rtol=1e-7, atol=1e-20)
 
 
 @testing.requires_testing_data
