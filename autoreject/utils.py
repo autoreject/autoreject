@@ -275,9 +275,10 @@ def _precompute_interp(info, picks, mode='fast'):
 def _get_interp_data(info, picks, dots=None, mode='fast'):
     """Get MNE's precomputed interpolation data, computing what is missing.
 
-    Data for the EEG and MEG channel types in picks is computed for all
-    channels of that type in info, so it can be reused with any picks and
-    bads. With MNE-Python < 1.14, ``dots`` is returned unchanged.
+    The data is computed for the EEG and MEG channels in picks only, so other
+    channels (e.g., those in info['bads']) cannot change the results, even
+    by rounding. It can be reused for any bads and subset of picks. With
+    MNE-Python < 1.14, ``dots`` is returned unchanged.
     """
     if not _has_interp_data():
         return dots
@@ -290,7 +291,11 @@ def _get_interp_data(info, picks, dots=None, mode='fast'):
     for kind, origin in _INTERP_ORIGINS.items():
         type_picks = pick_types(info, meg=kind == 'meg', eeg=kind == 'eeg',
                                 ref_meg=False, exclude=())
-        if kind not in dots and np.isin(type_picks, picks).any():
+        type_picks = type_picks[np.isin(type_picks, picks)]
+        if len(type_picks) == 0:
+            continue
+        names = {info['ch_names'][pick] for pick in type_picks}
+        if kind not in dots or not names <= set(dots[kind]['ch_names']):
             dots.update(compute_interpolation_data(
                 pick_info(info, type_picks), origin=origin, mode=mode,
                 verbose='error'))

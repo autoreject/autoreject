@@ -453,6 +453,11 @@ def test_interpolation_data(monkeypatch, tmp_path):
 
     ar, epochs_clean, reject_log = fit_transform()
     assert set(ar.dots) == {'eeg', 'meg'}
+    # only computed for the picks, so results cannot depend on other channels
+    for kind, data in ar.dots.items():
+        assert data['ch_names'] == [
+            ch for ch in epochs.ch_names
+            if ch not in bads and ch.startswith(kind.upper())]
     with monkeypatch.context() as m:
         m.setattr(utils, '_has_interp_data', lambda: False)
         ar_old, epochs_clean_old, reject_log_old = fit_transform()
