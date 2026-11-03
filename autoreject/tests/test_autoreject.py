@@ -477,8 +477,9 @@ def test_interpolation_data_once(interp_data, monkeypatch):
         return wrapped
 
     from mne.forward import _lead_dots
-    monkeypatch.setattr(mne.channels, 'compute_interpolation_data', counted(
-        mne.channels.compute_interpolation_data, 'compute'))
+    if interp_data:  # not in MNE-Python < 1.14
+        monkeypatch.setattr(mne.channels, 'compute_interpolation_data', counted(
+            mne.channels.compute_interpolation_data, 'compute'))
     monkeypatch.setattr(_lead_dots, '_do_self_dots', counted(
         _lead_dots._do_self_dots, 'self_dots'))
     # the dots of the MEG channels with themselves are the self dots
