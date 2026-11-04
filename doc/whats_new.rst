@@ -21,6 +21,12 @@ Changelog
 - :class:`autoreject.AutoReject` is now about 5x faster, with unchanged results: the cross-validation splits, test-fold medians and train-fold peak-to-peaks are hoisted out of the threshold and parameter searches, the peak-to-peaks needed to pick the channels to interpolate are computed for all epochs at once, and epochs that need the same set of channels interpolated are now repaired together instead of one at a time, by `Eric Larson`_ in :github:`#359`
 - The channel-level thresholds computed with ``thresh_method='bayesian_optimization'`` are now compared on a single cross-validation split rather than on a freshly drawn one per candidate threshold. This only affects ``random_state=None``, where the results were not reproducible to begin with, by `Eric Larson`_ in :github:`#359`
 - With MNE-Python 1.14+, :class:`autoreject.AutoReject` precomputes the EEG and MEG interpolation data once with :func:`mne.channels.compute_interpolation_data` and interpolates via the public :meth:`mne.Epochs.interpolate_bads`, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#368`
+- :class:`autoreject.AutoReject` is faster (about 15% for MEG+EEG data), with results unchanged up to floating point precision: the matrices that interpolate the bad channels are obtained by interpolating an identity matrix over the picked channels only, and then applied to all epochs at once, by `Eric Larson`_ in :github:`#369`
+- :func:`autoreject.compute_thresholds` now computes the MEG and EEG interpolation data once instead of once per channel with MNE-Python < 1.14, which made it about 3x faster for 51 gradiometers and many times faster for more channels, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#369`
+- With MNE-Python < 1.14, :class:`autoreject.AutoReject` computes the MEG dot products once instead of twice and no longer recreates the MEG coils for every interpolation, which made it about 25% faster for MEG data, with results unchanged up to floating point precision, by `Eric Larson`_ in :github:`#369`
+- The ``n_jobs`` parameter of :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` is now also used to compute the MEG interpolation data, by `Eric Larson`_ in :github:`#369`
+- The Bayesian optimization of the thresholds now uses a small NumPy implementation of the Gaussian process regression instead of :class:`sklearn.gaussian_process.GaussianProcessRegressor`, whose input validation dominated the computation time. This makes :class:`autoreject.AutoReject` about 20 to 30% faster, with unchanged results, by `Eric Larson`_ in :github:`#369`
+- :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` are faster (about 30% for MEG and 45% for EEG data), with results unchanged up to floating point precision: the cross-validated loss of all candidate thresholds of a channel is computed at once from cumulative sums, and MNE-Python no longer checks the measurement info again for every set of channels to interpolate, by `Eric Larson`_ in :github:`#369`
 
 Bug
 ~~~
@@ -28,6 +34,7 @@ Bug
 - :meth:`autoreject.AutoReject.transform` now emits a single warning when all epochs are marked as bad, regardless of the MNE-Python version, by `Eric Larson`_ in :github:`#366`
 - :func:`autoreject.read_auto_reject` now restores ``verbose=False`` as ``False`` rather than ``0``, which made a loaded :class:`autoreject.AutoReject` warn about channels marked as bad as if it were verbose, by `Eric Larson`_ in :github:`#368`
 - :meth:`autoreject.AutoReject.fit` no longer raises an ``IndexError`` or silently interpolates MEG channels with the wrong precomputed dot products when other channels come before the MEG channels in the epochs, as in CTF recordings (:github:`#365`), by `Eric Larson`_ in :github:`#368`
+- ``autoreject.utils.clean_by_interp`` no longer modifies an :class:`mne.Evoked` passed to it, which also made it interpolate each channel from neighbors that had already been interpolated (:github:`#364`), by `Eric Larson`_ in :github:`#369`
 
 .. _0.4.3:
 

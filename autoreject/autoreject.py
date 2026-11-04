@@ -24,7 +24,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import KFold, StratifiedShuffleSplit
 from sklearn.model_selection import cross_val_score, check_cv
 
-from .utils import (_clean_by_interp, interpolate_bads, _get_epochs_type,
+from .utils import (_clean_by_interp, _interp_matrices, _get_epochs_type,
                     _pbar, _handle_picks, _check_data, _precompute_interp,
                     _get_interp_data, _restore_interp_data,
                     _get_picks_by_type, _pprint)
@@ -210,8 +210,10 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
     decim : int
         The decimation factor: Increment for selecting every nth time slice.
     random_state : int | np.random.RandomState | None
-        The seed of the pseudo random number generator to use.
-        Defaults to None.
+        Unused, as the threshold estimation is deterministic. It will be
+        removed in a future release.
+
+        .. deprecated:: 0.5
     ch_types : str | list of str | None
         The channel types for which to find the rejection dictionary.
         e.g., ['mag', 'grad']. If None, the rejection dictionary
@@ -297,8 +299,7 @@ def get_rejection_threshold(epochs, decim=1, random_state=None,
         best_thresh, _ = bayes_opt(func, initial_x,
                                    all_threshes,
                                    expected_improvement,
-                                   max_iter=10, debug=False,
-                                   random_state=random_state)
+                                   max_iter=10, debug=False)
         reject[ch_type] = best_thresh
 
     return reject
@@ -328,6 +329,34 @@ class _ChannelAutoReject(BaseAutoReject):
         keep = deltas <= max(self.thresh, deltas.min())
         self.mean_ = _slicemean(X, keep, axis=0)
         return self
+
+
+def _thresh_cv_loss(this_data, cv, y, threshes):
+    """Get the cross-validated loss of channel-level thresholds.
+
+    This is ``-np.mean`` over the folds of the score of a
+    ``_ChannelAutoReject(thresh)`` fit on the train set, for each threshold.
+    The kept train epochs (whose peak-to-peak is at most the threshold) are the
+    first ones when sorted by peak-to-peak, so the means for all thresholds are
+    obtained at once from a cumulative sum.
+    """
+    losses = list()
+    for train, test in check_cv(cv).split(this_data, y):
+        X = this_data[train]
+        deltas = np.ptp(X, axis=1)
+        order = np.argsort(deltas, kind='stable')
+        deltas = deltas[order]
+        # the mean of the first k sorted epochs, for each k
+        means = np.cumsum(X[order], axis=0)
+        means /= np.arange(1, len(means) + 1)[:, np.newaxis]
+        median = np.median(this_data[test], axis=0)
+        loss_k = np.sqrt(np.mean((median - means) ** 2, axis=1))
+        loss_k[np.isnan(loss_k)] = np.inf  # as BaseAutoReject.score does
+        # the epoch with the smallest peak-to-peak is always kept
+        n_keep = np.searchsorted(deltas, np.maximum(threshes, deltas[0]),
+                                 side='right')
+        losses.append(loss_k[n_keep - 1])
+    return np.mean(losses, axis=0)
 
 
 def _compute_thresh(this_data, method='bayesian_optimization',
@@ -371,30 +400,12 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         rs.fit(this_data, y)
         best_thresh = rs.best_estimator_.thresh
     elif method == 'bayesian_optimization':
-        cache = dict()
-        # none of this depends on the threshold, so hoist it out of ``func``,
-        # which is called once per candidate threshold
-        folds = list()
-        for train, test in check_cv(cv).split(this_data, y):
-            # keep the train indices, not the (much larger) train data
-            deltas = np.ptp(this_data[train], axis=1)
-            folds.append((train, deltas, deltas.min(),
-                          np.median(this_data[test], axis=0)))
+        # the loss of every candidate threshold, computed all at once
+        losses = _thresh_cv_loss(this_data, cv, y, all_threshes)
 
         def func(thresh):
-            idx = np.where(thresh - all_threshes >= 0)[0][-1]
-            thresh = all_threshes[idx]
-            if thresh not in cache:
-                scores = list()
-                for train, deltas, delta_min, median in folds:
-                    # _ChannelAutoReject.fit + BaseAutoReject.score, inlined
-                    keep = deltas <= max(thresh, delta_min)
-                    mean_ = _slicemean(this_data, train[keep], axis=0)
-                    scores.append(
-                        -np.inf if np.any(np.isnan(mean_))
-                        else -np.sqrt(np.mean((median - mean_) ** 2)))
-                cache[thresh] = -np.mean(scores)
-            return cache[thresh]
+            # the largest candidate threshold that is not above thresh
+            return losses[np.searchsorted(all_threshes, thresh, 'right') - 1]
 
         n_epochs = all_threshes.shape[0]
         idx = np.concatenate((
@@ -405,8 +416,7 @@ def _compute_thresh(this_data, method='bayesian_optimization',
         best_thresh, _ = bayes_opt(func, initial_x,
                                    all_threshes,
                                    expected_improvement,
-                                   max_iter=10, debug=False,
-                                   random_state=random_state)
+                                   max_iter=10, debug=False)
 
     return best_thresh
 
@@ -468,6 +478,8 @@ def _compute_thresholds(epochs, method='bayesian_optimization',
     picks = _handle_picks(info=epochs.info, picks=picks)
     _check_data(epochs, picks, verbose=verbose, check_loc=augment,
                 ch_constraint='data_channels')
+    if augment and dots is None:  # compute once rather than for each channel
+        dots = _precompute_interp(epochs.info, picks, n_jobs=n_jobs)
     picks_by_type = _get_picks_by_type(picks=picks, info=epochs.info)
     picks_by_type = None if len(picks_by_type) == 1 else picks_by_type  # XXX
     if picks_by_type is not None:
@@ -805,17 +817,18 @@ def _interpolate_bad_epochs(
         if len(interp_chs) > 0:
             groups.setdefault(tuple(interp_chs), list()).append(epoch_idx)
 
-    if len(groups) > 0:  # precompute once for MNE-Python 1.14+
-        dots = _get_interp_data(epochs.info, picks, dots, mode='accurate')
-    for interp_chs, epoch_idxs in _pbar(
-            list(groups.items()),
-            desc='Repairing epochs',
-            position=pos, leave=True, verbose=verbose):
-        these_epochs = epochs[epoch_idxs]
-        these_epochs.info['bads'] = list(interp_chs)
-        interpolate_bads(these_epochs, dots=dots, picks=picks,
-                         reset_bads=True)
-        epochs._data[epoch_idxs] = these_epochs._data
+    if len(groups) == 0:
+        return
+    dots = _get_interp_data(epochs.info, picks, dots, mode='accurate')
+    picks = np.asarray(picks)
+    pick_of = {epochs.ch_names[pick]: pick for pick in picks}
+    mats = _interp_matrices(
+        epochs.info, picks, dots, list(groups), mode='accurate',
+        desc='Repairing epochs', verbose=verbose, position=pos, leave=True)
+    for (interp_chs, epoch_idxs), mat in zip(groups.items(), mats):
+        bad_picks = [pick_of[ch] for ch in interp_chs]
+        epochs._data[np.ix_(epoch_idxs, bad_picks)] = np.matmul(
+            mat, epochs._data[np.ix_(epoch_idxs, picks)])
 
 
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
@@ -1045,7 +1058,8 @@ class AutoReject:
 
         # XXX : maybe use an mne function in pick.py ?
         picks_by_type = _get_picks_by_type(info=epochs.info, picks=self.picks_)
-        self.dots = _precompute_interp(epochs.info, self.picks_)
+        self.dots = _precompute_interp(epochs.info, self.picks_,
+                                       n_jobs=self.n_jobs)
 
         thresh_func = partial(_compute_thresholds, n_jobs=self.n_jobs,
                               method=self.thresh_method,

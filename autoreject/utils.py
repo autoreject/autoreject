@@ -4,6 +4,8 @@
 #          Denis A. Engemann <denis.engemann@gmail.com>
 
 from collections import defaultdict
+import contextlib
+import inspect
 import warnings
 
 import numpy as np
@@ -223,31 +225,52 @@ def clean_by_interp(inst, picks=None, verbose=True):
 
 
 def _clean_by_interp(inst, picks=None, dots=None, verbose=True):
+    if not isinstance(inst, (mne.Evoked, _get_epochs_type())):
+        raise ValueError('Unrecognized type for inst')
     inst_interp = inst.copy()
-    mesg = 'Creating augmented epochs'
     picks = _handle_picks(info=inst_interp.info, picks=picks)
     dots = _get_interp_data(inst.info, picks, dots, mode='fast')
-
-    BaseEpochs = _get_epochs_type()
-    ch_names = [inst.info['ch_names'][p] for p in picks]
-    for ch_idx, (pick, ch) in enumerate(_pbar(list(zip(picks, ch_names)),
-                                        desc=mesg, verbose=verbose)):
-        inst.info['bads'] = [ch]
-        pick_interp = mne.pick_channels(inst.info['ch_names'], [ch])[0]
-        data_orig = inst._data[:, pick_interp].copy()
-
-        interpolate_bads(inst, picks=picks, dots=dots,
-                         reset_bads=True, mode='fast')
-
-        if isinstance(inst, mne.Evoked):
-            inst_interp.data[pick] = inst.data[pick_interp]
-        elif isinstance(inst, BaseEpochs):
-            inst_interp._data[:, pick] = inst._data[:, pick_interp]
-        else:
-            raise ValueError('Unrecognized type for inst')
-        inst._data[:, pick_interp] = data_orig.copy()
-    inst.info['bads'] = inst_interp.info['bads'].copy()
+    # interpolate each channel from all the other picks, in one go
+    ch_names = [inst.ch_names[p] for p in picks]
+    loo = np.concatenate(list(_interp_matrices(
+        inst.info, picks, dots, [[ch] for ch in ch_names], mode='fast',
+        desc='Creating augmented epochs', verbose=verbose)))
+    inst_interp._data[..., picks, :] = np.matmul(
+        loo, inst._data[..., picks, :])
     return inst_interp
+
+
+def _interp_matrices(info, picks, dots, bad_sets, mode, desc, verbose,
+                     **kwargs):
+    """Get the matrix that interpolates each set of bads from the picks.
+
+    Interpolating an identity matrix gives the interpolation matrix itself,
+    so this works on n_picks x n_picks data rather than on all of the data.
+    Yields, for each set of bad channel names, an array of shape
+    (n_bads, n_picks) to apply to the data of the picks. Rows of bads that
+    are not interpolated (e.g., not MEG or EEG) leave the data as is.
+    """
+    picks = np.asarray(picks)
+    eye = np.eye(len(picks))
+    evoked = mne.EvokedArray(eye.copy(), pick_info(info, picks),
+                             verbose=False)
+    if not _has_interp_data() and dots is not None:
+        # the dots are for the MEG channels of info, so pick those of evoked
+        meg_picks = _meg_dots_picks(info)
+        pos = np.searchsorted(meg_picks, picks[np.isin(picks, meg_picks)])
+        dots = _pick_dots(dots, pos, pos)
+    idx = {name: ii for ii, name in enumerate(evoked.ch_names)}
+    # the Info was checked when creating evoked, and only its bads change, so
+    # do not let MNE-Python (1.13+) check it again for every set of bads
+    skip_checks = getattr(evoked.info, '_skip_checks', contextlib.nullcontext)
+    with skip_checks():
+        for bads in _pbar(bad_sets, desc=desc, verbose=verbose, **kwargs):
+            bads_idx = [idx[ch] for ch in bads]
+            evoked.info['bads'] = list(bads)
+            interpolate_bads(evoked, picks=np.arange(len(picks)), dots=dots,
+                             reset_bads=True, mode=mode)
+            yield evoked.data[bads_idx]  # a copy, as it is fancy indexing
+            evoked.data[bads_idx] = eye[bads_idx]
 
 
 # Origins (head frame, in meters) used for EEG (spherical spline) and MEG
@@ -261,18 +284,19 @@ def _has_interp_data():
     return hasattr(mne.channels, 'compute_interpolation_data')
 
 
-def _precompute_interp(info, picks, mode='fast'):
+def _precompute_interp(info, picks, mode='fast', n_jobs=1):
     """Precompute the interpolation data for the channel types in picks."""
     if _has_interp_data():
-        return _get_interp_data(info, picks, mode=mode)
+        return _get_interp_data(info, picks, mode=mode, n_jobs=n_jobs)
     ch_types = {channel_type(info, pick) for pick in picks}
     if {'mag', 'grad'} & ch_types:
         this_info = pick_info(info, _meg_dots_picks(info), copy=True)
-        return _compute_dots(this_info, mode=mode, templates=None)
+        return _compute_dots(this_info, mode=mode, templates=None,
+                             n_jobs=n_jobs)
     return None
 
 
-def _get_interp_data(info, picks, dots=None, mode='fast'):
+def _get_interp_data(info, picks, dots=None, mode='fast', n_jobs=1):
     """Get MNE's precomputed interpolation data, computing what is missing.
 
     The data is computed for the EEG and MEG channels in picks only, so other
@@ -283,6 +307,9 @@ def _get_interp_data(info, picks, dots=None, mode='fast'):
     if not _has_interp_data():
         return dots
     from mne.channels import compute_interpolation_data, InterpolationData
+    # n_jobs was added after compute_interpolation_data
+    kwargs = dict(n_jobs=n_jobs) if 'n_jobs' in inspect.signature(
+        compute_interpolation_data).parameters else dict()
     # anything else (e.g., the dot products of files written with
     # MNE-Python < 1.14) is recomputed
     dots = {key: val for key, val in (
@@ -298,7 +325,7 @@ def _get_interp_data(info, picks, dots=None, mode='fast'):
         if kind not in dots or not names <= set(dots[kind]['ch_names']):
             dots.update(compute_interpolation_data(
                 pick_info(info, type_picks), origin=origin, mode=mode,
-                verbose='error'))
+                verbose='error', **kwargs))
     return dots
 
 
@@ -486,9 +513,9 @@ def _meg_dots_picks(info):
     return pick_types(info, meg=True, eeg=False, exclude=[])
 
 
-def _compute_dots(info, mode='fast', *, templates):
+def _compute_dots(info, mode='fast', *, templates, n_jobs=1):
     """Compute all-to-all dots."""
-    from mne.forward._lead_dots import _do_self_dots, _do_cross_dots
+    from mne.forward._lead_dots import _do_self_dots
     from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
     from mne.bem import _check_origin
 
@@ -499,10 +526,9 @@ def _compute_dots(info, mode='fast', *, templates):
     my_origin = _check_origin((0., 0., 0.04), info)
     int_rad, noise, lut_fun, n_fact = _setup_dots(mode, info, coils, 'meg')
     self_dots = _do_self_dots(int_rad, False, coils, my_origin, 'meg',
-                              lut_fun, n_fact, n_jobs=1)
-    cross_dots = _do_cross_dots(int_rad, False, coils, coils,
-                                my_origin, 'meg', lut_fun, n_fact).T
-    return self_dots, cross_dots
+                              lut_fun, n_fact, n_jobs=n_jobs)
+    # the cross dots of the coils with themselves are the self dots
+    return self_dots, self_dots
 
 
 def _pick_dots(dots, pick_from, pick_to):
@@ -517,26 +543,20 @@ def _pick_dots(dots, pick_from, pick_to):
 def _fast_map_meg_channels(info, pick_from, pick_to,
                            dots=None, mode='fast'):
     from mne.forward._field_interpolation import _compute_mapping_matrix
-    from mne.forward._make_forward import _create_meg_coils, _read_coil_defs
     from mne.bem import _check_origin
 
     miss = 1e-4  # Smoothing criterion for MEG
 
     info_from = pick_info(info, pick_from, copy=True)
-    templates = _read_coil_defs(verbose='error')
-    coils_from = _create_meg_coils(info_from['chs'], 'normal',
-                                   info_from['dev_head_t'], templates)
     my_origin = _check_origin((0., 0., 0.04), info_from)
-    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, info_from,
-                                                  coils_from, 'meg')
+    # the coils are only needed to compute the dots (_setup_dots ignores them)
+    int_rad, noise, lut_fun, n_fact = _setup_dots(mode, info_from, None,
+                                                  'meg')
 
     # This function needs a clean input. It hates the presence of other
     # channels than MEG channels. Make sure all is picked.
     if dots is None:
-        dots = self_dots, cross_dots = _compute_dots(
-            info, mode=mode, templates=templates)
-    else:
-        self_dots, cross_dots = dots
+        dots = _compute_dots(info, mode=mode, templates=None)
 
     self_dots, cross_dots = _pick_dots(dots, pick_from, pick_to)
 
