@@ -261,7 +261,7 @@ def _interp_matrices(info, picks, dots, bad_sets, mode, desc, verbose,
         dots = _pick_dots(dots, pos, pos)
     idx = {name: ii for ii, name in enumerate(evoked.ch_names)}
     # the Info was checked when creating evoked, and only its bads change, so
-    # do not let MNE-Python (1.14+) check it again for every set of bads
+    # do not let MNE-Python (1.13+) check it again for every set of bads
     skip_checks = getattr(evoked.info, '_skip_checks', contextlib.nullcontext)
     with skip_checks():
         for bads in _pbar(bad_sets, desc=desc, verbose=verbose, **kwargs):

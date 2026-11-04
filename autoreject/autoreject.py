@@ -828,7 +828,7 @@ def _interpolate_bad_epochs(
     for (interp_chs, epoch_idxs), mat in zip(groups.items(), mats):
         bad_picks = [pick_of[ch] for ch in interp_chs]
         epochs._data[np.ix_(epoch_idxs, bad_picks)] = np.matmul(
-            mat, epochs._data[epoch_idxs][:, picks])
+            mat, epochs._data[np.ix_(epoch_idxs, picks)])
 
 
 def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,

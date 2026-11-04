@@ -49,6 +49,8 @@ def test_utils():
             epochs_clean.get_data(copy=False),
             this_epoch.get_data(copy=False),
         )
+    with pytest.raises(ValueError, match='Unrecognized type'):
+        clean_by_interp(raw)
 
     picks_meg = mne.pick_types(evoked.info, meg='grad', eeg=False, exclude=[])
     picks_eeg = mne.pick_types(evoked.info, meg=False, eeg=True, exclude=[])
@@ -82,8 +84,8 @@ def test_utils():
 @testing.requires_testing_data
 def test_interp_matrices_checks(monkeypatch):
     """Test that the Info is not checked again for every set of bads."""
-    if not hasattr(mne.Info, '_skip_checks'):
-        pytest.skip('Requires MNE-Python 1.14+')
+    if not hasattr(mne.Info, '_skip_checks'):  # pragma: no cover
+        pytest.skip('Requires MNE-Python 1.13+')
     raw = io.read_raw_fif(raw_fname, preload=False)
     raw.pick('eeg', exclude='bads').crop(0, 5).load_data()
     epochs = mne.make_fixed_length_epochs(raw, duration=1., preload=True)

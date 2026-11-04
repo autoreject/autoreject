@@ -32,6 +32,7 @@ def test_gaussian_process(scale):
         X[:, None], y).predict(x[:, None], return_std=True)
     gp = _GaussianProcess().fit(X[:, None], y)
     got = gp.predict(x[:, None], return_std=True)
+    assert_allclose(gp.predict(x[:, None]), got[0])  # the mean alone
     for g, w in zip(got, want):
         assert_allclose(g, w, rtol=1e-7, atol=1e-12)
     # and so does the expected improvement, which is what bayes_opt uses
