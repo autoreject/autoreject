@@ -229,6 +229,12 @@ def test_autoreject():
         assert (ar.consensus_[ch_type] ==
                 ar.local_reject_[ch_type].consensus_[ch_type])
 
+    # the loss of a consensus does not depend on the other ones tried
+    ar_one = AutoReject(cv=3, picks=picks, random_state=42,
+                        n_interpolate=[1, 2], consensus=[1]).fit(epochs_fit)
+    for ch_type in ch_types:
+        assert_array_equal(ar_one.loss_[ch_type][0], ar.loss_[ch_type][1])
+
     # test complementarity of goods and bads
     assert_array_equal(len(reject_log.bad_epochs), len(epochs_fit))
 

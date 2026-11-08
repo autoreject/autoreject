@@ -27,6 +27,7 @@ Changelog
 - The ``n_jobs`` parameter of :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` is now also used to compute the MEG interpolation data, by `Eric Larson`_ in :github:`#369`
 - The Bayesian optimization of the thresholds now uses a small NumPy implementation of the Gaussian process regression instead of :class:`sklearn.gaussian_process.GaussianProcessRegressor`, whose input validation dominated the computation time. This makes :class:`autoreject.AutoReject` about 20 to 30% faster, with unchanged results, by `Eric Larson`_ in :github:`#369`
 - :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` are faster (about 30% for MEG and 45% for EEG data), with results unchanged up to floating point precision: the cross-validated loss of all candidate thresholds of a channel is computed at once from cumulative sums, and MNE-Python no longer checks the measurement info again for every set of channels to interpolate, by `Eric Larson`_ in :github:`#369`
+- :class:`autoreject.AutoReject` is faster (10 to 40% less fitting time on MEG data), with unchanged results: in the search over ``consensus``, the loss is computed once for each distinct set of kept training epochs, by `Hamza Abdelhedi`_ in :github:`#370`
 
 Bug
 ~~~
@@ -185,3 +186,4 @@ Changelog
 .. _Eric Larson: https://larsoner.com
 .. _Paul Bogdan: http://pbogdan.com/
 .. _Richard Höchenberger: https://github.com/hoechenberger
+.. _Hamza Abdelhedi: https://github.com/BabaSanfour
