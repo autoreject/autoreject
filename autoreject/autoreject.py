@@ -876,9 +876,9 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
 
         pbar = _pbar(splits, desc='Fold', position=3, verbose=verbose)
         for fold, (train, test) in enumerate(pbar):
-            X_interp_train = X_interp[train]  # does not depend on consensus
             counts_train = bad_sensor_counts[train]
             median = medians[fold]
+            fold_loss = dict()  # consensus values keeping the same epochs
             for idx, this_consensus in enumerate(consensus):
                 # \kappa must be greater than \rho
                 if this_consensus * n_channels <= n_interp:
@@ -888,15 +888,15 @@ def _run_local_reject_cv(epochs, thresh_func, picks_, n_interpolate, cv,
                 local_reject.consensus_[ch_type] = this_consensus
                 bad_epochs = local_reject._get_bad_epochs(
                     counts_train, picks=picks_, ch_type=ch_type)
-
-                good_epochs_idx = np.nonzero(np.invert(bad_epochs))[0]
-
-                local_reject.mean_ = mean_ = _slicemean(
-                    X_interp_train, good_epochs_idx, axis=0)
-                # BaseAutoReject.score with the median hoisted out
-                loss[idx, jdx, fold] = (
-                    np.inf if np.any(np.isnan(mean_))
-                    else np.sqrt(np.mean((median - mean_) ** 2)))
+                key = bad_epochs.tobytes()
+                if key not in fold_loss:
+                    mean_ = _slicemean(
+                        X_interp, train[np.invert(bad_epochs)], axis=0)
+                    # BaseAutoReject.score with the median hoisted out
+                    fold_loss[key] = (
+                        np.inf if np.any(np.isnan(mean_))
+                        else np.sqrt(np.mean((median - mean_) ** 2)))
+                loss[idx, jdx, fold] = fold_loss[key]
 
     return local_reject, loss
 
