@@ -159,3 +159,49 @@ def test_ransac_multiprocessing():
         np.testing.assert_allclose(mappings[1], mappings[n_jobs], err_msg=msg)
         np.testing.assert_allclose(corrs[1], corrs[n_jobs], err_msg=msg)
         assert bad_chs[1] == bad_chs[n_jobs], msg
+
+
+@testing.requires_testing_data
+def test_ransac_mappings(monkeypatch):
+    """Test that the MEG dots are computed once for all channel subsets."""
+    import autoreject.utils
+    info = io.read_info(raw_fname, verbose='error')
+    info['bads'] = []
+    picks = mne.pick_types(info, meg='mag')
+    epochs = mne.EpochsArray(np.zeros((1, len(info['ch_names']), 2)), info)
+    ransac = Ransac(picks=picks, random_state=0, n_resample=3,
+                    min_channels=0.2)
+    ransac.ch_type = 'meg'
+    ch_subsets = ransac._get_random_subsets(info)
+    # each subset alone computes the same mapping as all subsets at once
+    want = np.concatenate([ransac._get_mappings(epochs, [subset])
+                           for subset in ch_subsets])
+    n_calls = list()
+    compute_dots = autoreject.utils._compute_dots
+
+    def _count_compute_dots(*args, **kwargs):
+        n_calls.append(None)
+        return compute_dots(*args, **kwargs)
+
+    monkeypatch.setattr(autoreject.utils, '_compute_dots',
+                        _count_compute_dots)
+    mappings = ransac._get_mappings(epochs, ch_subsets)
+    assert len(n_calls) == 1
+    np.testing.assert_array_equal(mappings, want)
+
+
+@pytest.mark.parametrize('n_resample', (1, 4, 5))
+def test_ransac_correlations(n_resample):
+    """Test the correlations of the data with the median prediction."""
+    rng = np.random.RandomState(0)
+    n_channels, n_times = 6, 7
+    ransac = Ransac(n_resample=n_resample, picks=np.arange(n_channels))
+    ransac.mappings_ = rng.randn(n_resample * n_channels, n_channels)
+    data = rng.randn(n_channels, n_times)
+    y_pred = np.median(np.reshape(
+        data.T @ ransac.mappings_.T, (n_times, n_channels, n_resample),
+        order='F'), axis=-1)
+    want = (np.sum(data.T * y_pred, axis=0) /
+            np.linalg.norm(data, axis=1) / np.linalg.norm(y_pred, axis=0))
+    np.testing.assert_allclose(ransac._compute_correlations(data), want,
+                               rtol=1e-12)

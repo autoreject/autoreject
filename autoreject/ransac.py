@@ -117,13 +117,16 @@ class Ransac(object):
         return ch_subsets
 
     def _get_mappings(self, inst, ch_subsets):
-        from .utils import _fast_map_meg_channels
+        from .utils import _compute_dots, _fast_map_meg_channels
 
         picked_info = mne.pick_info(inst.info, self.picks)
         pos = np.array([ch['loc'][:3] for ch in picked_info['chs']])
         ch_names = picked_info['ch_names']
         n_channels = len(ch_names)
         pick_to = range(n_channels)
+        dots = None
+        if self.ch_type == 'meg':  # the same for all subsets
+            dots = _compute_dots(picked_info, mode='fast', templates=None)
         mappings = list()
         # Try different channel subsets
         for subset in _pbar(ch_subsets, desc='interpolating channels',
@@ -135,7 +138,7 @@ class Ransac(object):
             mapping = np.zeros((n_channels, n_channels))
             if self.ch_type == 'meg':
                 mapping[:, pick_from] = _fast_map_meg_channels(
-                    picked_info.copy(), pick_from, pick_to)
+                    picked_info, pick_from, pick_to, dots=dots)
             elif self.ch_type == 'eeg':
                 mapping[:, pick_from] = _make_interpolation_matrix(
                     pos[pick_from], pos[pick_to], alpha=1e-5)
@@ -155,7 +158,13 @@ class Ransac(object):
         # pool them using median
         # XXX: weird that original implementation sorts and takes middle value.
         # Isn't really the median if n_resample even
-        y_pred = np.median(y_pred, axis=-1)
+        # this is np.median, but sorting is faster than its partitioning
+        y_pred = np.sort(y_pred, axis=-1)
+        half = self.n_resample // 2
+        if self.n_resample % 2:
+            y_pred = y_pred[..., half]
+        else:
+            y_pred = np.mean(y_pred[..., half - 1:half + 1], axis=-1)
         # compute correlation
         num = np.sum(data.T * y_pred, axis=0)
         denom = (np.sqrt(np.sum(data.T ** 2, axis=0)) *

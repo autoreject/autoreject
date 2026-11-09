@@ -28,6 +28,7 @@ Changelog
 - The Bayesian optimization of the thresholds now uses a small NumPy implementation of the Gaussian process regression instead of :class:`sklearn.gaussian_process.GaussianProcessRegressor`, whose input validation dominated the computation time. This makes :class:`autoreject.AutoReject` about 20 to 30% faster, with unchanged results, by `Eric Larson`_ in :github:`#369`
 - :class:`autoreject.AutoReject` and :func:`autoreject.compute_thresholds` are faster (about 30% for MEG and 45% for EEG data), with results unchanged up to floating point precision: the cross-validated loss of all candidate thresholds of a channel is computed at once from cumulative sums, and MNE-Python no longer checks the measurement info again for every set of channels to interpolate, by `Eric Larson`_ in :github:`#369`
 - :class:`autoreject.AutoReject` is faster (10 to 40% less fitting time on MEG data), with unchanged results: in the search over ``consensus``, the loss is computed once for each distinct set of kept training epochs, by `Hamza Abdelhedi`_ in :github:`#370`
+- :class:`autoreject.Ransac` is about 6x faster for MEG and 2.5x faster for EEG data, with unchanged results: the MEG dot products are computed once instead of once per channel subset, and the median of the predictions is computed by sorting, by `Eric Larson`_ in :github:`#371`
 
 Bug
 ~~~
